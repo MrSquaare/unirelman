@@ -1,0 +1,29 @@
+{
+  "name": "unirelman",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "root:check": "oxfmt --check && oxlint",
+    "root:check:fix": "oxfmt && oxlint --fix",
+    "dev": "turbo dev --continue",
+    "build": "turbo build",
+    "test": "turbo test --continue",
+    "check": "turbo check --continue",
+    "check:fix": "turbo check:fix --continue",
+    "typecheck": "turbo typecheck --continue",
+    "clean": "turbo clean --continue",
+    "deps:update": "taze",
+    "deps:upgrade": "taze -w"
+  },
+  "devDependencies": {
+    "@unirelman/shared-config": "workspace:*",
+    "oxfmt": "^0.78.0",
+    "oxlint": "^1.93.0",
+    "taze": "^21.3.0",
+    "turbo": "^2.11.10"
+  },
+  "engines": {
+    "node": "24.22.3"
+  },
+  "packageManager": "pnpm@12.18.0"
+}

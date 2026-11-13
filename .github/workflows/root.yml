@@ -1,0 +1,27 @@
+name: "Root"
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths-ignore:
+      - "internals/**"
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    name: Checks
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup environment
+        uses: ./.github/actions/setup-env
+
+      - name: Check
+        run: pnpm root:check

@@ -1,0 +1,69 @@
+name: Bug
+description: Report a bug
+title: "Bug: "
+labels: [bug]
+body:
+  - type: checkboxes
+    attributes:
+      label: Guidelines
+      description: Before opening an issue, read the [Issues](../blob/main/GUIDELINES.md#issues) section of the Guidelines.
+      options:
+        - label: I have read the Issues section of the Guidelines.
+          required: true
+  - type: textarea
+    attributes:
+      label: Current behavior
+      description: Describe the current behavior.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Expected behavior
+      description: Describe the expected behavior.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Steps to reproduce
+      description: List the steps to reproduce the bug.
+      placeholder: |
+        1. Run...
+        2. Click on...
+        3. See error
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Environment
+      description: Describe your environment.
+      value: |
+        - Version: 
+        - Operating system: 
+        - Operating system version: 
+      render: markdown
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Logs
+      description: If applicable, attach the logs related to the bug.
+    validations:
+      required: false
+  - type: textarea
+    attributes:
+      label: Screenshots
+      description: If applicable, attach the screenshots related to the bug.
+    validations:
+      required: false
+  - type: textarea
+    attributes:
+      label: Possible solutions
+      description: If applicable, suggest possible solutions for the bug.
+    validations:
+      required: false
+  - type: textarea
+    attributes:
+      label: Additional information
+      description: Add any additional information that could help.
+    validations:
+      required: false
