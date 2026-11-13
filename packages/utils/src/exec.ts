@@ -93,13 +93,14 @@ export const execCommand = async (
   options: ExecCommandOptions,
 ): Promise<ExecCommandResult> => {
   const { cwd, allowedExitCodes = DEFAULT_ALLOWED_EXIT_CODES } = options;
-  const childProcess = x(command, args, {
-    nodePath: false,
-    nodeOptions: { cwd, stdio: CHILD_PROCESS_STDIO },
-  });
+  let childProcess: ReturnType<typeof x>;
   let output: Output;
 
   try {
+    childProcess = x(command, args, {
+      nodePath: false,
+      nodeOptions: { cwd, stdio: CHILD_PROCESS_STDIO },
+    });
     output = await childProcess;
   } catch (error) {
     if (!(error instanceof Error)) {

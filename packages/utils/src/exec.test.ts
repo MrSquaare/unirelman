@@ -171,6 +171,18 @@ describe("execCommand", () => {
     );
   });
 
+  it("should throw ExecSpawnError when starting the command throws synchronously", async () => {
+    const cause = new TypeError("The argument 'args[0]' must be a string without null bytes.");
+
+    mockedX.mockImplementationOnce(() => {
+      throw cause;
+    });
+
+    await expect(execCommand("git", ["a\0b"], { cwd: CONFIG_CWD })).rejects.toThrow(
+      new ExecSpawnError({ command: "git", args: ["a\0b"], cwd: CONFIG_CWD, cause }),
+    );
+  });
+
   it("should throw ExecError when command exits with non-zero code", async () => {
     mockedX.mockReturnValueOnce(
       createExecResult({ exitCode: 1, stdout: "std output", stderr: "err output" }),
