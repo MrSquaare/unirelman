@@ -1,0 +1,44 @@
+{
+  "name": "@unirelman/testing",
+  "version": "0.0.0",
+  "private": true,
+  "homepage": "https://github.com/MrSquaare/unirelman/internals/testing#readme",
+  "bugs": {
+    "url": "https://github.com/MrSquaare/unirelman/issues"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MrSquaare/unirelman.git"
+  },
+  "type": "module",
+  "exports": {
+    "./mocks/tinyexec": {
+      "@unirelman/source": "./src/mocks/tinyexec.ts"
+    },
+    "./utils/tinyexec": {
+      "@unirelman/source": "./src/utils/tinyexec.ts"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check",
+    "typecheck": "tsc --noEmit",
+    "check": "pnpm run fmt:check && pnpm run lint",
+    "check:fix": "pnpm run fmt && pnpm run lint:fix"
+  },
+  "dependencies": {
+    "tinyexec": "^1.3.1",
+    "vitest": "^5.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "@unirelman/shared-config": "workspace:*",
+    "oxfmt": "^0.78.0",
+    "oxlint": "^1.93.0",
+    "typescript": "^6.0.3"
+  }
+}

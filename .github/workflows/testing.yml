@@ -1,0 +1,37 @@
+name: "@unirelman/testing"
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "internals/testing/**"
+      - "internals/shared-config/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "turbo.json"
+      - ".github/actions/setup-env/**"
+      - ".github/workflows/testing.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    name: Checks
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup environment
+        uses: ./.github/actions/setup-env
+
+      - name: Typecheck
+        run: pnpm typecheck --filter @unirelman/testing
+
+      - name: Check
+        run: pnpm check --filter @unirelman/testing
