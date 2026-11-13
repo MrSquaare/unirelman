@@ -27,7 +27,13 @@ Read the [Guidelines](GUIDELINES.md) before opening an issue or a pull request.
 git clone https://github.com/MrSquaare/unirelman.git
 ```
 
-2. Install the dependencies:
+2. Enter the repository:
+
+```shell
+cd unirelman
+```
+
+3. Install the dependencies:
 
 ```shell
 pnpm install
