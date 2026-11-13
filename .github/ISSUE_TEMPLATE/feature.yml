@@ -1,0 +1,36 @@
+name: Feature
+description: Request a feature
+title: "Feature: "
+labels: [enhancement]
+body:
+  - type: checkboxes
+    attributes:
+      label: Guidelines
+      description: Before opening an issue, read the [Issues](../blob/main/GUIDELINES.md#issues) section of the Guidelines.
+      options:
+        - label: I have read the Issues section of the Guidelines.
+          required: true
+  - type: textarea
+    attributes:
+      label: Description
+      description: Describe the feature and how it works.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Screenshots
+      description: If applicable, attach the screenshots related to the feature.
+    validations:
+      required: false
+  - type: textarea
+    attributes:
+      label: Possible solutions
+      description: If applicable, suggest possible solutions for the feature.
+    validations:
+      required: false
+  - type: textarea
+    attributes:
+      label: Additional information
+      description: Add any additional information that could help.
+    validations:
+      required: false
