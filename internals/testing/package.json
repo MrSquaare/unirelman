@@ -13,8 +13,17 @@
   },
   "type": "module",
   "exports": {
+    "./mocks/node/fs-promises": {
+      "@unirelman/source": "./src/mocks/node/fs-promises.ts"
+    },
     "./mocks/tinyexec": {
       "@unirelman/source": "./src/mocks/tinyexec.ts"
+    },
+    "./utils/factory": {
+      "@unirelman/source": "./src/utils/factory.ts"
+    },
+    "./utils/mock": {
+      "@unirelman/source": "./src/utils/mock.ts"
     },
     "./utils/tinyexec": {
       "@unirelman/source": "./src/utils/tinyexec.ts"
