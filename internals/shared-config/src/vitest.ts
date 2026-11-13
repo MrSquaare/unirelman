@@ -9,6 +9,7 @@ export const config = defineConfig({
   },
   test: {
     coverage: {
+      reporter: ["text", "lcov"],
       include: ["src/**/*.ts"],
       exclude: ["src/**/*.mock.ts", "src/**/*.fixture.ts", "src/**/testing/**"],
     },
