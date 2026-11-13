@@ -14,6 +14,19 @@ on:
       - "turbo.json"
       - ".github/actions/setup-env/**"
       - ".github/workflows/utils.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "packages/utils/**"
+      - "internals/shared-config/**"
+      - "internals/testing/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "turbo.json"
+      - ".github/actions/setup-env/**"
+      - ".github/workflows/utils.yml"
 
 permissions:
   contents: read
@@ -53,4 +66,13 @@ jobs:
         uses: ./.github/actions/setup-env
 
       - name: Test
-        run: pnpm test --filter @unirelman/utils
+        run: pnpm test --filter @unirelman/utils -- --coverage
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: packages/utils/coverage/lcov.info
+          flags: utils
+          disable_search: true
+          fail_ci_if_error: true
