@@ -16,7 +16,7 @@ The GitHub Action runs on pushes to your main branch, and does two passes:
    - **Changes pending**: force-pushes the release branch and opens the release pull request, or updates it. Its description lists each scope's current and next version.
    - **Nothing pending**: closes the release pull request if one is open.
 
-Publishing first retries a failed publish on the next push, whatever was merged in between.
+If a publish fails, the next push retries it before the version pass.
 
 ## The publish setting
 

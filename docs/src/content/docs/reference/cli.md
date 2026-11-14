@@ -63,7 +63,7 @@ With `--json`, the command prints this document, validated by `versionOutputSche
 | `scopes`   | `Record<string, { currentVersion: string \| null; nextVersion: string }>` | Each scope that gets a next version. `currentVersion` is `null` when no plugin provides one. |
 | `files`    | `Array<{ path: string; action: "write" \| "delete" }>`                    | File operations applied, or reported on a dry run, with paths relative to the project root.  |
 
-`scopes` and `files` are empty when no scope gets a next version.
+`scopes` is empty when no scope gets a next version.
 
 ### `publish`
 

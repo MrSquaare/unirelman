@@ -5,9 +5,10 @@ sidebar:
   order: 4
 ---
 
+import { TabItem, Tabs } from "@astrojs/starlight/components";
 import PackageManagers from "../../../components/PackageManagers.astro";
 
-This guide shows how to publish packages to the npm registry with the [npm plugin](/unirelman/reference/plugins/npm/). The plugin publishes with `npm publish`, so npm's own configuration sets the registry and the authentication, as for a manual publish.
+This guide shows how to publish packages to the npm registry with the [npm plugin](/unirelman/reference/plugins/npm/). The plugin publishes with your package manager's own command, so its configuration sets the registry and the authentication, as for a manual publish.
 
 ## Register the plugin
 
@@ -71,25 +72,84 @@ Trusted publishing lets GitHub Actions publish with a short-lived identity token
 
 ## Publish from GitHub Actions with a token
 
-1. Create an npm access token and store it as a repository secret, such as `NPM_TOKEN`.
-2. Configure the registry with `actions/setup-node`, and expose the token as the `NODE_AUTH_TOKEN` environment variable:
+Create an npm access token and store it as a repository secret, such as `NPM_TOKEN`. Then expose the token to your package manager:
 
-   ```yaml title=".github/workflows/release.yml"
-   - name: Setup Node.js
-     uses: actions/setup-node@v7
-     with:
-       node-version: 24
-       registry-url: https://registry.npmjs.org
+<Tabs syncKey="starlight-package-managers-pkg">
+<TabItem label="npm" icon="seti:npm">
 
-   # ...
+Configure the registry with `actions/setup-node`, and set the `NODE_AUTH_TOKEN` environment variable:
 
-   - name: Release
-     uses: MrSquaare/unirelman/integrations/github-action@v0.0.0
-     env:
-       NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-   ```
+```yaml title=".github/workflows/release.yml"
+- name: Setup Node.js
+  uses: actions/setup-node@v7
+  with:
+    node-version: 24
+    registry-url: https://registry.npmjs.org
 
-3. To add provenance, set the `NPM_CONFIG_PROVENANCE` environment variable to `true`, or `"publishConfig": { "provenance": true }` in `package.json`, and grant the job `id-token: write`.
+# ...
+
+- name: Release
+  uses: MrSquaare/unirelman/integrations/github-action@v0.0.0
+  env:
+    NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+```
+
+</TabItem>
+<TabItem label="pnpm" icon="pnpm">
+
+Configure the registry with `actions/setup-node`, and set the `NODE_AUTH_TOKEN` environment variable:
+
+```yaml title=".github/workflows/release.yml"
+- name: Setup Node.js
+  uses: actions/setup-node@v7
+  with:
+    node-version: 24
+    registry-url: https://registry.npmjs.org
+
+# ...
+
+- name: Release
+  uses: MrSquaare/unirelman/integrations/github-action@v0.0.0
+  env:
+    NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+```
+
+</TabItem>
+<TabItem label="yarn" icon="seti:yarn">
+
+Set the `YARN_NPM_AUTH_TOKEN` environment variable:
+
+```yaml title=".github/workflows/release.yml"
+- name: Release
+  uses: MrSquaare/unirelman/integrations/github-action@v0.0.0
+  env:
+    YARN_NPM_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+```
+
+</TabItem>
+<TabItem label="bun" icon="bun">
+
+Set the `NPM_CONFIG_TOKEN` environment variable:
+
+```yaml title=".github/workflows/release.yml"
+- name: Release
+  uses: MrSquaare/unirelman/integrations/github-action@v0.0.0
+  env:
+    NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
+```
+
+</TabItem>
+</Tabs>
+
+To add provenance, grant the job `id-token: write`, and set the environment variable of your package manager to `true`:
+
+| Package manager | Environment variable          |
+| --------------- | ----------------------------- |
+| npm             | `NPM_CONFIG_PROVENANCE`       |
+| pnpm            | `PNPM_CONFIG_PROVENANCE`      |
+| yarn            | `YARN_NPM_PUBLISH_PROVENANCE` |
+
+`bun publish` cannot generate provenance statements yet.
 
 ## Publish a scoped package for the first time
 
