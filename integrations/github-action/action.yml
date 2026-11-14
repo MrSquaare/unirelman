@@ -1,0 +1,29 @@
+name: unirelman
+description: Version and publish releases with unirelman
+inputs:
+  command:
+    description: Command that runs the unirelman CLI installed in the repository
+    default: npx --no-install unirelman
+  working-directory:
+    description: Folder the CLI runs in, holding the unirelman configuration and the publish setting
+    default: .
+  github-token:
+    description: Token used to manage the release pull request, passed to the CLI as GITHUB_TOKEN; pushes use the credentials of actions/checkout
+    default: ${{ github.token }}
+  base-branch:
+    description: Branch the release pull request targets
+    default: ${{ github.ref_name }}
+  branch:
+    description: Branch holding the release commit
+    default: unirelman/release
+  pr-title:
+    description: Title of the release pull request
+    default: "chore(release): bump versions"
+outputs:
+  pr-number:
+    description: Number of the created or updated release pull request
+  releases:
+    description: Releases reported by unirelman publish, as JSON; not set while publishing is disabled (.unirelman/github-action/settings.json)
+runs:
+  using: node24
+  main: dist/index.mjs
