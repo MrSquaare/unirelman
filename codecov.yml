@@ -20,6 +20,10 @@ flags:
     paths:
       - packages/helpers/
     carryforward: true
+  plugin-calver:
+    paths:
+      - plugins/calver/
+    carryforward: true
   plugin-changelog:
     paths:
       - plugins/changelog/
