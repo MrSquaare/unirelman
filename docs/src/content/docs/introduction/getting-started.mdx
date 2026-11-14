@@ -1,0 +1,76 @@
+---
+title: Get started
+description: Install unirelman in a new or existing repository, configure it, and release a version.
+sidebar:
+  order: 2
+---
+
+import PackageManagers from "../../../components/PackageManagers.astro";
+
+This page sets up unirelman in a repository, new or existing, with npm packages. For a guided walk-through with every intermediate result, follow [Release your first package](/unirelman/tutorials/first-release/).
+
+## Prerequisites
+
+- [Node.js](https://nodejs.org/) 24 or later.
+- A Git repository.
+
+## Install
+
+Install the CLI, core and the plugins of an npm package:
+
+<PackageManagers pkg="@unirelman/cli @unirelman/core @unirelman/plugin-changesets @unirelman/plugin-changelog @unirelman/plugin-npm @unirelman/plugin-git @unirelman/plugin-semver" dev />
+
+## Configure
+
+Create `unirelman.config.ts` at the root of the repository:
+
+```ts title="unirelman.config.ts"
+import { defineConfig } from "@unirelman/cli";
+import { createChangelogPlugin } from "@unirelman/plugin-changelog";
+import { createChangesetsPlugin } from "@unirelman/plugin-changesets";
+import { createGitPlugin } from "@unirelman/plugin-git";
+import { createNpmPlugin } from "@unirelman/plugin-npm";
+import { createSemverPlugin } from "@unirelman/plugin-semver";
+
+export default defineConfig({
+  scopes: {
+    "my-package": "./",
+  },
+  plugins: [
+    createChangesetsPlugin(),
+    createChangelogPlugin(),
+    createNpmPlugin(),
+    createGitPlugin(),
+    createSemverPlugin(),
+  ],
+});
+```
+
+`scopes` maps each [scope](/unirelman/reference/glossary/#scope) to its folder:
+
+- **A single package**: one scope at `./`, as above.
+- **A monorepo**: one scope per package, such as `"@example/core": "packages/core"`. See [Release a monorepo](/unirelman/guides/monorepo/).
+
+In a repository with published versions, unirelman publishes the next versions only. If your tags are named another way than `1.0.0` or `@example/core@1.0.0`, see [Adopt unirelman in an existing project](/unirelman/guides/existing-project/).
+
+## Release
+
+1. Record a change:
+
+   <PackageManagers type="exec" pkg="unirelman" args='changesets create --scopes my-package --level patch --message "fix a bug"' />
+
+2. Apply the next version. unirelman writes `package.json` and `CHANGELOG.md`, deletes the changeset, and commits:
+
+   <PackageManagers type="exec" pkg="unirelman" args="version" />
+
+3. Publish the version to npm, and tag it:
+
+   <PackageManagers type="exec" pkg="unirelman" args="publish" />
+
+   npm's own configuration sets the registry and the authentication. See [Publish to npm](/unirelman/guides/publish-to-npm/).
+
+## Next steps
+
+- [Automate releases with GitHub Actions](/unirelman/tutorials/github-action/)
+- [CLI reference](/unirelman/reference/cli/)
+- [How unirelman works](/unirelman/concepts/overview/)

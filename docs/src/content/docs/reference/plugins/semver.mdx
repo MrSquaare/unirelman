@@ -1,0 +1,139 @@
+---
+title: SemVer
+description: Computes next versions with semantic versioning, with prerelease channels.
+---
+
+import PackageManagers from "../../../../components/PackageManagers.astro";
+
+<PackageManagers pkg="@unirelman/plugin-semver" dev />
+
+```ts title="unirelman.config.ts"
+import { createSemverPlugin } from "@unirelman/plugin-semver";
+
+createSemverPlugin({ prereleaseChannels: ["alpha", "beta", "rc"] });
+```
+
+## Options
+
+| Option               | Type                                  | Default | Description                                                                                                                                               |
+| -------------------- | ------------------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `prereleaseChannels` | `string[]`                            | `[]`    | [Channels](/unirelman/reference/glossary/#channel) a scope goes through, in order: letters, digits and hyphens. Required by `semver pre`, except to exit. |
+| `fixed`              | `boolean \| Record<string, string[]>` | `false` | [Groups](/unirelman/reference/glossary/#group) of scopes that share a version. See [Fixed versioning](#fixed-versioning).                                 |
+
+## Phases
+
+| Phase                 | Behavior                                                                                                                                       |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `parseCurrentVersion` | Parses each scope's current version and fills `meta.semver`, plus `meta.prerelease` for prereleases.                                           |
+| `computeNextVersion`  | Computes each scope's next version from its changes and its [prerelease state](#prerelease-state), following the [rules](#next-version-rules). |
+
+## Version format
+
+- Release: `MAJOR.MINOR.PATCH`, such as `1.2.3`.
+- Prerelease: `MAJOR.MINOR.PATCH-<channel>.<number>`, such as `1.3.0-beta.2`.
+
+## Next version rules
+
+Every rule but "Exit, no changes" needs at least one change.
+
+| Situation                   | Rule                                 | Example                                   |
+| --------------------------- | ------------------------------------ | ----------------------------------------- |
+| Release                     | Bump by the highest level.           | `1.2.3` + minor → `1.3.0`                 |
+| Enter a channel             | Bump, then start the channel at `0`. | `1.2.3` + minor → `1.3.0-alpha.0`         |
+| Same channel                | Increment the number.                | `1.3.0-alpha.0` + patch → `1.3.0-alpha.1` |
+| Bigger change than the base | Bump the base again, restart at `0`. | `1.3.0-alpha.1` + major → `2.0.0-alpha.0` |
+| Next channel                | Keep the base, restart at `0`.       | `1.3.0-alpha.1` + patch → `1.3.0-beta.0`  |
+| Exit, no changes            | Release the base.                    | `1.3.0-beta.0` → `1.3.0`                  |
+| Exit, with changes          | Apply the changes, then release.     | `1.3.0-beta.0` + major → `2.0.0`          |
+
+A change is bigger than the base when its level is above the level the base was bumped by: `1.3.0` is a minor bump of `1.2.3`, so a major change is bigger.
+
+## Fixed versioning
+
+`fixed` groups scopes that share a version, such as `{ product: ["@example/core", "@example/cli"] }`. The other scopes stay independent. `true` is one group named `all` with every scope of the registration.
+
+`computeNextVersion` computes one next version per group, from the shared current version and the changes of every scope of the group, and gives it to every scope of the group, with or without changes.
+
+## Commands
+
+### `semver pre`
+
+Puts a scope in prerelease mode, moves it to a later channel, or exits prerelease mode, in the [prerelease state](#prerelease-state).
+
+```sh
+unirelman semver pre [--scope <scope> | --group <group>] [--channel <channel> | --exit]
+```
+
+| Option      | Description                                                                             |
+| ----------- | --------------------------------------------------------------------------------------- |
+| `--scope`   | Independent scope to change, outside every group.                                       |
+| `--group`   | Group to change, by name.                                                               |
+| `--channel` | Channel to enter, after the current one in `prereleaseChannels`. Prompted when missing. |
+| `--exit`    | Exit from prerelease mode: the next `version` releases the base version.                |
+
+A target, `--scope` or `--group`, is prompted when missing, and required by `--channel` and `--exit`. When the registration has a single target, such as the `all` group of `fixed: true`, the target is optional.
+
+#### JSON document
+
+With `--json`, the command prints this document, validated by `prereleaseOutputSchema` from `@unirelman/helpers/prerelease`:
+
+```json
+{
+  "group": null,
+  "scopes": ["@example/core"],
+  "channel": "beta",
+  "previousChannel": "alpha"
+}
+```
+
+| Field             | Type             | Description                                                                                               |
+| ----------------- | ---------------- | --------------------------------------------------------------------------------------------------------- |
+| `group`           | `string \| null` | Group the command applies to, `null` for an independent scope.                                            |
+| `scopes`          | `string[]`       | Scopes the command applies to.                                                                            |
+| `channel`         | `string \| null` | [Channel](/unirelman/reference/glossary/#channel) of the scopes after the command, `null` when they exit. |
+| `previousChannel` | `string \| null` | Channel of the scopes before the command, `null` when they were in release mode.                          |
+
+## Prerelease state
+
+```json title=".unirelman/semver/prerelease.json"
+{
+  "@example/core": { "channel": "beta" }
+}
+```
+
+Each scope listed is in prerelease mode on its channel. `semver pre` writes the file, and `computeNextVersion` reads it.
+
+## Version meta
+
+Current versions carry `meta.semver`, the parsed version: `{ major, minor, patch }`, plus `{ channel, increment }` for a prerelease. The exported type guard checks it:
+
+```ts
+import { isSemverVersionMeta } from "@unirelman/plugin-semver";
+```
+
+## Errors
+
+| Error                                  | Cause                                                                                       |
+| -------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `VersioningInvalidVersionError`        | A current version has another format.                                                       |
+| `GroupEmptyError`                      | A group has no scope.                                                                       |
+| `GroupUnknownScopeError`               | A group lists a scope outside the registration.                                             |
+| `GroupDuplicateScopeError`             | A scope is in two groups.                                                                   |
+| `VersioningFixedVersionMismatchError`  | The scopes of a group have different current versions.                                      |
+| `VersioningMissingCurrentVersionError` | A scope or a group with changes has no current version.                                     |
+| `PrereleaseStateMismatchError`         | The scopes of a group have different prerelease states.                                     |
+| `PrereleaseNoChannelsConfiguredError`  | `semver pre` runs without `--exit` and with an empty `prereleaseChannels`.                  |
+| `PrereleaseInvalidChannelNameError`    | A channel in `prereleaseChannels` has a character other than a letter, a digit or a hyphen. |
+| `PrereleaseInvalidTargetChannelError`  | The channel is outside `prereleaseChannels`, or before the current one.                     |
+| `PrereleaseDowngradeChannelError`      | A next version would move to an earlier channel.                                            |
+| `PrereleaseInvalidCurrentChannelError` | A current version is on a channel outside `prereleaseChannels`.                             |
+| `PrereleaseInvalidChannelInStateError` | `semver pre` enters a channel while the state has a channel outside `prereleaseChannels`.   |
+| `PrereleaseInvalidScopeError`          | `--scope` names a scope outside the independent scopes of the registration.                 |
+| `PrereleaseInvalidGroupError`          | `--group` names no group.                                                                   |
+| `PrereleaseOptionRequiredError`        | `--channel` or `--exit` is given without a target.                                          |
+| `PrereleaseOptionsConflictError`       | `--channel` and `--exit`, or `--scope` and `--group`, are given together.                   |
+
+## Related
+
+- [Publish prereleases](/unirelman/guides/prereleases/)
+- [Choose a versioning scheme](/unirelman/guides/versioning-schemes/)

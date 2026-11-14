@@ -1,6 +1,13 @@
 packages:
+  - docs
   - packages/*
   - plugins/*
   - integrations/*
   - internals/*
   - e2e
+
+allowBuilds:
+  esbuild: true
+
+onlyBuiltDependencies:
+  - esbuild
