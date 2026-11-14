@@ -271,21 +271,22 @@ export const createPrereleaseCommand = (
       },
     },
     run: async ({ options, ui }): Promise<PrereleaseOutput> => {
-      if (versioningOptions.prereleaseChannels.length === 0) {
+      const parsedOptions = thisMod.parsePrereleaseOptions(options, requiredTargetOptions);
+      const isExit = parsedOptions.selection?.action === "exit";
+
+      if (!isExit && versioningOptions.prereleaseChannels.length === 0) {
         throw new PrereleaseNoChannelsConfiguredError();
       }
 
-      const parsedOptions = thisMod.parsePrereleaseOptions(options, requiredTargetOptions);
       const state = await readPrereleaseState(context.store);
       const target =
         thisMod.resolvePrereleaseTarget(groups, independentScopes, parsedOptions) ??
         singleTarget ??
         (await thisMod.promptPrereleaseTarget(ui, targets, state, targetOptions));
       const currentPrerelease = resolveGroupPrerelease(state, target.scopes);
-      const allowedChannels = thisMod.resolveAllowedChannels(
-        versioningOptions.prereleaseChannels,
-        currentPrerelease,
-      );
+      const allowedChannels = isExit
+        ? []
+        : thisMod.resolveAllowedChannels(versioningOptions.prereleaseChannels, currentPrerelease);
       const selection =
         parsedOptions.selection ??
         (await thisMod.promptChannel(ui, allowedChannels, currentPrerelease !== undefined));

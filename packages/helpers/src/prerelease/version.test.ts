@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { formatPrereleaseVersion, parsePrereleaseVersion } from "./version";
+import {
+  formatPrereleaseVersion,
+  isValidPrereleaseChannel,
+  parsePrereleaseVersion,
+} from "./version";
 
 describe("parsePrereleaseVersion", () => {
   it("should return version without prerelease when value has no prerelease suffix", () => {
@@ -36,6 +40,28 @@ describe("parsePrereleaseVersion", () => {
       version: "",
       prerelease: undefined,
     });
+  });
+});
+
+describe("isValidPrereleaseChannel", () => {
+  it("should accept a channel of letters", () => {
+    expect(isValidPrereleaseChannel("beta")).toEqual(true);
+  });
+
+  it("should accept a channel with digits and hyphens", () => {
+    expect(isValidPrereleaseChannel("release-candidate-2")).toEqual(true);
+  });
+
+  it("should reject a channel with a dot", () => {
+    expect(isValidPrereleaseChannel("rc.1")).toEqual(false);
+  });
+
+  it("should reject a channel with another character", () => {
+    expect(isValidPrereleaseChannel("rc_1")).toEqual(false);
+  });
+
+  it("should reject an empty channel", () => {
+    expect(isValidPrereleaseChannel("")).toEqual(false);
   });
 });
 

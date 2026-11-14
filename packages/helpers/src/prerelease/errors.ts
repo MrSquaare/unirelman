@@ -53,6 +53,17 @@ export class PrereleaseNoChannelsConfiguredError extends PrereleaseError {
   }
 }
 
+export class PrereleaseInvalidChannelNameError extends PrereleaseError {
+  readonly channel: string;
+
+  constructor(channel: string) {
+    super(`Prerelease channel "${channel}" must contain only letters, digits and hyphens`);
+
+    this.name = "PrereleaseInvalidChannelNameError";
+    this.channel = channel;
+  }
+}
+
 export class PrereleaseInvalidScopeError extends PrereleaseError {
   readonly scopeName: string;
   readonly knownScopeNames: readonly string[];

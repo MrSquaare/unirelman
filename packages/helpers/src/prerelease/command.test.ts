@@ -653,12 +653,77 @@ describe("createPrereleaseCommand", () => {
       selection: { action: "exit" },
     });
     expect(promptPrereleaseTargetSpy).not.toHaveBeenCalled();
+    expect(resolveAllowedChannelsSpy).not.toHaveBeenCalled();
     expect(promptChannelSpy).not.toHaveBeenCalled();
+    expect(resolvePrereleaseUpdateSpy).toHaveBeenCalledTimes(1);
+    expect(resolvePrereleaseUpdateSpy).toHaveBeenNthCalledWith(
+      1,
+      {},
+      { group: "all", scopes },
+      undefined,
+      { action: "exit" },
+      [],
+    );
     expect(context.store.writeJSON).not.toHaveBeenCalled();
   });
 
+  it("should exit prerelease mode when the current channel is no longer configured", async () => {
+    const context = createPluginContext();
+    const runContext = createCommandRunContext({ extends: { values: { exit: true } } });
+    const scopes = [SCOPE_NAMES.ALPHA, SCOPE_NAMES.BETA];
+    const command = createPrereleaseCommand(context, {
+      prereleaseChannels: ["beta"],
+      fixed: true,
+    });
+
+    vi.mocked(context.store.readJSON).mockResolvedValueOnce({
+      [SCOPE_NAMES.ALPHA]: { channel: "alpha" },
+      [SCOPE_NAMES.BETA]: { channel: "alpha" },
+    });
+
+    await expect(command.run(runContext)).resolves.toEqual({
+      result: { group: "all", scopes, channel: null, previousChannel: "alpha" },
+      success: {
+        summary: [],
+        message: `Exited prerelease for group all (${SCOPE_NAMES.ALPHA}, ${SCOPE_NAMES.BETA})`,
+      },
+    });
+
+    expect(resolveAllowedChannelsSpy).not.toHaveBeenCalled();
+    expect(context.store.writeJSON).toHaveBeenCalledTimes(1);
+    expect(context.store.writeJSON).toHaveBeenNthCalledWith(1, "prerelease.json", {});
+  });
+
+  it("should exit prerelease mode when no channels are configured", async () => {
+    const context = createPluginContext();
+    const runContext = createCommandRunContext({ extends: { values: { exit: true } } });
+    const scopes = [SCOPE_NAMES.ALPHA, SCOPE_NAMES.BETA];
+    const command = createPrereleaseCommand(context, {
+      prereleaseChannels: [],
+      fixed: true,
+    });
+
+    vi.mocked(context.store.readJSON).mockResolvedValueOnce({
+      [SCOPE_NAMES.ALPHA]: { channel: "alpha" },
+      [SCOPE_NAMES.BETA]: { channel: "alpha" },
+    });
+
+    await expect(command.run(runContext)).resolves.toEqual({
+      result: { group: "all", scopes, channel: null, previousChannel: "alpha" },
+      success: {
+        summary: [],
+        message: `Exited prerelease for group all (${SCOPE_NAMES.ALPHA}, ${SCOPE_NAMES.BETA})`,
+      },
+    });
+
+    expect(resolveAllowedChannelsSpy).not.toHaveBeenCalled();
+    expect(context.store.writeJSON).toHaveBeenCalledTimes(1);
+    expect(context.store.writeJSON).toHaveBeenNthCalledWith(1, "prerelease.json", {});
+  });
+
   it("should throw when no channels are configured", async () => {
-    const command = createPrereleaseCommand(createPluginContext(), {
+    const context = createPluginContext();
+    const command = createPrereleaseCommand(context, {
       prereleaseChannels: [],
       fixed: false,
     });
@@ -667,6 +732,12 @@ describe("createPrereleaseCommand", () => {
       new PrereleaseNoChannelsConfiguredError(),
     );
 
-    expect(parsePrereleaseOptionsSpy).not.toHaveBeenCalled();
+    expect(parsePrereleaseOptionsSpy).toHaveBeenCalledTimes(1);
+    expect(parsePrereleaseOptionsSpy).toHaveBeenNthCalledWith(
+      1,
+      { scope: undefined, channel: undefined, exit: undefined },
+      ["--scope"],
+    );
+    expect(context.store.readJSON).not.toHaveBeenCalled();
   });
 });

@@ -5,6 +5,7 @@ import {
   PrereleaseError,
   PrereleaseInvalidChannelInStateError,
   PrereleaseInvalidCurrentChannelError,
+  PrereleaseInvalidChannelNameError,
   PrereleaseInvalidGroupError,
   PrereleaseInvalidScopeError,
   PrereleaseInvalidTargetChannelError,
@@ -79,6 +80,20 @@ describe("PrereleaseNoChannelsConfiguredError", () => {
 
       expect(error.message).toEqual("No prerelease channels configured");
       expect(error.name).toEqual("PrereleaseNoChannelsConfiguredError");
+    });
+  });
+});
+
+describe("PrereleaseInvalidChannelNameError", () => {
+  describe("constructor", () => {
+    it("should construct with its message, name and properties", () => {
+      const error = new PrereleaseInvalidChannelNameError("rc.1");
+
+      expect(error.message).toEqual(
+        'Prerelease channel "rc.1" must contain only letters, digits and hyphens',
+      );
+      expect(error.name).toEqual("PrereleaseInvalidChannelNameError");
+      expect(error.channel).toEqual("rc.1");
     });
   });
 });

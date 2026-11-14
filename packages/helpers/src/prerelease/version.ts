@@ -5,6 +5,8 @@ export type ParsedPrereleaseVersion = {
   readonly prerelease: PrereleaseTag | undefined;
 };
 
+const CHANNEL_PROBE_VERSION = "0.0.0";
+
 const PRERELEASE_VERSION_RE = /^(.+?)(?:-([0-9A-Za-z-]+)\.(\d+))?$/;
 
 export const parsePrereleaseVersion = (value: string): ParsedPrereleaseVersion => {
@@ -27,6 +29,14 @@ export const parsePrereleaseVersion = (value: string): ParsedPrereleaseVersion =
       increment: Number.parseInt(increment, 10),
     },
   };
+};
+
+export const isValidPrereleaseChannel = (channel: string): boolean => {
+  const { prerelease } = parsePrereleaseVersion(
+    formatPrereleaseVersion(CHANNEL_PROBE_VERSION, { channel, increment: 0 }),
+  );
+
+  return prerelease?.channel === channel;
 };
 
 export const formatPrereleaseVersion = (version: string, prerelease: PrereleaseTag): string => {
