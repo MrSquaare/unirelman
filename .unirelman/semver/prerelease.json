@@ -1,0 +1,38 @@
+{
+  "@unirelman/cli": {
+    "channel": "alpha"
+  },
+  "@unirelman/core": {
+    "channel": "alpha"
+  },
+  "@unirelman/helpers": {
+    "channel": "alpha"
+  },
+  "@unirelman/utils": {
+    "channel": "alpha"
+  },
+  "@unirelman/plugin-calver": {
+    "channel": "alpha"
+  },
+  "@unirelman/plugin-changelog": {
+    "channel": "alpha"
+  },
+  "@unirelman/plugin-changesets": {
+    "channel": "alpha"
+  },
+  "@unirelman/plugin-git": {
+    "channel": "alpha"
+  },
+  "@unirelman/plugin-github": {
+    "channel": "alpha"
+  },
+  "@unirelman/plugin-npm": {
+    "channel": "alpha"
+  },
+  "@unirelman/plugin-replace": {
+    "channel": "alpha"
+  },
+  "@unirelman/plugin-semver": {
+    "channel": "alpha"
+  }
+}

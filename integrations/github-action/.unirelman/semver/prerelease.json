@@ -1,0 +1,5 @@
+{
+  "@unirelman/github-action": {
+    "channel": "alpha"
+  }
+}
