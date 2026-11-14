@@ -2,17 +2,19 @@ import type { ResolvedVersioningOptions, VersioningOptions } from "@unirelman/he
 
 import * as z from "zod";
 
-export const semverVersionSchema = z.object({
-  major: z.number(),
-  minor: z.number(),
-  patch: z.number(),
+const versionNumberSchema = z.number().int().nonnegative();
+
+export const semverVersionSchema = z.strictObject({
+  major: versionNumberSchema,
+  minor: versionNumberSchema,
+  patch: versionNumberSchema,
 });
 
 export type SemverVersion = z.infer<typeof semverVersionSchema>;
 
 export const semverPreVersionSchema = semverVersionSchema.extend({
   channel: z.string(),
-  increment: z.number(),
+  increment: versionNumberSchema,
 });
 
 export type SemverPreVersion = z.infer<typeof semverPreVersionSchema>;

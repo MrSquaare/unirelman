@@ -22,9 +22,20 @@ describe("parseSemverVersion", () => {
     expect(parseSemverVersion("1.2.3")).toEqual({ major: 1, minor: 2, patch: 3 });
   });
 
+  it("should parse zero and multi-digit components", () => {
+    expect(parseSemverVersion("0.10.200")).toEqual({ major: 0, minor: 10, patch: 200 });
+  });
+
   it("should return undefined when value is not a semver version", () => {
     expect(parseSemverVersion("invalid")).toEqual(undefined);
   });
+
+  it.each(["01.2.3", "1.02.3", "1.2.03"])(
+    "should return undefined when a component of %s has a leading zero",
+    (value) => {
+      expect(parseSemverVersion(value)).toEqual(undefined);
+    },
+  );
 
   it("should return undefined when value contains a prerelease suffix", () => {
     expect(parseSemverVersion("1.2.3-alpha.4")).toEqual(undefined);

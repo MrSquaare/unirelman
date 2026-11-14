@@ -8,7 +8,7 @@ import type { SemverVersion } from "./types";
 
 import * as thisMod from "./scheme";
 
-const SEMVER_RE = /^(\d+)\.(\d+)\.(\d+)$/;
+const SEMVER_RE = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
 
 export const parseSemverVersion = (value: string): SemverVersion | undefined => {
   const match = SEMVER_RE.exec(value);
