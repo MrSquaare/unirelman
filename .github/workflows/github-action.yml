@@ -65,7 +65,7 @@ jobs:
 
       - name: Check committed build
         run: |
-          git add --intent-to-add -- integrations/github-action/dist
+          git add --intent-to-add --no-all -- integrations/github-action/dist
           git diff --exit-code -- integrations/github-action/dist
 
   test:
