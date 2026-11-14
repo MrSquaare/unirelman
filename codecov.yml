@@ -20,6 +20,10 @@ flags:
     paths:
       - packages/helpers/
     carryforward: true
+  plugin-changelog:
+    paths:
+      - plugins/changelog/
+    carryforward: true
   utils:
     paths:
       - packages/utils/
