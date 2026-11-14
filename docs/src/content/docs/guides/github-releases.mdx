@@ -27,23 +27,40 @@ On `publish`, the plugin creates a GitHub release for each current version, name
 
 ## Provide the repository and the token
 
-In GitHub Actions, the plugin reads the repository and the token from the environment. Elsewhere, set the same environment variables:
+The plugin needs the repository and a token with the `contents: write` permission.
+
+### With the GitHub Action
+
+The [GitHub Action](/unirelman/reference/integrations/github-action/) provides the repository, and its `github-token` input as the token.
+
+### With environment variables
+
+Set the `GITHUB_REPOSITORY` and `GITHUB_TOKEN` environment variables:
 
 ```sh
-export GITHUB_REPOSITORY=owner/repo
+export GITHUB_REPOSITORY=owner/name
 export GITHUB_TOKEN=ghp_...
 ```
 
-Or pass the options:
+In a GitHub Actions `run` step, GitHub Actions sets the `GITHUB_REPOSITORY` environment variable. Set the `GITHUB_TOKEN` environment variable in the step's `env`:
+
+```yaml title=".github/workflows/release.yml"
+- name: Publish
+  run: npx unirelman publish
+  env:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+```
+
+### With options
+
+Set the `repository` and `token` options:
 
 ```ts title="unirelman.config.ts"
 createGitHubPlugin({
-  repository: "owner/repo",
+  repository: "owner/name",
   token: process.env.MY_TOKEN,
 });
 ```
-
-The token needs the `contents: write` permission.
 
 ## Create drafts
 
@@ -59,7 +76,7 @@ createGitHubPlugin({ makeLatest: "@example/core" });
 
 ## Use GitHub Enterprise Server
 
-Set `GITHUB_API_URL`, which GitHub Actions sets on Enterprise Server, or pass the `apiUrl` option:
+Set the `GITHUB_API_URL` environment variable, which GitHub Actions sets on Enterprise Server, or pass the `apiUrl` option:
 
 ```ts title="unirelman.config.ts"
 createGitHubPlugin({ apiUrl: "https://github.example.com/api/v3" });

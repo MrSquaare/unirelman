@@ -28,7 +28,7 @@ createGitPlugin({ commitMessage: "chore(release): bump versions" });
 | `prepare`        | Stages the files written or deleted by the version pipeline and commits them as the [release commit](/unirelman/reference/glossary/#release-commit), when there are any. |
 | `createReleases` | Creates a tag on the current commit for each scope's current version whose tag is missing. The tags are local: push them, or let the GitHub Action push them.            |
 
-The release commit contains the release files only. Other changes, staged or not, stay out of it.
+The release commit contains the release files only, as the version pipeline leaves them. Other files, staged or not, stay out of it.
 
 ## Tag names
 

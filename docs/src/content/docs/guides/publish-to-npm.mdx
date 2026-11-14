@@ -54,6 +54,7 @@ Trusted publishing lets GitHub Actions publish with a short-lived identity token
 1. On [npmjs.com](https://www.npmjs.com/), open the settings of each package and add a **trusted publisher**:
    - **Organization or user** and **Repository**: your GitHub repository.
    - **Workflow filename**: the file name of your release workflow, with its extension, such as `release.yml`.
+   - **Allowed actions**: allow `npm publish`, which the plugin runs; new configurations only allow `npm stage publish`.
 
    A new trusted publisher configuration expires after 2 days without a successful publish.
 
@@ -71,7 +72,7 @@ Trusted publishing lets GitHub Actions publish with a short-lived identity token
 ## Publish from GitHub Actions with a token
 
 1. Create an npm access token and store it as a repository secret, such as `NPM_TOKEN`.
-2. Configure the registry with `actions/setup-node`, and expose the token as `NODE_AUTH_TOKEN`:
+2. Configure the registry with `actions/setup-node`, and expose the token as the `NODE_AUTH_TOKEN` environment variable:
 
    ```yaml title=".github/workflows/release.yml"
    - name: Setup Node.js
@@ -88,7 +89,7 @@ Trusted publishing lets GitHub Actions publish with a short-lived identity token
        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
    ```
 
-3. To add provenance, set `NPM_CONFIG_PROVENANCE: true` in the environment, or `"publishConfig": { "provenance": true }` in `package.json`.
+3. To add provenance, set the `NPM_CONFIG_PROVENANCE` environment variable to `true`, or `"publishConfig": { "provenance": true }` in `package.json`, and grant the job `id-token: write`.
 
 ## Publish a scoped package for the first time
 

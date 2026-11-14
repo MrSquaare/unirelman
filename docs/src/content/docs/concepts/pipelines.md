@@ -44,7 +44,7 @@ The publish pipeline publishes the **current** versions: whatever the version pi
 
 `generateFileOperations` returns descriptions of files, and core writes them. This guarantees that:
 
-- **A failure leaves the files as they were.** Every plugin computes its files first, and core writes them once every plugin succeeded.
+- **A failing plugin writes nothing.** Every plugin computes its files first, and core writes them only once every plugin succeeded.
 - **Conflicts are caught.** When two plugins target the same file with different content, the pipeline fails.
 - **Dry runs are reliable.** Core skips the writes in one place, for every plugin.
 - **The commit sees every file.** `prepare` runs after all files are written, whatever the plugin order.

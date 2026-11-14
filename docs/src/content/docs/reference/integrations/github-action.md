@@ -19,14 +19,14 @@ The GitHub Action keeps a [release pull request](/unirelman/reference/glossary/#
 
 ## Inputs
 
-| Input               | Default                         | Description                                                                               |
-| ------------------- | ------------------------------- | ----------------------------------------------------------------------------------------- |
-| `command`           | `npx --no-install unirelman`    | Command that runs the unirelman CLI installed in the repository.                          |
-| `working-directory` | `.`                             | Folder the CLI runs in: the folder of the configuration file, and of the publish setting. |
-| `github-token`      | `${{ github.token }}`           | Token used to manage the release pull request. Also passed to the CLI as `GITHUB_TOKEN`.  |
-| `base-branch`       | `${{ github.ref_name }}`        | Branch the release pull request targets.                                                  |
-| `branch`            | `unirelman/release`             | Branch holding the release commit. Force-pushed on every run.                             |
-| `pr-title`          | `chore(release): bump versions` | Title of the release pull request.                                                        |
+| Input               | Default                         | Description                                                                                                       |
+| ------------------- | ------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `command`           | `npx --no-install unirelman`    | Command that runs the unirelman CLI installed in the repository.                                                  |
+| `working-directory` | `.`                             | Folder the CLI runs in: the folder of the configuration file, and of the publish setting.                         |
+| `github-token`      | `${{ github.token }}`           | Token used to manage the release pull request. Also passed to the CLI as the `GITHUB_TOKEN` environment variable. |
+| `base-branch`       | `${{ github.ref_name }}`        | Branch the release pull request targets.                                                                          |
+| `branch`            | `unirelman/release`             | Branch holding the release commit. Force-pushed on every run.                                                     |
+| `pr-title`          | `chore(release): bump versions` | Title of the release pull request.                                                                                |
 
 ## Several configurations
 
@@ -59,7 +59,7 @@ Each configuration gets its own release pull request and its own publish setting
 
 ## Environment
 
-- The CLI runs with the GitHub Action's environment, plus `GITHUB_TOKEN` set to the `github-token` input. Variables you set on the step, such as `NODE_AUTH_TOKEN`, are available to plugins.
+- The CLI runs with the GitHub Action's environment, plus the `GITHUB_TOKEN` environment variable set to the `github-token` input. Environment variables you set on the step, such as `NODE_AUTH_TOKEN`, are available to plugins.
 - Pushes use the credentials stored by `actions/checkout`, set by its `token` input.
 - When Git has no user configured, the GitHub Action commits as `github-actions[bot]`.
 

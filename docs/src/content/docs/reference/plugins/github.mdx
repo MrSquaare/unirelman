@@ -15,16 +15,16 @@ createGitHubPlugin();
 
 ## Options
 
-| Option       | Type                                                       | Default                                                                 | Description                                                                                                             |
-| ------------ | ---------------------------------------------------------- | ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `repository` | `string`                                                   | `GITHUB_REPOSITORY`                                                     | Repository, as `owner/name`.                                                                                            |
-| `token`      | `string`                                                   | `GITHUB_TOKEN`, then `GH_TOKEN`                                         | Token allowed to create releases.                                                                                       |
-| `apiUrl`     | `string`                                                   | `GITHUB_API_URL`, then `https://api.github.com`                         | GitHub API URL, for GitHub Enterprise Server.                                                                           |
-| `tagFormat`  | `GitTagFormat`                                             | The [Git plugin's default](/unirelman/reference/plugins/git/#tag-names) | Function that names the tag of a version, the same as the Git plugin's.                                                 |
-| `draft`      | `boolean \| ({ scopeName, version }) => boolean`           | `false`                                                                 | Whether a release is created as a draft.                                                                                |
-| `makeLatest` | `boolean \| string \| ({ scopeName, version }) => boolean` | `true`                                                                  | Whether a release becomes the latest release. A string names the only scope that does. Prereleases and drafts never do. |
+| Option       | Type                                                       | Default                                                                   | Description                                                                                                             |
+| ------------ | ---------------------------------------------------------- | ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `repository` | `string`                                                   | `GITHUB_REPOSITORY` environment variable                                  | Repository, as `owner/name`.                                                                                            |
+| `token`      | `string`                                                   | `GITHUB_TOKEN` environment variable, then `GH_TOKEN` environment variable | Token allowed to create releases.                                                                                       |
+| `apiUrl`     | `string`                                                   | `GITHUB_API_URL` environment variable, then `"https://api.github.com"`    | GitHub API URL, for GitHub Enterprise Server.                                                                           |
+| `tagFormat`  | `GitTagFormat`                                             | The [Git plugin's default](/unirelman/reference/plugins/git/#tag-names)   | Function that names the tag of a version, the same as the Git plugin's.                                                 |
+| `draft`      | `boolean \| ({ scopeName, version }) => boolean`           | `false`                                                                   | Whether a release is created as a draft.                                                                                |
+| `makeLatest` | `boolean \| string \| ({ scopeName, version }) => boolean` | `true`                                                                    | Whether a release becomes the latest release. A string names the only scope that does. Prereleases and drafts never do. |
 
-The defaults of `repository`, `token` and `apiUrl` are environment variables that GitHub Actions sets. An empty value counts as unset. The `createReleases` phase reads the repository and the token.
+An empty environment variable counts as unset. The `createReleases` phase reads the repository and the token.
 
 ## Phases
 
@@ -52,11 +52,11 @@ Existing releases, drafts included, stay unchanged.
 
 ## Errors
 
-| Error                           | Cause                                                                             |
-| ------------------------------- | --------------------------------------------------------------------------------- |
-| `GitHubMissingOptionError`      | The repository or the token is missing from both the options and the environment. |
-| `GitHubInvalidRepositoryError`  | The repository has another format than `owner/name`.                              |
-| `GitHubUnknownLatestScopeError` | `makeLatest` names a scope the plugin is not registered for.                      |
+| Error                           | Cause                                                                                       |
+| ------------------------------- | ------------------------------------------------------------------------------------------- |
+| `GitHubMissingOptionError`      | The repository or the token is missing from both the options and the environment variables. |
+| `GitHubInvalidRepositoryError`  | The repository has another format than `owner/name`.                                        |
+| `GitHubUnknownLatestScopeError` | `makeLatest` names a scope the plugin is not registered for.                                |
 
 ## Related
 

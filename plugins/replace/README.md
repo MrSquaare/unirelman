@@ -47,7 +47,7 @@ plugins: [
       {
         path: "README.md",
         scope: "my-package",
-        search: /my-package@\d+\.\d+\.\d+/,
+        search: ({ currentVersion }) => new RegExp(RegExp.escape(`my-package@${currentVersion}`)),
         replace: ({ nextVersion }) => `my-package@${nextVersion}`,
       },
     ],

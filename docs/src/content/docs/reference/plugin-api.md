@@ -20,13 +20,13 @@ interface Plugin extends Partial<PhaseMap> {
 
 ## Phases
 
-Each phase function has this signature:
+Each phase function has this signature, typed per phase, such as `PhaseFunction<"getChanges">`:
 
 ```ts
-type PhaseFunction<TState, TResult> = (
-  context: PhaseContext,
-  state: TState,
-) => TResult | Promise<TResult>;
+type PhaseFunction<TName extends PhaseName> = (
+  context: PhaseFunctionContext<TName>,
+  state: PhaseFunctionState<TName>,
+) => PhaseFunctionResult<TName> | Promise<PhaseFunctionResult<TName>>;
 ```
 
 Within a phase, plugins run in the order of the configuration. Each plugin only receives the scopes it's registered for, in `context.scopes` and in every scope map of `state`, and returns results only for those scopes: a result for any other scope fails with `CoreUnknownPhaseResultScopeError`, except in phases returning `void`, whose results are ignored. Results of all plugins are combined as described below. For a phase with one plugin per scope, two plugins providing it for the same scope fail with `CoreConflictingPhaseProvidersError` when the configuration loads.
@@ -65,10 +65,10 @@ type PhaseContext = PluginContext & {
 };
 ```
 
-| Member     | Description                                                                                                                                          |
-| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `dryRun`   | `true` on a [dry run](/unirelman/reference/glossary/#dry-run). Phases with side effects (`prepare`, `publish`) skip them and log what they would do. |
-| `pipeline` | Pipeline being run.                                                                                                                                  |
+| Member     | Description                                                                                                                                                                        |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `dryRun`   | `true` on a [dry run](/unirelman/reference/glossary/#dry-run). Phases with side effects, such as `prepare`, `createReleases` and `finalize`, skip them and log what they would do. |
+| `pipeline` | Pipeline being run.                                                                                                                                                                |
 
 ### `PluginContext`
 

@@ -39,7 +39,7 @@ The npm registry accepts SemVer versions only, so calendar-versioned packages st
 
 ## Next version rules
 
-The date is the day, or the month with the `month` granularity, of the `version` run, in UTC. Any change gives a next version, whatever its level. The examples use the `day` granularity; with `month`, "day" reads "month" (`2026.01.3` → `2026.02.0` in a new month).
+The date is the day, or the month with the `month` granularity, of the `version` run, in UTC. Any change gives a next version, whatever its level, and every rule but "Exit, no changes" needs one. The examples use the `day` granularity; with `month`, "day" reads "month" (`2026.01.3` → `2026.02.0` in a new month).
 
 | Situation                   | Rule                                 | Example (on 2026-01-02)                         |
 | --------------------------- | ------------------------------------ | ----------------------------------------------- |

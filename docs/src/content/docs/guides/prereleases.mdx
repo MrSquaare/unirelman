@@ -27,7 +27,7 @@ Put the scope in prerelease mode:
 
 The command records the channel in `.unirelman/semver/prerelease.json`. Commit this file: `version` reads it.
 
-From now on, each `version` run gives a prerelease, such as `1.0.0` → `1.1.0-alpha.0` with a minor change, then `1.1.0-alpha.1`. See the [next version rules](/unirelman/reference/plugins/semver/#next-version-rules).
+From now on, each `version` run with changes gives a prerelease, such as `1.0.0` → `1.1.0-alpha.0` with a minor change, then `1.1.0-alpha.1`. See the [next version rules](/unirelman/reference/plugins/semver/#next-version-rules).
 
 With [fixed versioning](/unirelman/reference/glossary/#fixed-versioning), name the group with `--group` instead of `--scope`. See [`semver pre`](/unirelman/reference/plugins/semver/#semver-pre).
 
@@ -35,7 +35,7 @@ With [fixed versioning](/unirelman/reference/glossary/#fixed-versioning), name t
 
 <PackageManagers type="exec" pkg="unirelman" args="semver pre --scope my-package --channel beta" />
 
-The next `version` run gives `1.1.0-beta.0`.
+The next `version` run with changes gives `1.1.0-beta.0`.
 
 ## Release as stable
 

@@ -34,13 +34,15 @@ createSemverPlugin({ prereleaseChannels: ["alpha", "beta", "rc"] });
 
 ## Next version rules
 
+Every rule but "Exit, no changes" needs at least one change.
+
 | Situation                   | Rule                                 | Example                                   |
 | --------------------------- | ------------------------------------ | ----------------------------------------- |
 | Release                     | Bump by the highest level.           | `1.2.3` + minor → `1.3.0`                 |
 | Enter a channel             | Bump, then start the channel at `0`. | `1.2.3` + minor → `1.3.0-alpha.0`         |
-| Same channel                | Increment the number.                | `1.3.0-alpha.0` → `1.3.0-alpha.1`         |
+| Same channel                | Increment the number.                | `1.3.0-alpha.0` + patch → `1.3.0-alpha.1` |
 | Bigger change than the base | Bump the base again, restart at `0`. | `1.3.0-alpha.1` + major → `2.0.0-alpha.0` |
-| Next channel                | Keep the base, restart at `0`.       | `1.3.0-alpha.1` → `1.3.0-beta.0`          |
+| Next channel                | Keep the base, restart at `0`.       | `1.3.0-alpha.1` + patch → `1.3.0-beta.0`  |
 | Exit, no changes            | Release the base.                    | `1.3.0-beta.0` → `1.3.0`                  |
 | Exit, with changes          | Apply the changes, then release.     | `1.3.0-beta.0` + major → `2.0.0`          |
 
