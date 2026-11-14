@@ -304,6 +304,37 @@ describe("createGitHubRelease", () => {
     expect(resolveGitHubReleaseSpy).toHaveBeenNthCalledWith(1, RELEASE_RESPONSE);
   });
 
+  it("should never make a draft release the latest", async () => {
+    const octokit = new MockedOctokit();
+
+    vi.mocked(octokit.rest.repos.createRelease).mockResolvedValueOnce({
+      data: RELEASE_RESPONSE,
+    } as CreateReleaseResponse);
+
+    await expect(
+      createGitHubRelease(octokit, REPOSITORY, {
+        tag: "1.0.0",
+        commit: "abc123",
+        body: "",
+        prerelease: undefined,
+        draft: true,
+        latest: true,
+      }),
+    ).resolves.toEqual(RELEASE);
+    expect(octokit.rest.repos.createRelease).toHaveBeenCalledTimes(1);
+    expect(octokit.rest.repos.createRelease).toHaveBeenNthCalledWith(1, {
+      owner: "owner",
+      repo: "repo",
+      tag_name: "1.0.0",
+      name: "1.0.0",
+      target_commitish: "abc123",
+      body: "",
+      prerelease: false,
+      draft: true,
+      make_latest: "false",
+    });
+  });
+
   it("should create a draft release that is not the latest", async () => {
     const octokit = new MockedOctokit();
 

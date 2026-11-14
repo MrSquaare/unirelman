@@ -136,7 +136,8 @@ export const createGitHubRelease = async (
     body: release.body,
     prerelease: release.prerelease !== undefined,
     draft: release.draft,
-    make_latest: release.prerelease === undefined && release.latest ? "true" : "false",
+    make_latest:
+      release.prerelease === undefined && !release.draft && release.latest ? "true" : "false",
   });
 
   return thisMod.resolveGitHubRelease(data);

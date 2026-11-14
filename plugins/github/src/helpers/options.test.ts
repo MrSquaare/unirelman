@@ -69,6 +69,40 @@ describe("resolveGitHubPluginOptions", () => {
     });
   });
 
+  it("should treat empty options and environment variables as unset", () => {
+    expect(
+      resolveGitHubPluginOptions(
+        { repository: "", token: "", apiUrl: "" },
+        {
+          GITHUB_REPOSITORY: "env-owner/env-repo",
+          GITHUB_TOKEN: "",
+          GH_TOKEN: "gh-token",
+          GITHUB_API_URL: "",
+        },
+      ),
+    ).toEqual({
+      repository: "env-owner/env-repo",
+      token: "gh-token",
+      apiUrl: "https://api.github.com",
+      tagFormat: resolveDefaultGitTag,
+      draft: false,
+      makeLatest: true,
+    });
+  });
+
+  it("should leave repository and token undefined when every value is empty", () => {
+    expect(
+      resolveGitHubPluginOptions({}, { GITHUB_REPOSITORY: "", GITHUB_TOKEN: "", GH_TOKEN: "" }),
+    ).toEqual({
+      repository: undefined,
+      token: undefined,
+      apiUrl: "https://api.github.com",
+      tagFormat: resolveDefaultGitTag,
+      draft: false,
+      makeLatest: true,
+    });
+  });
+
   it("should leave repository and token undefined and default the API URL", () => {
     expect(resolveGitHubPluginOptions({}, {})).toEqual({
       repository: undefined,
