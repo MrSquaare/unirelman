@@ -1,0 +1,56 @@
+name: "Release"
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    name: Release (${{ matrix.name }})
+    permissions:
+      contents: write
+      pull-requests: write
+      id-token: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: packages
+            working-directory: .
+            branch: unirelman/release
+            pr-title: "chore(release): bump versions"
+          - name: github-action
+            working-directory: integrations/github-action
+            branch: unirelman/release-github-action
+            pr-title: "chore(release): bump github action version"
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Setup environment
+        uses: ./.github/actions/setup-env
+        with:
+          registry-url: https://registry.npmjs.org
+
+      - name: Build packages
+        run: pnpm turbo run build --filter='./packages/*' --filter='./plugins/*'
+
+      - name: Release
+        uses: ./integrations/github-action
+        with:
+          working-directory: ${{ matrix.working-directory }}
+          branch: ${{ matrix.branch }}
+          pr-title: ${{ matrix.pr-title }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

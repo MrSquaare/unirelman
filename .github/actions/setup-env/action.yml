@@ -1,6 +1,11 @@
 name: "Setup environment"
 description: "Install pnpm, Node.js and the workspace dependencies"
 
+inputs:
+  registry-url:
+    description: "npm registry for actions/setup-node to authenticate with the NODE_AUTH_TOKEN environment variable"
+    required: false
+
 runs:
   using: "composite"
   steps:
@@ -12,6 +17,7 @@ runs:
       with:
         node-version-file: "package.json"
         cache: "pnpm"
+        registry-url: ${{ inputs.registry-url }}
 
     - name: Install dependencies
       shell: bash
