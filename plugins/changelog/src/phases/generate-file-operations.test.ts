@@ -23,6 +23,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { createResolvedChangelogPluginOptions } from "../helpers/options.fixture";
 import {
   createGenerateFileOperationsPhase,
+  resolveChangeEntry,
   resolveChangelogGroupsMarkdown,
   resolveEmptyChangelogMarkdown,
   resolveChangelogFileOperations,
@@ -68,7 +69,26 @@ describe("resolveEmptyChangelogMarkdown", () => {
   });
 });
 
+describe("resolveChangeEntry", () => {
+  it("should render a single-line message as a list item", () => {
+    expect(resolveChangeEntry("fix a bug")).toEqual("- fix a bug");
+  });
+
+  it("should indent the continuation lines of a multiline message under the list item", () => {
+    expect(
+      resolveChangeEntry("add a feature\n\nIt has a second paragraph.\n\n## Usage\n\nRun it."),
+    ).toEqual("- add a feature\n\n  It has a second paragraph.\n\n  ## Usage\n\n  Run it.");
+  });
+
+  it("should split a multiline message with CRLF line endings", () => {
+    expect(resolveChangeEntry("add a feature\r\n\r\nDetails.")).toEqual(
+      "- add a feature\n\n  Details.",
+    );
+  });
+});
+
 describe("resolveChangelogGroupsMarkdown", () => {
+  const resolveChangeEntrySpy = vi.spyOn(thisMod, "resolveChangeEntry");
   const resolveEmptyChangelogMarkdownSpy = vi.spyOn(thisMod, "resolveEmptyChangelogMarkdown");
 
   afterEach(() => {
@@ -101,6 +121,10 @@ describe("resolveChangelogGroupsMarkdown", () => {
         "- fix changelog heading typo",
       ].join("\n"),
     );
+    expect(resolveChangeEntrySpy).toHaveBeenCalledTimes(3);
+    expect(resolveChangeEntrySpy).toHaveBeenNthCalledWith(1, "drop Node 18 support");
+    expect(resolveChangeEntrySpy).toHaveBeenNthCalledWith(2, "add release notes command");
+    expect(resolveChangeEntrySpy).toHaveBeenNthCalledWith(3, "fix changelog heading typo");
     expect(resolveEmptyChangelogMarkdownSpy).not.toHaveBeenCalled();
   });
 
@@ -112,6 +136,7 @@ describe("resolveChangelogGroupsMarkdown", () => {
         "Nothing changed.",
       ),
     ).toEqual("### Changes\n\n- Nothing changed.");
+    expect(resolveChangeEntrySpy).not.toHaveBeenCalled();
     expect(resolveEmptyChangelogMarkdownSpy).toHaveBeenCalledTimes(1);
     expect(resolveEmptyChangelogMarkdownSpy).toHaveBeenNthCalledWith(1, "Nothing changed.");
   });
@@ -233,6 +258,16 @@ describe("resolveNextChangelogContent", () => {
         "# Changelog\n\nAll changes.",
       ),
     ).toEqual("# Changelog\n\nAll changes.\n\n## New\n\n## Existing\n\n- fix\n");
+  });
+
+  it("should keep the existing sections of a changelog with CRLF line endings", () => {
+    expect(
+      resolveNextChangelogContent(
+        "## New",
+        "# History\r\n\r\n## Existing\r\n\r\n- fix\r\n",
+        "# Changelog",
+      ),
+    ).toEqual("# Changelog\n\n## New\n\n## Existing\n\n- fix\n");
   });
 
   it("should replace a changelog without section with the header and the sections", () => {

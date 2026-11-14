@@ -46,6 +46,18 @@ describe("resolveChangelogSection", () => {
     );
   });
 
+  it("should return the section of a changelog with CRLF line endings", () => {
+    expect(
+      resolveChangelogSection(CHANGELOG.replaceAll("\n", "\r\n"), "## @scope/a - 1.0.1"),
+    ).toEqual("### Patch changes\n- fix a bug");
+  });
+
+  it("should not close a code block on a fence followed by an info string", () => {
+    expect(
+      resolveChangelogSection("## 1.0.1\n```\n```js\n## 1.0.0\n```\n\n## 0.9.0\n- old", "## 1.0.1"),
+    ).toEqual("```\n```js\n## 1.0.0\n```");
+  });
+
   it("should keep the rest of the changelog when a code block is not closed", () => {
     expect(resolveChangelogSection("## 1.0.1\n```\n## 1.0.0\n- initial", "## 1.0.1")).toEqual(
       "```\n## 1.0.0\n- initial",

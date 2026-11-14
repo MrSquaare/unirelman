@@ -18,6 +18,9 @@ import {
 } from "../helpers/changelog";
 import * as thisMod from "./generate-file-operations";
 
+const LINE_BREAK_PATTERN = /\r?\n/;
+const LIST_ITEM_INDENT = "  ";
+
 export const resolveGroupedChangeMessages = (
   changes: ScopeChangesMap[string] | undefined,
 ): Record<ChangeLevel, string[]> => {
@@ -42,6 +45,15 @@ export const resolveEmptyChangelogMarkdown = (noChangeMessage: string): string =
   return `### ${CHANGELOG_EMPTY_HEADING}\n\n- ${noChangeMessage}`;
 };
 
+export const resolveChangeEntry = (message: string): string => {
+  const [firstLine, ...continuationLines] = message.split(LINE_BREAK_PATTERN);
+
+  return [
+    `- ${firstLine}`,
+    ...continuationLines.map((line) => (line.length === 0 ? line : `${LIST_ITEM_INDENT}${line}`)),
+  ].join("\n");
+};
+
 export const resolveChangelogGroupsMarkdown = (
   groupedChanges: Record<ChangeLevel, string[]>,
   levelHeaders: ChangelogLevelHeaders,
@@ -56,7 +68,7 @@ export const resolveChangelogGroupsMarkdown = (
       continue;
     }
 
-    const entries = messages.map((message) => `- ${message}`);
+    const entries = messages.map((message) => thisMod.resolveChangeEntry(message));
 
     sections.push([`### ${levelHeaders[level]}`, "", ...entries].join("\n"));
   }
@@ -114,7 +126,7 @@ export const resolveNextChangelogContent = (
   existingContent: string,
   header: string,
 ): string => {
-  const lines = existingContent.split("\n");
+  const lines = existingContent.split(LINE_BREAK_PATTERN);
   const firstSectionIndex = lines.findIndex((line) => isChangelogSectionHeading(line));
   const existingSections =
     firstSectionIndex === -1 ? "" : lines.slice(firstSectionIndex).join("\n");
