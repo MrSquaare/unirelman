@@ -1,8 +1,8 @@
-import type { MockInstance } from "vitest";
+import type { Mock } from "vitest";
 
 export type MockedObject<T> = {
   [K in keyof T]: T[K] extends (...args: infer TArgs) => infer TReturn
-    ? MockInstance<(...args: TArgs) => TReturn>
+    ? Mock<(...args: TArgs) => TReturn>
     : T[K];
 };
 
