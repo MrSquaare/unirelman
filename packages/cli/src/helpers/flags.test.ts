@@ -15,6 +15,10 @@ const ARGS = {
 } as const;
 
 describe("resolveOptionName", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should convert a camel case key to a kebab case option name", () => {
     expect(resolveOptionName("dryRun")).toEqual("dry-run");
   });
@@ -39,6 +43,10 @@ describe("formatLongFlag", () => {
 });
 
 describe("formatAliasFlag", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should format the short flag of an alias", () => {
     expect(formatAliasFlag("C")).toEqual("-C");
   });

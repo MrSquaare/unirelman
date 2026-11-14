@@ -1,8 +1,12 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { resolveReplacePluginOptions } from "./options";
 
 describe("resolveReplacePluginOptions", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should keep the allowNoMatch option of each file", () => {
     const file = {
       path: "README.md",

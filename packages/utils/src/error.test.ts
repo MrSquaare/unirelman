@@ -1,8 +1,12 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { isErrnoException, resolveErrorMessage } from "./error";
 
 describe("isErrnoException", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should return true for an error with a code property", () => {
     const error: NodeJS.ErrnoException = new Error("alpha");
     error.code = "ETEST";
@@ -32,6 +36,10 @@ describe("isErrnoException", () => {
 });
 
 describe("resolveErrorMessage", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should return the message of an error", () => {
     expect(resolveErrorMessage(new Error("alpha"))).toEqual("alpha");
   });

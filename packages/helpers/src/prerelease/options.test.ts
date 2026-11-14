@@ -1,9 +1,13 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { PrereleaseInvalidChannelNameError } from "./errors";
 import { resolvePrereleaseOptions } from "./options";
 
 describe("resolvePrereleaseOptions", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should resolve options when custom prerelease channels are provided", () => {
     expect(
       resolvePrereleaseOptions({

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   PrereleaseDowngradeChannelError,
@@ -9,6 +9,10 @@ import {
 import { assertPrereleaseChannelTransition, resolvePrereleaseTransition } from "./transition";
 
 describe("resolvePrereleaseTransition", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should return exit with current channel when prerelease state was removed", () => {
     expect(
       resolvePrereleaseTransition({
@@ -47,6 +51,10 @@ describe("resolvePrereleaseTransition", () => {
 });
 
 describe("assertPrereleaseChannelTransition", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should accept entering a configured channel from a release version", () => {
     expect(assertPrereleaseChannelTransition(undefined, "alpha", ["alpha", "beta", "rc"])).toEqual(
       undefined,

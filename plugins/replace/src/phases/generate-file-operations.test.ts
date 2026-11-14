@@ -20,6 +20,10 @@ import * as thisMod from "./generate-file-operations";
 const INPUT = { scopeName: SCOPE_NAMES.ALPHA, currentVersion: "1.0.0", nextVersion: "1.1.0" };
 
 describe("resolveReplaceRegExp", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should return the search when it is a regular expression", () => {
     expect(resolveReplaceRegExp(/my-package@1\.0\.0/, INPUT)).toEqual(/my-package@1\.0\.0/);
   });
@@ -34,6 +38,10 @@ describe("resolveReplaceRegExp", () => {
 });
 
 describe("resolveGlobalRegExp", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should return a global regular expression as is", () => {
     const search = /my-package@\d+\.\d+\.\d+/g;
 
@@ -103,6 +111,10 @@ describe("resolveReplacedContent", () => {
 });
 
 describe("resolveReplaceFileOperations", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should give each scope a write of each file it replaced in", () => {
     expect(
       resolveReplaceFileOperations(

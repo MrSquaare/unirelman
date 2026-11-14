@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   formatPrereleaseVersion,
@@ -7,6 +7,10 @@ import {
 } from "./version";
 
 describe("parsePrereleaseVersion", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should return version without prerelease when value has no prerelease suffix", () => {
     expect(parsePrereleaseVersion("1.2.3")).toEqual({
       version: "1.2.3",
@@ -44,6 +48,10 @@ describe("parsePrereleaseVersion", () => {
 });
 
 describe("isValidPrereleaseChannel", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should accept a channel of letters", () => {
     expect(isValidPrereleaseChannel("beta")).toEqual(true);
   });
@@ -66,6 +74,10 @@ describe("isValidPrereleaseChannel", () => {
 });
 
 describe("formatPrereleaseVersion", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should append prerelease channel and increment to version", () => {
     expect(formatPrereleaseVersion("1.2.3", { channel: "beta", increment: 2 })).toEqual(
       "1.2.3-beta.2",

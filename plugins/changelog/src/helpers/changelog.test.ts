@@ -15,6 +15,10 @@ import {
 import * as thisMod from "./changelog";
 
 describe("resolveChangelogPath", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should return root changelog path for root mode", () => {
     expect(resolveChangelogPath(CONFIG_CWD, "packages/a", "root")).toEqual(
       `${CONFIG_CWD}/CHANGELOG.md`,
@@ -29,6 +33,10 @@ describe("resolveChangelogPath", () => {
 });
 
 describe("isChangelogSectionHeading", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should return true for a level-two heading", () => {
     expect(isChangelogSectionHeading("## @scope/a@1.0.0")).toEqual(true);
   });
@@ -39,6 +47,10 @@ describe("isChangelogSectionHeading", () => {
 });
 
 describe("resolveRootChangelogSectionHeader", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should name the section after the scope and the version", () => {
     expect(resolveRootChangelogSectionHeader({ scopeName: "@scope/a", version: "1.0.1" })).toEqual(
       "## @scope/a - 1.0.1",
@@ -47,6 +59,10 @@ describe("resolveRootChangelogSectionHeader", () => {
 });
 
 describe("resolveScopeChangelogSectionHeader", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should name the section after the version", () => {
     expect(resolveScopeChangelogSectionHeader({ scopeName: "@scope/a", version: "1.0.1" })).toEqual(
       "## 1.0.1",
@@ -55,12 +71,20 @@ describe("resolveScopeChangelogSectionHeader", () => {
 });
 
 describe("resolveScopeChangelogHeader", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should title the changelog after the scope", () => {
     expect(resolveScopeChangelogHeader({ scopeName: "@scope/a" })).toEqual("# @scope/a Changelog");
   });
 });
 
 describe("resolveDefaultChangelogNoChangeMessage", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should return the default message", () => {
     expect(resolveDefaultChangelogNoChangeMessage()).toEqual("No user-facing changes.");
   });

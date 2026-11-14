@@ -49,6 +49,10 @@ describe("writePrereleaseState", () => {
 });
 
 describe("resolveGroupPrerelease", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should return the prerelease state shared by every scope", () => {
     expect(
       resolveGroupPrerelease({ alpha: { channel: "beta" }, beta: { channel: "beta" } }, [

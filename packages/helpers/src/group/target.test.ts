@@ -6,6 +6,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { resolveGroupTargetLabel, resolveGroupTargets, resolveIndependentScopes } from "./target";
 
 describe("resolveIndependentScopes", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should return the scopes that belong to no group", () => {
     expect(
       resolveIndependentScopes(
@@ -24,6 +28,10 @@ describe("resolveIndependentScopes", () => {
 });
 
 describe("resolveGroupTargets", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should list groups first, then one target per independent scope", () => {
     expect(
       resolveGroupTargets([{ name: "core", scopes: [SCOPE_NAMES.ALPHA] }], [SCOPE_NAMES.BETA]),

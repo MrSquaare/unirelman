@@ -24,6 +24,10 @@ import {
 const changes: NonEmptyArray<Change> = [createChange()];
 
 describe("parseVersion", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should parse release version with scheme", () => {
     const scheme = createVersioningScheme();
     const parseSpy = vi.spyOn(scheme, "parse");
@@ -61,6 +65,10 @@ describe("parseVersion", () => {
 });
 
 describe("formatVersion", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should format release version with scheme", () => {
     const scheme = createVersioningScheme();
     const formatSpy = vi.spyOn(scheme, "format");
@@ -80,6 +88,10 @@ describe("formatVersion", () => {
 });
 
 describe("resolveFlatVersion", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should return base when version has no prerelease tag", () => {
     expect(resolveFlatVersion({ base: { value: 3 }, prerelease: undefined })).toEqual({ value: 3 });
   });
@@ -146,6 +158,10 @@ describe("resolveVersion", () => {
 });
 
 describe("bumpPrereleaseVersion", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should bump release and start channel when version is not a prerelease", () => {
     const scheme = createVersioningScheme();
     const bumpReleaseSpy = vi.spyOn(scheme, "bumpRelease");
@@ -299,6 +315,10 @@ describe("resolvePrereleaseNextVersion", () => {
 });
 
 describe("resolveReleaseNextVersion", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should bump release version with scheme", () => {
     const scheme = createVersioningScheme();
     const bumpReleaseSpy = vi.spyOn(scheme, "bumpRelease");

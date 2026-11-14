@@ -31,6 +31,10 @@ const CHANGESETS_COMMAND: CommandGroup = {
 };
 
 describe("formatOptionLabel", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should label a boolean option with its alias", () => {
     expect(formatOptionLabel("verbose", GLOBAL_OPTION_DEFS.verbose)).toEqual("-v, --verbose");
   });
@@ -49,6 +53,10 @@ describe("formatOptionLabel", () => {
 });
 
 describe("formatUsageRows", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should align the descriptions of the rows", () => {
     expect(
       formatUsageRows([

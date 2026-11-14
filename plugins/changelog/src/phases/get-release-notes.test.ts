@@ -23,6 +23,10 @@ const CHANGELOG =
   "# Changelog\n\n## @scope/a - 1.0.1\n\n### Patch changes\n- fix a bug\n\n## @scope/b - 2.0.0\n\n### Minor changes\n- add a feature\n";
 
 describe("resolveChangelogSection", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should return the body of a section followed by another section", () => {
     expect(resolveChangelogSection(CHANGELOG, "## @scope/a - 1.0.1")).toEqual(
       "### Patch changes\n- fix a bug",
