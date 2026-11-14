@@ -32,6 +32,10 @@ flags:
     paths:
       - plugins/changesets/
     carryforward: true
+  plugin-git:
+    paths:
+      - plugins/git/
+    carryforward: true
   plugin-replace:
     paths:
       - plugins/replace/
