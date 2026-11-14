@@ -97,6 +97,32 @@ describe("parseArgv", () => {
     });
   });
 
+  it("should skip the rest of a short option group after an unknown option", () => {
+    const optionDefs = {
+      verbose: { type: "boolean", alias: "v", description: "Verbose" },
+    } as const;
+
+    expect(parseArgv(["create", "-vmhello"], optionDefs)).toEqual({
+      values: { verbose: true },
+      tokens: [
+        { kind: "positional", value: "create" },
+        { kind: "unknownOption", rawName: "-m" },
+      ],
+    });
+  });
+
+  it("should read the rest of a short option group as the value of a string option", () => {
+    const optionDefs = {
+      verbose: { type: "boolean", alias: "v", description: "Verbose" },
+      message: { type: "string", alias: "m", description: "Message" },
+    } as const;
+
+    expect(parseArgv(["create", "-vmhello"], optionDefs)).toEqual({
+      values: { verbose: true, message: "hello" },
+      tokens: [{ kind: "positional", value: "create" }],
+    });
+  });
+
   it("should keep arguments after the option terminator as positionals", () => {
     expect(parseArgv(["version", "--", "--dry-run"], ARGS)).toEqual({
       values: {},

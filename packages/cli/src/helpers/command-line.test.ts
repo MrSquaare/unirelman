@@ -111,6 +111,18 @@ describe("parseCommandLine", () => {
     });
   });
 
+  it("should not read global options inside a short option group starting with a command option", () => {
+    expect(parseCommandLine(["changesets", "create", "-mhello"])).toEqual({
+      globalOptionDefs: expectedOptionDefs,
+      options: createGlobalOptions(),
+      tokens: [
+        { kind: "positional", value: "changesets" },
+        { kind: "positional", value: "create" },
+        { kind: "unknownOption", rawName: "-m" },
+      ],
+    });
+  });
+
   it("should return interactive output mode when interactive option is provided", () => {
     expect(parseCommandLine(["--interactive", "version"])).toEqual({
       globalOptionDefs: expectedOptionDefs,

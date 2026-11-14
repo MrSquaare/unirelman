@@ -60,8 +60,13 @@ export const parseArgv = (argv: readonly string[], optionDefs: OptionsDef): Pars
   });
   const values: Record<string, string | boolean> = {};
   const argvTokens: ArgvToken[] = [];
+  let unknownOptionIndex: number | undefined;
 
   for (const token of tokens) {
+    if (token.index === unknownOptionIndex) {
+      continue;
+    }
+
     if (token.kind === "positional") {
       argvTokens.push({ kind: "positional", value: token.value });
 
@@ -76,6 +81,8 @@ export const parseArgv = (argv: readonly string[], optionDefs: OptionsDef): Pars
 
     if (key === undefined) {
       argvTokens.push({ kind: "unknownOption", rawName: token.rawName });
+
+      unknownOptionIndex = token.index;
 
       continue;
     }

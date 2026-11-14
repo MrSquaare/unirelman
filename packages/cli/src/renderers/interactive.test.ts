@@ -24,6 +24,7 @@ import {
   createInteractiveCommandUI,
   createInteractiveLogger,
   createInteractiveProgress,
+  interruptProcess,
   createInteractiveRenderer,
   resolvePromptValue,
 } from "./interactive";
@@ -34,6 +35,23 @@ const scopeOptions = [
   { value: { name: "a" }, label: "a" },
   { value: { name: "b" }, label: "b" },
 ];
+
+describe("interruptProcess", () => {
+  const killSpy = vi.spyOn(process, "kill");
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("should send SIGINT to the current process", () => {
+    killSpy.mockReturnValueOnce(true);
+
+    interruptProcess();
+
+    expect(killSpy).toHaveBeenCalledTimes(1);
+    expect(killSpy).toHaveBeenNthCalledWith(1, process.pid, "SIGINT");
+  });
+});
 
 describe("createInteractiveProgress", () => {
   afterEach(() => {
@@ -63,6 +81,7 @@ describe("createInteractiveProgress", () => {
       output: stderr,
       withGuide: false,
       frames: ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"],
+      onCancel: interruptProcess,
     });
     expect(progressSpinner.start).toHaveBeenCalledTimes(1);
     expect(progressSpinner.start).toHaveBeenNthCalledWith(1, "Versioning");

@@ -39,12 +39,18 @@ type RunningProgress = {
 
 const SPINNER_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
 
+const INTERRUPT_SIGNAL = "SIGINT";
+
 const stderr = process.stderr;
 
 const resolveClackOptions = <TValue>(
   options: readonly PromptOption<TValue>[],
 ): { value: PromptOption<TValue>; label: string }[] => {
   return options.map((option) => ({ value: option, label: option.label }));
+};
+
+export const interruptProcess = (): void => {
+  process.kill(process.pid, INTERRUPT_SIGNAL);
 };
 
 export const createInteractiveProgress = (): InteractiveProgress => {
@@ -59,7 +65,12 @@ export const createInteractiveProgress = (): InteractiveProgress => {
       log.message("", { output: stderr, spacing: 0 });
 
       running = {
-        spinner: spinner({ output: stderr, withGuide: false, frames: SPINNER_FRAMES }),
+        spinner: spinner({
+          output: stderr,
+          withGuide: false,
+          frames: SPINNER_FRAMES,
+          onCancel: interruptProcess,
+        }),
         message,
       };
 
