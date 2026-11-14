@@ -1,0 +1,78 @@
+{
+  "name": "@unirelman/cli",
+  "version": "0.0.0",
+  "homepage": "https://github.com/MrSquaare/unirelman/tree/main/packages/cli#readme",
+  "bugs": {
+    "url": "https://github.com/MrSquaare/unirelman/issues"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MrSquaare/unirelman.git"
+  },
+  "bin": {
+    "unirelman": "./dist/bin.mjs"
+  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "types": "./dist/index.d.mts",
+  "exports": {
+    ".": {
+      "@unirelman/source": "./src/index.ts",
+      "default": "./dist/index.mjs"
+    },
+    "./bin": {
+      "@unirelman/source": "./src/bin.ts",
+      "default": "./dist/bin.mjs"
+    },
+    "./output": {
+      "@unirelman/source": "./src/output.ts",
+      "default": "./dist/output.mjs"
+    },
+    "./testing/fixtures": {
+      "@unirelman/source": "./src/testing/fixtures/index.ts"
+    },
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "test": "vitest run",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check",
+    "typecheck": "tsc --noEmit",
+    "check": "pnpm run fmt:check && pnpm run lint",
+    "check:fix": "pnpm run fmt && pnpm run lint:fix",
+    "clean": "rm -rf dist/"
+  },
+  "dependencies": {
+    "@clack/prompts": "^1.9.0",
+    "c12": "4.0.0-rc.4",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "@unirelman/core": "workspace:*",
+    "@unirelman/shared-config": "workspace:*",
+    "@unirelman/testing": "workspace:*",
+    "@vitest/coverage-v8": "^5.1.0",
+    "oxfmt": "^0.78.0",
+    "oxlint": "^1.93.0",
+    "tsdown": "^0.23.7",
+    "typescript": "^6.0.3",
+    "vitest": "^5.1.0"
+  },
+  "peerDependencies": {
+    "@unirelman/core": "workspace:^"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}
