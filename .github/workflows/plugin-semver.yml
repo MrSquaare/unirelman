@@ -1,0 +1,86 @@
+name: "@unirelman/plugin-semver"
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "plugins/semver/**"
+      - "internals/shared-config/**"
+      - "internals/testing/**"
+      - "packages/cli/**"
+      - "packages/core/**"
+      - "packages/helpers/**"
+      - "packages/utils/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "turbo.json"
+      - ".github/actions/setup-env/**"
+      - ".github/workflows/plugin-semver.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "plugins/semver/**"
+      - "internals/shared-config/**"
+      - "internals/testing/**"
+      - "packages/cli/**"
+      - "packages/core/**"
+      - "packages/helpers/**"
+      - "packages/utils/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "turbo.json"
+      - ".github/actions/setup-env/**"
+      - ".github/workflows/plugin-semver.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    name: Checks
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup environment
+        uses: ./.github/actions/setup-env
+
+      - name: Build
+        run: pnpm build --filter @unirelman/plugin-semver
+
+      - name: Typecheck
+        run: pnpm typecheck --filter @unirelman/plugin-semver
+
+      - name: Check
+        run: pnpm check --filter @unirelman/plugin-semver
+
+  test:
+    runs-on: ubuntu-latest
+    name: Test
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup environment
+        uses: ./.github/actions/setup-env
+
+      - name: Test
+        run: pnpm test --filter @unirelman/plugin-semver -- --coverage
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: plugins/semver/coverage/lcov.info
+          flags: plugin-semver
+          disable_search: true
+          fail_ci_if_error: true

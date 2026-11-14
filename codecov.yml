@@ -32,6 +32,10 @@ flags:
     paths:
       - plugins/replace/
     carryforward: true
+  plugin-semver:
+    paths:
+      - plugins/semver/
+    carryforward: true
   utils:
     paths:
       - packages/utils/
