@@ -43,7 +43,7 @@
     "@unirelman/utils": "workspace:*"
   },
   "devDependencies": {
-    "@types/node": "^24.19.2",
+    "@types/node": "^26.6.6",
     "@unirelman/core": "workspace:*",
     "@unirelman/shared-config": "workspace:*",
     "@unirelman/testing": "workspace:*",
@@ -51,7 +51,7 @@
     "oxfmt": "^0.78.0",
     "oxlint": "^1.93.0",
     "tsdown": "^0.23.7",
-    "typescript": "^6.0.3",
+    "typescript": "^7.0.2",
     "vitest": "^5.1.0"
   },
   "peerDependencies": {
