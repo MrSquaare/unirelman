@@ -2,5 +2,11 @@ import { config } from "@unirelman/shared-config/oxlint";
 
 export default {
   ...config,
-  ignorePatterns: [...(config.ignorePatterns ?? []), "internals/**", "packages/**", "plugins/**"],
+  ignorePatterns: [
+    ...(config.ignorePatterns ?? []),
+    "integrations/**",
+    "internals/**",
+    "packages/**",
+    "plugins/**",
+  ],
 };
