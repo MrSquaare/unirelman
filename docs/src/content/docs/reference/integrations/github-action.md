@@ -6,7 +6,7 @@ description: Inputs, outputs, permissions and behavior of the unirelman GitHub A
 The GitHub Action keeps a [release pull request](/unirelman/reference/glossary/#release-pull-request) up to date with the pending changes, and publishes when you merge it. See [How the GitHub Action works](/unirelman/concepts/github-action/).
 
 ```yaml
-- uses: MrSquaare/unirelman/integrations/github-action@v0.0.0
+- uses: MrSquaare/unirelman/integrations/github-action@v0.1.0-alpha.0
 ```
 
 ## Requirements
@@ -42,7 +42,7 @@ strategy:
         branch: unirelman/release-cli
 steps:
   # ...
-  - uses: MrSquaare/unirelman/integrations/github-action@v0.0.0
+  - uses: MrSquaare/unirelman/integrations/github-action@v0.1.0-alpha.0
     with:
       working-directory: ${{ matrix.working-directory }}
       branch: ${{ matrix.branch }}
