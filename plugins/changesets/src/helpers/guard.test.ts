@@ -43,6 +43,10 @@ describe("isChangesetsChangeMeta", () => {
 });
 
 describe("isChangeLevel", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should return true for a change level", () => {
     expect(isChangeLevel("minor")).toEqual(true);
   });

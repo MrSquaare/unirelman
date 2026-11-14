@@ -148,6 +148,10 @@ describe("parseChangeset", () => {
 });
 
 describe("assertKnownScopes", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should accept scopes that are all known", () => {
     expect(assertKnownScopes([SCOPE_NAMES.ALPHA], [SCOPE_NAMES.ALPHA, SCOPE_NAMES.BETA])).toEqual(
       undefined,

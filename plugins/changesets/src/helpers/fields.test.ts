@@ -47,6 +47,10 @@ describe("parseLevel", () => {
 });
 
 describe("parseMessage", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should trim the message", () => {
     expect(parseMessage("  Ship feature  ")).toEqual("Ship feature");
   });
