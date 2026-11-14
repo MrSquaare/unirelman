@@ -1,0 +1,4 @@
+{
+  "extends": "@unirelman/shared-config/tsconfig",
+  "include": ["src"]
+}

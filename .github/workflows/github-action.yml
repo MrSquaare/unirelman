@@ -1,0 +1,93 @@
+name: "@unirelman/github-action"
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "integrations/github-action/**"
+      - "internals/shared-config/**"
+      - "internals/testing/**"
+      - "packages/cli/**"
+      - "packages/core/**"
+      - "packages/utils/**"
+      - "packages/helpers/**"
+      - "plugins/git/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "turbo.json"
+      - ".github/actions/setup-env/**"
+      - ".github/workflows/github-action.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "integrations/github-action/**"
+      - "internals/shared-config/**"
+      - "internals/testing/**"
+      - "packages/cli/**"
+      - "packages/core/**"
+      - "packages/utils/**"
+      - "packages/helpers/**"
+      - "plugins/git/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "turbo.json"
+      - ".github/actions/setup-env/**"
+      - ".github/workflows/github-action.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    name: Checks
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup environment
+        uses: ./.github/actions/setup-env
+
+      - name: Build
+        run: pnpm build --filter @unirelman/github-action
+
+      - name: Typecheck
+        run: pnpm typecheck --filter @unirelman/github-action
+
+      - name: Check
+        run: pnpm check --filter @unirelman/github-action
+
+      - name: Check committed build
+        run: |
+          git add --intent-to-add --no-all -- integrations/github-action/dist
+          git diff --exit-code -- integrations/github-action/dist
+
+  test:
+    runs-on: ubuntu-latest
+    name: Test
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup environment
+        uses: ./.github/actions/setup-env
+
+      - name: Test
+        run: pnpm test --filter @unirelman/github-action -- --coverage
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: integrations/github-action/coverage/lcov.info
+          flags: github-action
+          disable_search: true
+          fail_ci_if_error: true
