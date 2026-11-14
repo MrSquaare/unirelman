@@ -7,6 +7,7 @@ import type { CalverPluginOptions, CalverVersionMeta } from "./types";
 import { resolveCalverPluginOptions } from "./helpers/options";
 import { createCalverScheme, readCurrentDate } from "./scheme";
 
+export { CalverError, CalverFutureVersionError } from "./errors";
 export { isCalverVersionMeta } from "./helpers/guard";
 
 export type {
