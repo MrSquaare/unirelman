@@ -40,6 +40,10 @@ flags:
     paths:
       - plugins/github/
     carryforward: true
+  plugin-npm:
+    paths:
+      - plugins/npm/
+    carryforward: true
   plugin-replace:
     paths:
       - plugins/replace/
