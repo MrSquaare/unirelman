@@ -29,6 +29,13 @@ const SINGLE_PROVIDER_PHASE_NAMES = [
   "getReleaseNotes",
 ] as const satisfies readonly PhaseName[];
 
+const DISCARDED_RESULT_PHASE_NAMES: ReadonlySet<PhaseName> = new Set([
+  "initialize",
+  "prepare",
+  "finalize",
+  "teardown",
+]);
+
 const CHANGED_SCOPE_PHASE_NAMES = [
   "getCurrentVersion",
   "computeNextVersion",
@@ -193,6 +200,10 @@ export const assertPhaseResultScopes = (
   result: unknown,
   scopeNames: ReadonlySet<string>,
 ): void => {
+  if (DISCARDED_RESULT_PHASE_NAMES.has(phaseName)) {
+    return;
+  }
+
   if (typeof result !== "object" || result === null) {
     return;
   }

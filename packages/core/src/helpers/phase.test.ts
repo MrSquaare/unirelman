@@ -521,9 +521,23 @@ describe("assertPhaseResultScopes", () => {
 
   it("should accept an undefined result", () => {
     expect(() =>
-      assertPhaseResultScopes("prepare", "plugin", undefined, new Set([SCOPE_NAMES.ALPHA])),
+      assertPhaseResultScopes("getChanges", "plugin", undefined, new Set([SCOPE_NAMES.ALPHA])),
     ).not.toThrow();
   });
+
+  it.each(["initialize", "prepare", "finalize", "teardown"] as const)(
+    "should ignore the discarded result of the %s phase",
+    (phaseName) => {
+      expect(() =>
+        assertPhaseResultScopes(
+          phaseName,
+          "plugin",
+          { [SCOPE_NAMES.BETA]: [] },
+          new Set([SCOPE_NAMES.ALPHA]),
+        ),
+      ).not.toThrow();
+    },
+  );
 
   it("should throw an unknown phase result scope error when a result key is not a plugin scope", () => {
     expect(() =>
