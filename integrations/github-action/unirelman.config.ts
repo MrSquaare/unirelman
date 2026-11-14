@@ -30,7 +30,7 @@ export default defineConfig({
   },
   plugins: [
     createChangesetsPlugin(),
-    createChangelogPlugin(),
+    createChangelogPlugin({ mode: "scope" }),
     createNpmPlugin({ publish: false }),
     createReplacePlugin({ files: actionReferenceFiles }),
     createGitPlugin({ tagFormat }),
