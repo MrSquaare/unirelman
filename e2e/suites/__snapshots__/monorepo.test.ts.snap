@@ -1,0 +1,92 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`monorepo > fixed scopes > should fail when fixed scopes have different current versions 1`] = `
+"unirelman · Version
+error: Plugin "semver" failed in the computeNextVersion phase: Fixed scopes must share the same current version: @example/core (1.0.0), @example/ui (1.1.0)
+❌ An error occurred during versioning.
+"
+`;
+
+exports[`monorepo > independent scopes > should fail when a changeset names an unknown scope 1`] = `
+"unirelman · Create changeset
+error: Unknown scopes "@example/missing". Known scopes: @example/core, @example/ui
+❌ The command failed.
+"
+`;
+
+exports[`monorepo > independent scopes > should release one scope with its own versioning scheme 1`] = `
+{
+  "history": {
+    "log": "commit 6c9fac6 chore(release): bump versions
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+new file mode 100644
+index 0000000..fa672a0
+--- /dev/null
++++ b/CHANGELOG.md
+@@ -0,0 +1,7 @@
++# Changelog
++
++## @example/core - 1.0.1
++
++### Patch changes
++
++- fix core
+diff --git a/packages/core/package.json b/packages/core/package.json
+index 76ed856..ac25bc1 100644
+--- a/packages/core/package.json
++++ b/packages/core/package.json
+@@ -1,5 +1,5 @@
+ {
+   "name": "@example/core",
+-  "version": "1.0.0",
++  "version": "1.0.1",
+   "type": "module"
+ }
+",
+    "status": "",
+    "tags": [
+      "@example/core@1.0.1",
+      "@example/ui@2026.01.01.0",
+    ],
+  },
+  "packages": {
+    "@example/core": {
+      "distTags": {
+        "latest": "1.0.1",
+      },
+      "versions": [
+        "1.0.1",
+      ],
+    },
+  },
+  "releases": [
+    {
+      "body": "### Patch changes
+
+- fix core",
+      "draft": false,
+      "html_url": "https://github.com/unirelman/example/releases/tag/@example/core@1.0.1",
+      "id": 1,
+      "make_latest": "true",
+      "name": "@example/core@1.0.1",
+      "prerelease": false,
+      "tag_name": "@example/core@1.0.1",
+      "target_commitish": "6c9fac619244536b3e33404ea324f769c79a8a86",
+      "upload_url": "https://uploads.github.com/repos/unirelman/example/releases/1/assets{?name,label}",
+    },
+    {
+      "body": "",
+      "draft": false,
+      "html_url": "https://github.com/unirelman/example/releases/tag/@example/ui@2026.01.01.0",
+      "id": 2,
+      "make_latest": "true",
+      "name": "@example/ui@2026.01.01.0",
+      "prerelease": false,
+      "tag_name": "@example/ui@2026.01.01.0",
+      "target_commitish": "6c9fac619244536b3e33404ea324f769c79a8a86",
+      "upload_url": "https://uploads.github.com/repos/unirelman/example/releases/2/assets{?name,label}",
+    },
+  ],
+}
+`;

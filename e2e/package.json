@@ -1,0 +1,39 @@
+{
+  "name": "@unirelman/e2e",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check",
+    "typecheck": "tsc --noEmit",
+    "check": "pnpm run fmt:check && pnpm run lint",
+    "check:fix": "pnpm run fmt && pnpm run lint:fix"
+  },
+  "devDependencies": {
+    "@hono/node-server": "^2.1.6",
+    "@types/node": "^24.19.2",
+    "@unirelman/cli": "workspace:*",
+    "@unirelman/core": "workspace:*",
+    "@unirelman/github-action": "workspace:*",
+    "@unirelman/plugin-calver": "workspace:*",
+    "@unirelman/plugin-changelog": "workspace:*",
+    "@unirelman/plugin-changesets": "workspace:*",
+    "@unirelman/plugin-git": "workspace:*",
+    "@unirelman/plugin-github": "workspace:*",
+    "@unirelman/plugin-npm": "workspace:*",
+    "@unirelman/plugin-replace": "workspace:*",
+    "@unirelman/plugin-semver": "workspace:*",
+    "@unirelman/shared-config": "workspace:*",
+    "hono": "^4.13.17",
+    "oxfmt": "^0.78.0",
+    "oxlint": "^1.93.0",
+    "tinyexec": "^1.3.1",
+    "typescript": "^6.0.3",
+    "vitest": "^5.1.0",
+    "zod": "^4.6.7"
+  }
+}

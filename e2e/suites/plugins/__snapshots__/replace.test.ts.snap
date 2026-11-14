@@ -1,0 +1,8 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`replace > should fail when a file without allowNoMatch has no match 1`] = `
+"unirelman · Version
+error: Plugin "replace" failed in the generateFileOperations phase: File "README.md" has no match for /@example\\/cli@\\d+\\.\\d+\\.\\d+/
+❌ An error occurred during versioning.
+"
+`;

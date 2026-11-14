@@ -1,0 +1,8 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`calver > day granularity > should fail when the current version is dated after today 1`] = `
+"unirelman · Version
+error: Plugin "calver" failed in the computeNextVersion phase: Current version 2026.07.24.0 is dated after today (2026.01.01)
+❌ An error occurred during versioning.
+"
+`;

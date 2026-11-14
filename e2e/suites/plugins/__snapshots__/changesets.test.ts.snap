@@ -1,0 +1,13 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`changesets > should print the created changeset as JSON 1`] = `
+"{
+  "path": ".unirelman/changesets/1767268800000-00000001.md",
+  "scopes": [
+    "example"
+  ],
+  "level": "patch",
+  "message": "fix a bug"
+}
+"
+`;
