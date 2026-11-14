@@ -1,0 +1,60 @@
+{
+  "name": "@unirelman/plugin-changelog",
+  "version": "0.0.0",
+  "homepage": "https://github.com/MrSquaare/unirelman/tree/main/plugins/changelog#readme",
+  "bugs": {
+    "url": "https://github.com/MrSquaare/unirelman/issues"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MrSquaare/unirelman.git"
+  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "types": "./dist/index.d.mts",
+  "exports": {
+    ".": {
+      "@unirelman/source": "./src/index.ts",
+      "default": "./dist/index.mjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "test": "vitest run",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check",
+    "typecheck": "tsc --noEmit",
+    "check": "pnpm run fmt:check && pnpm run lint",
+    "check:fix": "pnpm run fmt && pnpm run lint:fix",
+    "clean": "rm -rf dist/"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "@unirelman/core": "workspace:*",
+    "@unirelman/shared-config": "workspace:*",
+    "@unirelman/testing": "workspace:*",
+    "@vitest/coverage-v8": "^5.1.0",
+    "oxfmt": "^0.78.0",
+    "oxlint": "^1.93.0",
+    "tsdown": "^0.23.7",
+    "typescript": "^6.0.3",
+    "vitest": "^5.1.0"
+  },
+  "peerDependencies": {
+    "@unirelman/core": "workspace:^"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}
