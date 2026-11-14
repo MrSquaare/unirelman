@@ -8,10 +8,14 @@ export const parseScopes = (scopesValue: string | undefined): string[] => {
     return [];
   }
 
-  return scopesValue
-    .split(",")
-    .map((value) => value.trim())
-    .filter(Boolean);
+  return [
+    ...new Set(
+      scopesValue
+        .split(",")
+        .map((value) => value.trim())
+        .filter(Boolean),
+    ),
+  ];
 };
 
 export const parseLevel = (levelValue: string | undefined): ChangeLevel | undefined => {

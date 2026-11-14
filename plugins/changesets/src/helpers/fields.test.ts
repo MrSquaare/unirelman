@@ -15,6 +15,13 @@ describe("parseScopes", () => {
     expect(parseScopes(` ${scopes[0]},  ${scopes[1]} , , `)).toEqual(scopes);
   });
 
+  it("should keep each scope once", () => {
+    expect(parseScopes(`${SCOPE_NAMES.ALPHA}, ${SCOPE_NAMES.ALPHA},${SCOPE_NAMES.BETA}`)).toEqual([
+      SCOPE_NAMES.ALPHA,
+      SCOPE_NAMES.BETA,
+    ]);
+  });
+
   it("should return empty array when scopes arg is undefined", () => {
     expect(parseScopes(undefined)).toEqual([]);
   });
