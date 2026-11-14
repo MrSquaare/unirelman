@@ -1,6 +1,7 @@
 import type { Hono } from "hono";
 
 import { serve, type ServerType } from "@hono/node-server";
+import { CleanupError } from "@unirelman/utils";
 
 export type MockServer = {
   readonly url: string;
@@ -21,4 +22,17 @@ export const stopMockServer = (server: ServerType): Promise<void> => {
   return new Promise((resolveClose, rejectClose) => {
     server.close((error) => (error ? rejectClose(error) : resolveClose()));
   });
+};
+
+export const stopMockServerAfterFailure = async (
+  server: ServerType,
+  error: unknown,
+): Promise<never> => {
+  try {
+    await stopMockServer(server);
+  } catch (stopError) {
+    throw new CleanupError(error, stopError);
+  }
+
+  throw error;
 };

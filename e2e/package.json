@@ -28,6 +28,7 @@
     "@unirelman/plugin-replace": "workspace:*",
     "@unirelman/plugin-semver": "workspace:*",
     "@unirelman/shared-config": "workspace:*",
+    "@unirelman/utils": "workspace:*",
     "hono": "^4.13.17",
     "oxfmt": "^0.78.0",
     "oxlint": "^1.93.0",

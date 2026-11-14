@@ -5,7 +5,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import * as z from "zod";
 
-import { startMockServer, stopMockServer } from "./mock-server.ts";
+import { startMockServer, stopMockServer, stopMockServerAfterFailure } from "./mock-server.ts";
 
 export type NpmPackage = {
   readonly distTags: Readonly<Record<string, string>>;
@@ -109,12 +109,16 @@ export class NpmRegistry {
     const userConfigPath = join(directory, USER_CONFIG_FILE_NAME);
     const globalConfigPath = join(directory, GLOBAL_CONFIG_FILE_NAME);
 
-    await mkdir(directory, { recursive: true });
-    await writeFile(
-      userConfigPath,
-      `registry=${registryUrl}\n${registryUrl.replace(/^http:/, "")}:_authToken=${NPM_TOKEN}\n`,
-    );
-    await writeFile(globalConfigPath, "");
+    try {
+      await mkdir(directory, { recursive: true });
+      await writeFile(
+        userConfigPath,
+        `registry=${registryUrl}\n${registryUrl.replace(/^http:/, "")}:_authToken=${NPM_TOKEN}\n`,
+      );
+      await writeFile(globalConfigPath, "");
+    } catch (error) {
+      return stopMockServerAfterFailure(server, error);
+    }
 
     return new NpmRegistry(
       {

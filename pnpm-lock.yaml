@@ -226,6 +226,9 @@ importers:
       '@unirelman/shared-config':
         specifier: workspace:*
         version: link:../internals/shared-config
+      '@unirelman/utils':
+        specifier: workspace:*
+        version: link:../packages/utils
       hono:
         specifier: ^4.13.17
         version: 4.13.18
