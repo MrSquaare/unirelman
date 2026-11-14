@@ -1,0 +1,76 @@
+---
+title: Changelog
+description: Writes CHANGELOG.md on version, and provides release notes on publish.
+---
+
+import PackageManagers from "../../../../components/PackageManagers.astro";
+
+<PackageManagers pkg="@unirelman/plugin-changelog" dev />
+
+```ts title="unirelman.config.ts"
+import { createChangelogPlugin } from "@unirelman/plugin-changelog";
+
+createChangelogPlugin({ mode: "root" });
+```
+
+## Options
+
+| Option            | Type                                                     | Default                                                  | Description                                                |
+| ----------------- | -------------------------------------------------------- | -------------------------------------------------------- | ---------------------------------------------------------- |
+| `mode`            | `"root" \| "scope"`                                      | `"root"`                                                 | Location of the changelogs. See [Modes](#modes).           |
+| `header`          | `string`, or `({ scopeName }) => string` in `scope` mode | `# Changelog`, `# <scope> Changelog` in `scope` mode     | Text above the sections. Must not contain a `## ` heading. |
+| `sectionHeader`   | `({ scopeName, version }) => string`                     | `## <scope> - <version>`, `## <version>` in `scope` mode | Heading of a section: one line starting with `## `.        |
+| `levelHeaders`    | `{ major?, minor?, patch? }`                             | `Major changes`, `Minor changes`, `Patch changes`        | Subsection titles, one line each.                          |
+| `noChangeMessage` | `({ scopeName, version }) => string`                     | `No user-facing changes.`                                | Entry of a version without changes.                        |
+
+## Phases
+
+| Phase                    | Behavior                                                                                                                                                                                                                                         |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `generateFileOperations` | Adds a section for each scope's next version at the top of its changelog, creating the file if needed.                                                                                                                                           |
+| `getReleaseNotes`        | Reads the [changelog section](/unirelman/reference/glossary/#changelog-section) of each scope's current version, and returns its [release notes](/unirelman/reference/glossary/#release-notes). Only scopes with that section get release notes. |
+
+## Modes
+
+| Mode    | Changelogs                                               |
+| ------- | -------------------------------------------------------- |
+| `root`  | One `CHANGELOG.md` at the project root, for every scope. |
+| `scope` | One `CHANGELOG.md` in each scope folder.                 |
+
+## Format
+
+```md title="CHANGELOG.md"
+# Changelog
+
+## <scope> - <version>
+
+### Major changes
+
+- <message of a major change>
+
+### Minor changes
+
+- <message of a minor change>
+
+### Patch changes
+
+- <message of a patch change>
+```
+
+- The header is rewritten on every release; new sections go above the existing ones.
+- In `root` mode, the sections of one release are ordered by scope name.
+- Each level with changes gets a subsection. A version without changes, such as the exit from a prerelease, gets `### Changes` with `noChangeMessage`.
+- The lines after the first line of a message are indented under its entry.
+
+## Errors
+
+| Error                                | Cause                                                                      |
+| ------------------------------------ | -------------------------------------------------------------------------- |
+| `ChangelogInvalidHeaderError`        | `header` contains a `## ` heading.                                         |
+| `ChangelogInvalidLevelHeaderError`   | A level header in `levelHeaders` has a line break.                         |
+| `ChangelogInvalidSectionHeaderError` | `sectionHeader` returns something other than one line starting with `## `. |
+
+## Related
+
+- [Changesets plugin](/unirelman/reference/plugins/changesets/)
+- [Keep generated files formatted](/unirelman/guides/formatted-files/)

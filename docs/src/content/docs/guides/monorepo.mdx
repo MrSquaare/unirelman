@@ -1,0 +1,134 @@
+---
+title: Release a monorepo
+description: Version several packages of one repository, independently or together, each with its own versioning scheme if needed.
+sidebar:
+  order: 1
+---
+
+import PackageManagers from "../../../components/PackageManagers.astro";
+
+This guide shows how to release several packages from one repository. Each package is a [scope](/unirelman/reference/glossary/#scope), with its own version, changelog section and tags.
+
+## Declare one scope per package
+
+List each package in `scopes`, with its path relative to the configuration file:
+
+```ts title="unirelman.config.ts"
+import { defineConfig } from "@unirelman/cli";
+import { createChangelogPlugin } from "@unirelman/plugin-changelog";
+import { createChangesetsPlugin } from "@unirelman/plugin-changesets";
+import { createGitPlugin } from "@unirelman/plugin-git";
+import { createNpmPlugin } from "@unirelman/plugin-npm";
+import { createSemverPlugin } from "@unirelman/plugin-semver";
+
+export default defineConfig({
+  scopes: {
+    "@example/core": "packages/core",
+    "@example/cli": "packages/cli",
+    "@example/ui": "packages/ui",
+  },
+  plugins: [
+    createChangesetsPlugin(),
+    createChangelogPlugin(),
+    createNpmPlugin(),
+    createGitPlugin(),
+    createSemverPlugin(),
+  ],
+});
+```
+
+Name each scope after its package: the name appears in tags and changelog sections. See [`scopes`](/unirelman/reference/configuration/#scopes).
+
+## Record a change for several scopes
+
+List the scopes of the change, separated by commas:
+
+<PackageManagers type="exec" pkg="unirelman" args='changesets create --scopes "@example/core,@example/ui" --level patch --message "fix a bug"' />
+
+## Update the dependents of a package
+
+The npm plugin gives a change to the packages that depend on a released scope, and updates their dependency ranges. See [Internal dependencies](/unirelman/reference/plugins/npm/#internal-dependencies).
+
+To update the dependents on every release of their dependency:
+
+```ts title="unirelman.config.ts"
+createNpmPlugin({ updateInternalDependencies: { dependents: "always" } });
+```
+
+## Write one changelog per scope
+
+The Changelog plugin writes one `CHANGELOG.md` at the root by default. To write one in each scope folder:
+
+```ts title="unirelman.config.ts"
+createChangelogPlugin({ mode: "scope" });
+```
+
+## Version scopes together
+
+To give every scope the same version, use [fixed versioning](/unirelman/reference/glossary/#fixed-versioning):
+
+```ts title="unirelman.config.ts"
+createSemverPlugin({ fixed: true });
+```
+
+To version only some scopes together, name the groups. The other scopes stay independent:
+
+```ts title="unirelman.config.ts"
+createSemverPlugin({
+  fixed: {
+    product: ["@example/core", "@example/cli"],
+  },
+});
+```
+
+The scopes of a group start from the same current version.
+
+## Version scopes with different schemes
+
+Register each versioning plugin for its scopes:
+
+```ts title="unirelman.config.ts" {2,13-20}
+import { defineConfig } from "@unirelman/cli";
+import { createCalverPlugin } from "@unirelman/plugin-calver";
+// ...
+
+export default defineConfig({
+  scopes: {
+    "@example/core": "packages/core",
+    "@example/app": "apps/app",
+  },
+  plugins: [
+    createChangesetsPlugin(),
+    createChangelogPlugin(),
+    {
+      plugin: createSemverPlugin(),
+      scopes: ["@example/core"],
+    },
+    {
+      plugin: createCalverPlugin(),
+      scopes: ["@example/app"],
+    },
+    // ...
+  ],
+});
+```
+
+Each scope with changes needs a plugin that reads its current version, such as npm, and one that computes its next version, such as SemVer or CalVer.
+
+## Release the repository root
+
+The root of the repository can be a scope too, such as a root `package.json` you also release:
+
+```ts title="unirelman.config.ts"
+scopes: {
+  root: "./",
+  "@example/core": "packages/core",
+},
+```
+
+Its tags are the bare version, such as `1.0.1`. See [Tag names](/unirelman/reference/plugins/git/#tag-names).
+
+## Related
+
+- [Configuration reference](/unirelman/reference/configuration/)
+- [Publish from a monorepo](/unirelman/guides/publish-to-npm/#publish-from-a-monorepo)

@@ -1,0 +1,61 @@
+---
+title: Replace
+description: Replaces text in listed files with the next version of a scope, in the release commit.
+---
+
+import PackageManagers from "../../../../components/PackageManagers.astro";
+
+<PackageManagers pkg="@unirelman/plugin-replace" dev />
+
+```ts title="unirelman.config.ts"
+import { createReplacePlugin } from "@unirelman/plugin-replace";
+
+createReplacePlugin({
+  files: [
+    {
+      path: "README.md",
+      scope: "my-package",
+      search: ({ currentVersion }) => new RegExp(RegExp.escape(`my-package@${currentVersion}`)),
+      replace: ({ nextVersion }) => `my-package@${nextVersion}`,
+    },
+  ],
+});
+```
+
+## Options
+
+| Option  | Type            | Default  | Description                                 |
+| ------- | --------------- | -------- | ------------------------------------------- |
+| `files` | `ReplaceFile[]` | Required | Replacements to apply. See [Files](#files). |
+
+## Phases
+
+| Phase                    | Behavior                                                                                                                                  |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `generateFileOperations` | Writes each listed file with its replacements applied, for the scopes with a [next version](/unirelman/reference/glossary/#next-version). |
+
+## Files
+
+| Member         | Type                          | Description                                                                        |
+| -------------- | ----------------------------- | ---------------------------------------------------------------------------------- |
+| `path`         | `string`                      | Path of the file, relative to the project root.                                    |
+| `scope`        | `string`                      | Scope whose versions the entry uses.                                               |
+| `search`       | `RegExp \| (input) => RegExp` | Text to replace. Every match is replaced.                                          |
+| `replace`      | `(input) => string`           | Replacement, inserted as is.                                                       |
+| `allowNoMatch` | `boolean`                     | Whether an entry without a match is skipped instead of throwing. Default: `false`. |
+
+`input` is `{ scopeName, currentVersion, nextVersion }`. An entry applies when its scope gets a next version; the entries of a file apply in order.
+
+## Errors
+
+| Error                               | Cause                                                                     |
+| ----------------------------------- | ------------------------------------------------------------------------- |
+| `ReplaceUnknownScopeError`          | An entry names a scope the plugin is not registered for.                  |
+| `ReplaceNoMatchError`               | A file has no match for the `search` of an entry, without `allowNoMatch`. |
+| `CoreFileNotFoundError`             | A listed file is missing.                                                 |
+| `CoreConflictingFileOperationError` | Another plugin writes a listed file in the same release.                  |
+
+## Related
+
+- [Release a monorepo](/unirelman/guides/monorepo/)
+- [Plugin API](/unirelman/reference/plugin-api/)

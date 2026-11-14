@@ -1,0 +1,32 @@
+{
+  "name": "@unirelman/docs",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check",
+    "typecheck": "astro check",
+    "check": "pnpm run fmt:check && pnpm run lint",
+    "check:fix": "pnpm run fmt && pnpm run lint:fix"
+  },
+  "dependencies": {
+    "@astrojs/starlight": "^0.42.10",
+    "astro": "^7.4.8",
+    "sharp": "^0.35.5",
+    "starlight-links-validator": "^0.27.0",
+    "starlight-package-managers": "^0.13.0"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.12",
+    "@unirelman/shared-config": "workspace:*",
+    "oxfmt": "^0.78.0",
+    "oxlint": "^1.93.0",
+    "typescript": "^6.0.3"
+  }
+}

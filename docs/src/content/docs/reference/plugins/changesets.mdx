@@ -1,0 +1,101 @@
+---
+title: Changesets
+description: Reads changes from changeset files, and provides the changesets create command.
+---
+
+import PackageManagers from "../../../../components/PackageManagers.astro";
+
+<PackageManagers pkg="@unirelman/plugin-changesets" dev />
+
+```ts title="unirelman.config.ts"
+import { createChangesetsPlugin } from "@unirelman/plugin-changesets";
+
+createChangesetsPlugin();
+```
+
+## Phases
+
+| Phase                    | Behavior                                                                                                                                                                                 |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `getChanges`             | Reads the [changesets](/unirelman/reference/glossary/#changeset) of `.unirelman/changesets/`. Each changeset gives one [change](/unirelman/reference/glossary/#change) per listed scope. |
+| `generateFileOperations` | Deletes the changesets of the changes being released.                                                                                                                                    |
+
+## Changeset format
+
+```md title=".unirelman/changesets/1767268800000-1f2e3d4c.md"
+---
+scopes: @example/core,@example/ui
+level: minor
+---
+
+add a feature
+```
+
+| Part     | Format                                                                      |
+| -------- | --------------------------------------------------------------------------- |
+| `scopes` | Comma-separated scope names, each one a scope the plugin is registered for. |
+| `level`  | `patch`, `minor` or `major`, case-insensitive.                              |
+| Body     | Message of the change, non-empty.                                           |
+
+A changeset is a `.md` file with a frontmatter block delimited by `---`. Its file name is free.
+
+## Commands
+
+### `changesets create`
+
+Creates a changeset in `.unirelman/changesets/`, named `<timestamp>-<random>.md`.
+
+```sh
+unirelman changesets create [--scopes <scopes>] [--level <level>] [--message <message>]
+```
+
+| Option      | Description                                                                    |
+| ----------- | ------------------------------------------------------------------------------ |
+| `--scopes`  | Comma-separated scope names, such as `@example/core,@example/ui`.              |
+| `--level`   | [Level](/unirelman/reference/glossary/#level) of the change, case-insensitive. |
+| `--message` | Message of the change.                                                         |
+
+Missing options are prompted.
+
+#### JSON document
+
+With `--json`, the command prints this document, validated by `changesetsCreateOutputSchema` from `@unirelman/plugin-changesets`:
+
+```json
+{
+  "path": ".unirelman/changesets/1767268800000-1f2e3d4c.md",
+  "scopes": ["@example/core"],
+  "level": "minor",
+  "message": "add a feature"
+}
+```
+
+| Field     | Type                            | Description                                          |
+| --------- | ------------------------------- | ---------------------------------------------------- |
+| `path`    | `string`                        | Path of the changeset, relative to the project root. |
+| `scopes`  | `string[]`                      | Scopes of the changeset.                             |
+| `level`   | `"patch" \| "minor" \| "major"` | Level of the changeset.                              |
+| `message` | `string`                        | Message of the changeset.                            |
+
+## Change meta
+
+Changes from this plugin carry `meta.changesets.path`, the file name of their changeset. The exported type guard checks it:
+
+```ts
+import { isChangesetsChangeMeta } from "@unirelman/plugin-changesets";
+```
+
+## Errors
+
+| Error                               | Cause                                                                                        |
+| ----------------------------------- | -------------------------------------------------------------------------------------------- |
+| `ChangesetsInvalidScopesError`      | `--scopes`, or a changeset, lists a scope the plugin is not registered for.                  |
+| `ChangesetsInvalidLevelError`       | `--level`, or the level of a changeset, is other than `patch`, `minor` or `major`.           |
+| `ChangesetsMissingFrontmatterError` | A changeset has no frontmatter block delimited by `---`.                                     |
+| `ChangesetsMissingFieldError`       | A changeset has no scopes, no level or no message.                                           |
+| `ChangesetsInvalidFileError`        | A changeset is invalid. Its `cause` is one of the errors above, and its `filePath` the file. |
+
+## Related
+
+- [Release your first package](/unirelman/tutorials/first-release/)
+- [Changelog plugin](/unirelman/reference/plugins/changelog/)

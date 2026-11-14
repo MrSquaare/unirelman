@@ -1,0 +1,67 @@
+---
+title: Choose a versioning scheme
+description: Version a scope with semantic versioning or calendar versioning.
+sidebar:
+  order: 2
+---
+
+import PackageManagers from "../../../components/PackageManagers.astro";
+
+This guide shows how to pick the [versioning scheme](/unirelman/reference/glossary/#versioning-scheme) of a scope and set it up.
+
+| Scheme | Version        | Next version from                                                        | Fits                                    |
+| ------ | -------------- | ------------------------------------------------------------------------ | --------------------------------------- |
+| SemVer | `1.2.3`        | The highest [level](/unirelman/reference/glossary/#level) of the changes | Libraries and packages others depend on |
+| CalVer | `2026.01.01.0` | The date of the release                                                  | Applications and services               |
+
+## Use semantic versioning
+
+<PackageManagers pkg="@unirelman/plugin-semver" dev />
+
+```ts title="unirelman.config.ts"
+import { createSemverPlugin } from "@unirelman/plugin-semver";
+
+// ...
+plugins: [
+  // ...
+  createSemverPlugin(),
+],
+```
+
+The current version of each scope is a SemVer version, such as `"version": "1.0.0"` in `package.json`. See the [SemVer plugin reference](/unirelman/reference/plugins/semver/).
+
+## Use calendar versioning
+
+<PackageManagers pkg="@unirelman/plugin-calver" dev />
+
+```ts title="unirelman.config.ts"
+import { createCalverPlugin } from "@unirelman/plugin-calver";
+
+// ...
+plugins: [
+  // ...
+  createCalverPlugin(),
+],
+```
+
+The current version of each scope is a calendar version from the start, such as `"version": "2026.01.01.0"` in `package.json`. To version by month, such as `2026.01.0`:
+
+```ts title="unirelman.config.ts"
+createCalverPlugin({ granularity: "month" });
+```
+
+The npm registry accepts SemVer versions only. Mark calendar-versioned packages as private, so the npm plugin manages their version and skips them when publishing:
+
+```json title="package.json"
+{
+  "private": true
+}
+```
+
+See the [CalVer plugin reference](/unirelman/reference/plugins/calver/).
+
+## Related
+
+- [Version scopes with different schemes](/unirelman/guides/monorepo/#version-scopes-with-different-schemes)
+- [Publish prereleases](/unirelman/guides/prereleases/)
+- [Write a versioning scheme](/unirelman/guides/write-a-versioning-scheme/)

@@ -1,0 +1,122 @@
+---
+title: Publish to npm
+description: Publish packages to the npm registry from your machine or from GitHub Actions, with trusted publishing or a token.
+sidebar:
+  order: 4
+---
+
+import PackageManagers from "../../../components/PackageManagers.astro";
+
+This guide shows how to publish packages to the npm registry with the [npm plugin](/unirelman/reference/plugins/npm/). The plugin publishes with `npm publish`, so npm's own configuration sets the registry and the authentication, as for a manual publish.
+
+## Register the plugin
+
+```ts title="unirelman.config.ts"
+createNpmPlugin();
+```
+
+`publish` publishes each scope whose current version is missing from the registry, so running it again is safe.
+
+## Publish from your machine
+
+Log in once:
+
+```sh
+npm login
+```
+
+Then publish:
+
+<PackageManagers type="exec" pkg="unirelman" args="publish" />
+
+## Publish from a monorepo
+
+The plugin publishes each package with your package manager, so `workspace:` and `catalog:` specifiers resolve to versions in the published package. It reads the package manager from the `packageManager` field of your root `package.json`:
+
+```json title="package.json"
+{
+  "packageManager": "pnpm@10.0.0"
+}
+```
+
+Or set it in the configuration:
+
+```ts title="unirelman.config.ts"
+createNpmPlugin({ packageManager: "pnpm" });
+```
+
+npm itself resolves neither specifier: with npm as package manager, a package that depends on `workspace:` or `catalog:` fails with `NpmUnresolvedSpecifierError`.
+
+## Publish from GitHub Actions with trusted publishing
+
+Trusted publishing lets GitHub Actions publish with a short-lived identity token, and adds [provenance](https://docs.npmjs.com/generating-provenance-statements) for public repositories and packages. It requires npm 11.5.1 or later and Node.js 22.14 or later; Node.js 24 meets both. pnpm supports it too; `bun publish` does not yet, so publish Bun packages with a token.
+
+1. On [npmjs.com](https://www.npmjs.com/), open the settings of each package and add a **trusted publisher**:
+   - **Organization or user** and **Repository**: your GitHub repository.
+   - **Workflow filename**: the file name of your release workflow, with its extension, such as `release.yml`.
+
+   A new trusted publisher configuration expires after 2 days without a successful publish.
+
+2. Grant the job permission to request an identity token:
+
+   ```yaml title=".github/workflows/release.yml" ins={4}
+   permissions:
+     contents: write
+     pull-requests: write
+     id-token: write
+   ```
+
+3. Run the workflow on a GitHub-hosted runner, the runner type npm trusted publishing supports.
+
+## Publish from GitHub Actions with a token
+
+1. Create an npm access token and store it as a repository secret, such as `NPM_TOKEN`.
+2. Configure the registry with `actions/setup-node`, and expose the token as `NODE_AUTH_TOKEN`:
+
+   ```yaml title=".github/workflows/release.yml"
+   - name: Setup Node.js
+     uses: actions/setup-node@v7
+     with:
+       node-version: 24
+       registry-url: https://registry.npmjs.org
+
+   # ...
+
+   - name: Release
+     uses: MrSquaare/unirelman/integrations/github-action@v0.0.0
+     env:
+       NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+   ```
+
+3. To add provenance, set `NPM_CONFIG_PROVENANCE: true` in the environment, or `"publishConfig": { "provenance": true }` in `package.json`.
+
+## Publish a scoped package for the first time
+
+npm publishes a scoped package, such as `@example/core`, as restricted by default. Make it public in its `package.json`:
+
+```json title="package.json"
+{
+  "publishConfig": {
+    "access": "public"
+  }
+}
+```
+
+## Troubleshoot authentication
+
+When npm rejects the publish with `ENEEDAUTH`, `E401`, `E403` or `EOTP`, the publish fails with an error such as:
+
+```
+error: Plugin "npm" failed in the createReleases phase: Failed to publish @example/core@1.0.1: npm could not authenticate or authorize the publish (E401)
+```
+
+The code comes from npm. Check that:
+
+- The token or the trusted publisher configuration exists and matches the package.
+- With trusted publishing: the workflow has `id-token: write`, its file name matches exactly, and it runs on a GitHub-hosted runner.
+- With 2FA required for publishing (`EOTP`): you publish with a granular access token or with trusted publishing.
+
+## Related
+
+- [npm plugin reference](/unirelman/reference/plugins/npm/)
+- [Publish prereleases](/unirelman/guides/prereleases/)

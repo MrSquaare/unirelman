@@ -1,0 +1,66 @@
+---
+title: Git
+description: Commits the release files on version, and tags the published versions.
+---
+
+import PackageManagers from "../../../../components/PackageManagers.astro";
+
+<PackageManagers pkg="@unirelman/plugin-git" dev />
+
+```ts title="unirelman.config.ts"
+import { createGitPlugin } from "@unirelman/plugin-git";
+
+createGitPlugin({ commitMessage: "chore(release): bump versions" });
+```
+
+## Options
+
+| Option          | Type                                     | Default                           | Description                                                                                                           |
+| --------------- | ---------------------------------------- | --------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `commitMessage` | `string \| ({ nextVersions }) => string` | `"chore(release): bump versions"` | Message of the release commit. `nextVersions` maps each scope name to its next version.                               |
+| `tagFormat`     | `GitTagFormat`                           | See [Tag names](#tag-names)       | Function that names the tag of a version.                                                                             |
+| `annotatedTags` | `boolean`                                | `false`                           | Whether tags are annotated, with the tag name as message. Lightweight tags are never signed, even with `tag.gpgSign`. |
+
+## Phases
+
+| Phase            | Behavior                                                                                                                                                                 |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `prepare`        | Stages the files written or deleted by the version pipeline and commits them as the [release commit](/unirelman/reference/glossary/#release-commit), when there are any. |
+| `createReleases` | Creates a tag on the current commit for each scope's current version whose tag is missing. The tags are local: push them, or let the GitHub Action push them.            |
+
+The release commit contains the release files only. Other changes, staged or not, stay out of it.
+
+## Tag names
+
+By default:
+
+| Scope               | Tag                 | Example               |
+| ------------------- | ------------------- | --------------------- |
+| At the project root | `<version>`         | `1.0.1`               |
+| Elsewhere           | `<scope>@<version>` | `@example/core@1.0.1` |
+
+`tagFormat` names tags another way. It receives the scope name, the version, and whether the scope is at the project root:
+
+```ts title="unirelman.config.ts"
+import { createGitPlugin, type GitTagFormat } from "@unirelman/plugin-git";
+
+const tagFormat: GitTagFormat = ({ scopeName, version, isRootScope }) =>
+  isRootScope ? `v${version}` : `${scopeName}/v${version}`;
+
+createGitPlugin({ tagFormat });
+```
+
+The [GitHub plugin](/unirelman/reference/plugins/github/#options) names its releases after the tags: pass it the same `tagFormat`.
+
+## Releases
+
+| Field    | Value                                           |
+| -------- | ----------------------------------------------- |
+| `type`   | `git-tag`                                       |
+| `name`   | The tag name.                                   |
+| `status` | `existing` when the tag already exists locally. |
+
+## Related
+
+- [Adopt unirelman in an existing project](/unirelman/guides/existing-project/)
+- [GitHub plugin](/unirelman/reference/plugins/github/)

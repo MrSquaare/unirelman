@@ -1,0 +1,78 @@
+---
+title: Script releases
+description: Preview releases with dry runs, read their results as JSON, and handle failures in scripts and CI.
+sidebar:
+  order: 7
+---
+
+import PackageManagers from "../../../components/PackageManagers.astro";
+
+This guide shows how to use unirelman from scripts: previewing a release, reading its result, and handling failures.
+
+unirelman prints the result of a command on standard output, and everything else on standard error. See [Output streams](/unirelman/reference/cli/#output-streams).
+
+## Preview a release
+
+Add `--dry-run` to `version` or `publish`:
+
+<PackageManagers type="exec" pkg="unirelman" args="version --dry-run" />
+
+A [dry run](/unirelman/reference/glossary/#dry-run) reports what the release contains and changes nothing. Its summary starts with `Dry run: nothing was changed.` Add `--verbose` to see each action the run skips, such as `Would write CHANGELOG.md`.
+
+## Read the result
+
+Add `--json` to get the result of the command as a JSON document on standard output:
+
+<PackageManagers type="exec" pkg="unirelman" args="version --dry-run --json > release.json" />
+
+```json title="release.json"
+{
+  "pipeline": "version",
+  "dryRun": true,
+  "scopes": {
+    "my-package": { "currentVersion": "1.0.0", "nextVersion": "1.0.1" }
+  },
+  "files": [
+    { "path": ".unirelman/changesets/1767268800000-1f2e3d4c.md", "action": "delete" },
+    { "path": "CHANGELOG.md", "action": "write" },
+    { "path": "package.json", "action": "write" }
+  ]
+}
+```
+
+Each command documents its JSON document, such as [`version`](/unirelman/reference/cli/#version).
+
+## Handle failures
+
+Check the exit code before reading the result. On failure, unirelman exits with code `1` and prints the error on standard error, with standard output empty:
+
+```sh
+if npx unirelman version --dry-run --json > release.json; then
+  jq '.scopes' release.json
+else
+  echo "Release failed, see the error above" >&2
+  exit 1
+fi
+```
+
+Add `--verbose` to print the stack trace of the error.
+
+## Pass every option
+
+Outside a terminal, unirelman uses the [plain output mode](/unirelman/reference/cli/#output-modes), where a missing option fails the command instead of prompting. In scripts, pass every option of the command, such as `--scope` and `--channel` for `semver pre`.
+
+## Check whether a release is pending
+
+```sh
+set -e
+
+npx unirelman version --dry-run --json > release.json
+
+if [ "$(jq '.files | length' release.json)" -gt 0 ]; then
+  echo "A release is pending"
+fi
+```
+
+## Related
+
+- [CLI reference](/unirelman/reference/cli/)

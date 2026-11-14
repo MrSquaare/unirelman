@@ -1,0 +1,74 @@
+---
+title: Create GitHub releases
+description: Create a GitHub release for each published version, with the changelog section as release notes.
+sidebar:
+  order: 5
+---
+
+import PackageManagers from "../../../components/PackageManagers.astro";
+
+This guide shows how to create a GitHub release for each published version.
+
+## Register the plugin
+
+<PackageManagers pkg="@unirelman/plugin-github" dev />
+
+```ts title="unirelman.config.ts"
+import { createGitHubPlugin } from "@unirelman/plugin-github";
+
+// ...
+plugins: [
+  // ...
+  createGitHubPlugin(),
+],
+```
+
+On `publish`, the plugin creates a GitHub release for each current version, named after its tag. With the Changelog plugin registered, the [release notes](/unirelman/reference/glossary/#release-notes) of the version are the body of the release.
+
+## Provide the repository and the token
+
+In GitHub Actions, the plugin reads the repository and the token from the environment. Elsewhere, set the same environment variables:
+
+```sh
+export GITHUB_REPOSITORY=owner/repo
+export GITHUB_TOKEN=ghp_...
+```
+
+Or pass the options:
+
+```ts title="unirelman.config.ts"
+createGitHubPlugin({
+  repository: "owner/repo",
+  token: process.env.MY_TOKEN,
+});
+```
+
+The token needs the `contents: write` permission.
+
+## Create drafts
+
+```ts title="unirelman.config.ts"
+createGitHubPlugin({ draft: true });
+```
+
+## Keep the latest release on one scope
+
+```ts title="unirelman.config.ts"
+createGitHubPlugin({ makeLatest: "@example/core" });
+```
+
+## Use GitHub Enterprise Server
+
+Set `GITHUB_API_URL`, which GitHub Actions sets on Enterprise Server, or pass the `apiUrl` option:
+
+```ts title="unirelman.config.ts"
+createGitHubPlugin({ apiUrl: "https://github.example.com/api/v3" });
+```
+
+## Use the created releases
+
+The [`publish` JSON document](/unirelman/reference/cli/#publish) gives each GitHub release with its `id`, `url` and `uploadUrl`, for example to upload assets in a later workflow step.
+
+## Related
+
+- [GitHub plugin reference](/unirelman/reference/plugins/github/)

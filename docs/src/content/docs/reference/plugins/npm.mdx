@@ -1,0 +1,105 @@
+---
+title: npm
+description: Reads and writes versions in package.json, and publishes packages to the npm registry.
+---
+
+import PackageManagers from "../../../../components/PackageManagers.astro";
+
+<PackageManagers pkg="@unirelman/plugin-npm" dev />
+
+```ts title="unirelman.config.ts"
+import { createNpmPlugin } from "@unirelman/plugin-npm";
+
+createNpmPlugin({ publish: true });
+```
+
+## Options
+
+| Option                                  | Type                                 | Default          | Description                                                                                                                |
+| --------------------------------------- | ------------------------------------ | ---------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `publish`                               | `boolean`                            | `true`           | Publication of packages in the publish pipeline. With `false`, the plugin manages versions in `package.json` only.         |
+| `packageManager`                        | `"npm" \| "pnpm" \| "yarn" \| "bun"` | Detected         | Package manager that publishes packages. See [Package manager](#package-manager).                                          |
+| `updateInternalDependencies.ranges`     | `"patch" \| "minor"`                 | `"patch"`        | Smallest release of an internal dependency that gives a range update. See [Internal dependencies](#internal-dependencies). |
+| `updateInternalDependencies.dependents` | `"out-of-range" \| "always"`         | `"out-of-range"` | Releases of an internal dependency that give a dependent update. See [Internal dependencies](#internal-dependencies).      |
+
+## Phases
+
+| Phase                    | Behavior                                                                                                                                                                                                |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `getCurrentVersion`      | Reads `version` from the `package.json` of each scope folder.                                                                                                                                           |
+| `getDependencyChanges`   | Gives a change to the dependents of each scope with a next version, as described in [Internal dependencies](#internal-dependencies).                                                                    |
+| `generateFileOperations` | Writes the next version and the updated [internal dependency](/unirelman/reference/glossary/#internal-dependency) ranges to the `package.json` of each scope, keeping its other fields and their order. |
+| `createReleases`         | Publishes each scope's package, as described in [Publishing](#publishing).                                                                                                                              |
+
+## Internal dependencies
+
+An [internal dependency](/unirelman/reference/glossary/#internal-dependency) is a dependency on the package of another scope. When `@example/cli` (cli) depends on `@example/core` (core), core is the dependency and cli the dependent. When core gets a SemVer next version, two updates can follow:
+
+- **[Dependent update](/unirelman/reference/glossary/#dependent-update):** cli gets a `patch` change, `Updated dependencies: @example/core@2.0.0`, so it gets a next version too. Its own dependents can then be updated in turn.
+- **[Range update](/unirelman/reference/glossary/#range-update):** cli's specifier for core moves to the next version, such as `^1.0.0` → `^1.1.0`.
+
+| Condition                                                                                     | Dependent update | Range update |
+| --------------------------------------------------------------------------------------------- | ---------------- | ------------ |
+| Core leaves cli's range                                                                       | ✓                | ✓            |
+| `dependents: "always"`                                                                        | ✓                | —            |
+| cli is updated, by its own changes or by a dependency, and `ranges: "patch"`                  | —                | ✓            |
+| cli is updated, by its own changes or by a dependency, and core gets a minor or major release | —                | ✓            |
+
+When cli is updated, its `Updated dependencies` change lists every updated dependency outside `devDependencies`, next to its own changes.
+
+`devDependencies` never give a dependent update. When core is only in cli's `devDependencies`, cli isn't updated, and core leaves its range (or `dependents` is `"always"`), cli's specifier for core still moves to the next version. cli keeps its version and gets no change.
+
+| Specifier                                         | Range                                | Updated to                        |
+| ------------------------------------------------- | ------------------------------------ | --------------------------------- |
+| Exact version, `^` or `~` range, such as `^1.0.0` | The specifier                        | The next version, with its prefix |
+| `workspace:<range>`, such as `workspace:^1.0.0`   | The range                            | `workspace:` and the next range   |
+| `workspace:*`                                     | The current version                  | Unchanged                         |
+| `workspace:^`, `workspace:~`                      | The current version, with its prefix | Unchanged                         |
+
+The [package manager](#package-manager) resolves `workspace:*`, `workspace:^` and `workspace:~` when packing. Other SemVer ranges, such as `>=1.0.0`, stay as they are while they include the next version, and fail with `NpmUnsupportedDependencyRangeError` otherwise. Specifiers that are not SemVer ranges, such as `catalog:` or `file:`, are ignored.
+
+## Publishing
+
+For each public scope whose version is missing from the registry it publishes to, the plugin publishes the package from its folder with the [package manager](#package-manager)'s own command:
+
+| Package manager | Command                        |
+| --------------- | ------------------------------ |
+| npm             | `npm publish`                  |
+| pnpm            | `pnpm publish --no-git-checks` |
+| yarn            | `yarn npm publish`             |
+| bun             | `bun publish`                  |
+
+A prerelease gets `--tag <channel>`. The package manager runs the publish lifecycle scripts, such as `prepublishOnly`, `prepack` and `postpublish`, and resolves `workspace:` and `catalog:` specifiers (pnpm, yarn and bun).
+
+Packages with `"private": true` get no release. npm's own configuration sets the registry and the authentication: see [Publish to npm](/unirelman/guides/publish-to-npm/). The plugin checks the registry with the package manager's own command (`npm view`, `pnpm info` or `yarn npm info`; `npm view` for bun), so its configuration and credentials apply. With npm and bun, the registry of `publishConfig` (`registry`, or `@scope:registry` for a scoped package) applies to the check too.
+
+## Package manager
+
+Without the `packageManager` option, the plugin reads the `packageManager` field of the closest `package.json` from the scope folder up to the project root, and uses npm when none has it. Yarn Classic (1.x) is not supported.
+
+## Releases
+
+| Field    | Value                                                 |
+| -------- | ----------------------------------------------------- |
+| `type`   | `npm-package`                                         |
+| `name`   | `<package name>@<version>`                            |
+| `status` | `existing` when the registry already has the version. |
+
+## Errors
+
+| Error                                | Cause                                                                                                                                |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `NpmPackageJsonNotFoundError`        | A scope folder has no `package.json`.                                                                                                |
+| `NpmInvalidPackageJsonVersionError`  | A `package.json` has an empty `version`.                                                                                             |
+| `NpmUnsupportedPackageManagerError`  | A `packageManager` field names a package manager other than npm, pnpm, yarn or bun.                                                  |
+| `NpmUnsupportedYarnClassicError`     | A `packageManager` field names Yarn Classic (1.x).                                                                                   |
+| `NpmUnresolvedSpecifierError`        | The package manager is npm and a published dependency uses a `workspace:` or `catalog:` specifier.                                   |
+| `NpmRegistryLookupError`             | Checking the registry fails for a reason other than a missing version.                                                               |
+| `NpmUnsupportedDependencyRangeError` | The next version of an [internal dependency](#internal-dependencies) leaves a range other than an exact version, `^` or `~`.         |
+| `NpmPublishAuthError`                | npm rejects the publish with `ENEEDAUTH`, `E401`, `E403` or `EOTP`.                                                                  |
+| `NpmPublishError`                    | `npm publish` fails for another reason. The message is npm's. With pnpm, yarn or bun, a failed publish reports the command's output. |
+
+## Related
+
+- [Publish to npm](/unirelman/guides/publish-to-npm/)
+- [Release a monorepo](/unirelman/guides/monorepo/)

@@ -1,0 +1,82 @@
+---
+title: Write a versioning scheme
+description: Add a version format, with prereleases and fixed versioning included, by implementing a versioning scheme.
+sidebar:
+  order: 8
+---
+
+import PackageManagers from "../../../components/PackageManagers.astro";
+
+This guide shows how to add a version format as a [versioning scheme](/unirelman/reference/glossary/#versioning-scheme). The scheme describes the format; `@unirelman/helpers` turns it into a plugin with prerelease channels, fixed versioning and the `pre` command, as for the SemVer and CalVer plugins.
+
+The guide assumes you know how plugins work: see [Build your first plugin](/unirelman/tutorials/first-plugin/). The example is a scheme with a single increasing number: `1`, `2`, `3`.
+
+## Install the helpers
+
+<PackageManagers pkg="@unirelman/helpers" />
+
+## Implement the scheme
+
+Implement `VersioningScheme` from `@unirelman/helpers/versioning`:
+
+```ts title="counter-scheme.ts"
+import type { VersioningScheme } from "@unirelman/helpers/versioning";
+
+export type CounterVersion = {
+  readonly value: number;
+};
+
+const COUNTER_RE = /^(\d+)$/;
+
+export const counterScheme: VersioningScheme<CounterVersion> = {
+  name: "counter",
+  parse: (value) => {
+    const match = COUNTER_RE.exec(value);
+
+    return match ? { value: Number.parseInt(match[1], 10) } : undefined;
+  },
+  format: (version) => String(version.value),
+  bumpRelease: (version) => ({ value: version.value + 1 }),
+  isPrereleaseBaseStale: () => false,
+};
+```
+
+`name` names the plugin, its commands (`unirelman counter pre`) and its store folder (`.unirelman/counter/`). See [`VersioningScheme`](/unirelman/reference/helpers/#versioningscheme) for each member.
+
+Keep the rules pure, and inject time-dependent inputs, as the CalVer scheme does with the current date.
+
+## Create the plugin
+
+Build the plugin with `createVersioningSchemePlugin`:
+
+```ts title="counter-plugin.ts"
+import type { CLIPlugin } from "@unirelman/cli";
+import type { VersioningOptions } from "@unirelman/helpers/versioning";
+
+import { createVersioningSchemePlugin } from "@unirelman/helpers/versioning";
+
+import { counterScheme } from "./counter-scheme.ts";
+
+export const createCounterPlugin = (options: VersioningOptions = {}): CLIPlugin => {
+  return createVersioningSchemePlugin(counterScheme, options);
+};
+```
+
+The plugin parses current versions, computes next versions with prerelease channels (`3` → `4-alpha.0` → `4-alpha.1` → `4`) and the `fixed` option, and provides the `pre` command. See [`createVersioningSchemePlugin`](/unirelman/reference/helpers/#createversioningschemeplugin).
+
+## Type the version meta
+
+Declare the [meta](/unirelman/reference/glossary/#meta) field of the scheme, so other plugins see it typed:
+
+```ts title="counter-scheme.ts"
+declare module "@unirelman/core" {
+  interface VersionMeta {
+    counter?: CounterVersion & { channel?: string; increment?: number };
+  }
+}
+```
+
+## Related
+
+- [Helpers reference](/unirelman/reference/helpers/#versioning)
+- [Publish prereleases](/unirelman/guides/prereleases/)

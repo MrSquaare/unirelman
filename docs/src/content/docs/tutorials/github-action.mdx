@@ -1,0 +1,287 @@
+---
+title: Automate releases with GitHub Actions
+description: Let the unirelman GitHub Action keep a release pull request up to date and publish when you merge it.
+sidebar:
+  order: 2
+---
+
+import { Steps, TabItem, Tabs } from "@astrojs/starlight/components";
+import PackageManagers from "../../../components/PackageManagers.astro";
+
+In this tutorial, you automate the project from [Release your first package](/unirelman/tutorials/first-release/) on GitHub. At the end, every change merged into `main` updates a [release pull request](/unirelman/reference/glossary/#release-pull-request), and merging that pull request publishes the release: a Git tag and a GitHub release with the changelog section as notes.
+
+## Before you begin
+
+You need:
+
+- The project from [Release your first package](/unirelman/tutorials/first-release/), pushed to a GitHub repository.
+- Permission to change the repository settings.
+
+## Allow the workflow to open pull requests
+
+In your repository on GitHub, go to **Settings** > **Actions** > **General**, then under **Workflow permissions**, check **Allow GitHub Actions to create and approve pull requests**.
+
+## Add the GitHub plugin
+
+The GitHub plugin creates a GitHub release for each published version. Install it:
+
+<PackageManagers pkg="@unirelman/plugin-github" dev />
+
+Add it to your configuration:
+
+```ts title="unirelman.config.ts" ins={4,18}
+import { defineConfig } from "@unirelman/cli";
+import { createChangelogPlugin } from "@unirelman/plugin-changelog";
+import { createChangesetsPlugin } from "@unirelman/plugin-changesets";
+import { createGitHubPlugin } from "@unirelman/plugin-github";
+import { createGitPlugin } from "@unirelman/plugin-git";
+import { createNpmPlugin } from "@unirelman/plugin-npm";
+import { createSemverPlugin } from "@unirelman/plugin-semver";
+
+export default defineConfig({
+  scopes: {
+    "my-package": "./",
+  },
+  plugins: [
+    createChangesetsPlugin(),
+    createChangelogPlugin(),
+    createNpmPlugin({ publish: false }),
+    createGitPlugin(),
+    createGitHubPlugin(),
+    createSemverPlugin(),
+  ],
+});
+```
+
+In GitHub Actions, the plugin reads the repository and the token from the environment.
+
+## Add the release workflow
+
+Create `.github/workflows/release.yml` for your package manager:
+
+<Tabs syncKey="starlight-package-managers-pkg">
+<TabItem label="npm" icon="seti:npm">
+
+```yaml title=".github/workflows/release.yml"
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Release
+        uses: MrSquaare/unirelman/integrations/github-action@v0.0.0
+```
+
+</TabItem>
+<TabItem label="pnpm" icon="pnpm">
+
+```yaml title=".github/workflows/release.yml"
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Release
+        uses: MrSquaare/unirelman/integrations/github-action@v0.0.0
+```
+
+</TabItem>
+<TabItem label="yarn" icon="seti:yarn">
+
+```yaml title=".github/workflows/release.yml"
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Release
+        uses: MrSquaare/unirelman/integrations/github-action@v0.0.0
+        with:
+          command: yarn unirelman
+```
+
+</TabItem>
+<TabItem label="bun" icon="bun">
+
+```yaml title=".github/workflows/release.yml"
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Release
+        uses: MrSquaare/unirelman/integrations/github-action@v0.0.0
+```
+
+</TabItem>
+</Tabs>
+
+A few lines matter:
+
+- `fetch-depth: 0` fetches the whole history and its tags, which the Git plugin checks before tagging a version.
+- The install step installs the unirelman CLI of your project, which the GitHub Action runs: with `npx --no-install unirelman` by default, or with its `command` input, as in the yarn workflow.
+- `contents: write` lets the GitHub Action push tags and the release branch. `pull-requests: write` lets it manage the release pull request.
+
+## Trigger the first release
+
+<Steps>
+
+1. Record a change:
+
+   <PackageManagers type="exec" pkg="unirelman" args='changesets create --scopes my-package --level minor --message "add a feature"' />
+
+2. Commit and push the workflow and the changeset together:
+
+   ```sh
+   git add .
+   git commit -m "ci: automate releases"
+   git push
+   ```
+
+3. Open the **Actions** tab of your repository. The **Release** workflow runs and opens a pull request named **chore(release): bump versions**.
+
+   The pull request contains the release commit (`package.json` at `1.1.0`, the new changelog section, the changeset deleted) and a commit named **chore(release): enable publishing**. This second commit enables publishing for the repository, so the GitHub Action publishes only from your first merged release pull request on: see [The publish setting](/unirelman/concepts/github-action/#the-publish-setting).
+
+   The description of the pull request lists the versions it releases:
+
+   ```md
+   ## Releases
+
+   - `my-package`: 1.0.1 → 1.1.0
+   ```
+
+4. Merge the pull request.
+
+5. The workflow runs again on `main`. This time it publishes: it pushes the tag `1.1.0` and creates a GitHub release named `1.1.0` with the changelog section as notes.
+
+</Steps>
+
+## Keep releasing
+
+From now on, the cycle is:
+
+1. Merge changes with their changesets into `main`.
+2. The GitHub Action updates the release pull request with every new changeset.
+3. When you're ready to release, merge the release pull request.
+
+## Next steps
+
+- [Publish to npm](/unirelman/guides/publish-to-npm/)
+- [GitHub Action reference](/unirelman/reference/integrations/github-action/)
+- [How the GitHub Action works](/unirelman/concepts/github-action/)

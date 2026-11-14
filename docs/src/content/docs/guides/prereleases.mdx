@@ -1,0 +1,56 @@
+---
+title: Publish prereleases
+description: Move a scope through prerelease channels such as alpha, beta and rc, then release it as stable.
+sidebar:
+  order: 3
+---
+
+import PackageManagers from "../../../components/PackageManagers.astro";
+
+This guide shows how to publish [prereleases](/unirelman/reference/glossary/#prerelease) of a scope, such as `1.1.0-alpha.0`, then release it as stable. The SemVer and CalVer plugins provide the same `pre` command; the examples use SemVer.
+
+## Declare the channels
+
+List the [channels](/unirelman/reference/glossary/#channel) in the order a release goes through them:
+
+```ts title="unirelman.config.ts"
+createSemverPlugin({
+  prereleaseChannels: ["alpha", "beta", "rc"],
+});
+```
+
+## Enter a channel
+
+Put the scope in prerelease mode:
+
+<PackageManagers type="exec" pkg="unirelman" args="semver pre --scope my-package --channel alpha" />
+
+The command records the channel in `.unirelman/semver/prerelease.json`. Commit this file: `version` reads it.
+
+From now on, each `version` run gives a prerelease, such as `1.0.0` → `1.1.0-alpha.0` with a minor change, then `1.1.0-alpha.1`. See the [next version rules](/unirelman/reference/plugins/semver/#next-version-rules).
+
+With [fixed versioning](/unirelman/reference/glossary/#fixed-versioning), name the group with `--group` instead of `--scope`. See [`semver pre`](/unirelman/reference/plugins/semver/#semver-pre).
+
+## Move to the next channel
+
+<PackageManagers type="exec" pkg="unirelman" args="semver pre --scope my-package --channel beta" />
+
+The next `version` run gives `1.1.0-beta.0`.
+
+## Release as stable
+
+Exit prerelease mode:
+
+<PackageManagers type="exec" pkg="unirelman" args="semver pre --scope my-package --exit" />
+
+The next `version` run releases the stable version, such as `1.1.0`, with or without new changesets.
+
+## Publish prereleases
+
+- **npm** publishes a prerelease under a dist-tag named after its channel, such as `npm install my-package@beta`. `latest` keeps pointing to the last stable version.
+- **GitHub** marks the release of a prerelease as a prerelease.
+
+## Related
+
+- [SemVer plugin reference](/unirelman/reference/plugins/semver/)
+- [CalVer plugin reference](/unirelman/reference/plugins/calver/)

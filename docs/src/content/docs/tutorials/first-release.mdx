@@ -1,0 +1,197 @@
+---
+title: Release your first package
+description: Set up unirelman in a single-package project, record a change, and release it.
+sidebar:
+  order: 1
+---
+
+import { FileTree, Steps } from "@astrojs/starlight/components";
+import PackageManagers from "../../../components/PackageManagers.astro";
+
+In this tutorial, you set up unirelman in a small npm package, record a bug fix, and release it: the version in `package.json` goes from `1.0.0` to `1.0.1`, a changelog is written, and the release is committed and tagged.
+
+Everything runs locally: publishing to npm stays disabled.
+
+## Before you begin
+
+You need:
+
+- [Node.js](https://nodejs.org/) 24 or later.
+- [Git](https://git-scm.com/).
+
+## Create the project
+
+<Steps>
+
+1. Create a folder with a Git repository:
+
+   ```sh
+   mkdir my-package
+   cd my-package
+   git init
+   ```
+
+2. Create a `package.json` at version `1.0.0`:
+
+   ```json title="package.json"
+   {
+     "name": "my-package",
+     "version": "1.0.0",
+     "type": "module"
+   }
+   ```
+
+3. Create a `.gitignore` that excludes the installed dependencies:
+
+   ```txt title=".gitignore"
+   node_modules
+   ```
+
+4. Install the unirelman CLI and the plugins this tutorial uses:
+
+   <PackageManagers pkg="@unirelman/cli @unirelman/core @unirelman/plugin-changesets @unirelman/plugin-changelog @unirelman/plugin-npm @unirelman/plugin-git @unirelman/plugin-semver" dev />
+
+</Steps>
+
+## Configure unirelman
+
+Create `unirelman.config.ts` at the root of the project:
+
+```ts title="unirelman.config.ts"
+import { defineConfig } from "@unirelman/cli";
+import { createChangelogPlugin } from "@unirelman/plugin-changelog";
+import { createChangesetsPlugin } from "@unirelman/plugin-changesets";
+import { createGitPlugin } from "@unirelman/plugin-git";
+import { createNpmPlugin } from "@unirelman/plugin-npm";
+import { createSemverPlugin } from "@unirelman/plugin-semver";
+
+export default defineConfig({
+  scopes: {
+    "my-package": "./",
+  },
+  plugins: [
+    createChangesetsPlugin(),
+    createChangelogPlugin(),
+    createNpmPlugin({ publish: false }),
+    createGitPlugin(),
+    createSemverPlugin(),
+  ],
+});
+```
+
+This configuration declares one [scope](/unirelman/reference/glossary/#scope), `my-package`, at the root of the project. Each plugin handles one part of the release:
+
+- Changesets reads the changes you record.
+- SemVer computes the next version from them.
+- npm reads and writes the version in `package.json`. With `publish: false`, it manages the version only.
+- Changelog writes `CHANGELOG.md`.
+- Git commits the release and creates the tag.
+
+Commit this initial state:
+
+```sh
+git add .
+git commit -m "chore: set up unirelman"
+```
+
+## Record a change
+
+Describe a bug fix with a [changeset](/unirelman/reference/glossary/#changeset):
+
+<PackageManagers type="exec" pkg="unirelman" args='changesets create --scopes my-package --level patch --message "fix a bug"' />
+
+Without options, the command prompts for the scopes, the level and the message.
+
+The command creates a file under `.unirelman/changesets/`:
+
+<FileTree>
+
+- .unirelman/
+  - changesets/
+    - 1767268800000-1f2e3d4c.md
+- .gitignore
+- package.json
+- unirelman.config.ts
+
+</FileTree>
+
+```md title=".unirelman/changesets/1767268800000-1f2e3d4c.md"
+---
+scopes: my-package
+level: patch
+---
+
+fix a bug
+```
+
+The file name changes on every run. Commit the changeset like any other change of your project:
+
+```sh
+git add .
+git commit -m "fix: fix a bug"
+```
+
+## Preview the release
+
+Run the version pipeline as a [dry run](/unirelman/reference/glossary/#dry-run), which changes nothing:
+
+<PackageManagers type="exec" pkg="unirelman" args="version --dry-run" />
+
+The summary shows the next version, `my-package: 1.0.0 → 1.0.1`. Add `--verbose` to see the files the release writes and deletes.
+
+## Release
+
+<Steps>
+
+1. Apply the next version:
+
+   <PackageManagers type="exec" pkg="unirelman" args="version" />
+
+   unirelman:
+
+   - sets `"version": "1.0.1"` in `package.json`,
+   - writes `CHANGELOG.md`,
+   - deletes the changeset,
+   - commits these files with the message `chore(release): bump versions`.
+
+2. Publish the version:
+
+   <PackageManagers type="exec" pkg="unirelman" args="publish" />
+
+   The Git plugin creates the tag `1.0.1` on the release commit.
+
+</Steps>
+
+## Check the result
+
+The changelog contains the release:
+
+```md title="CHANGELOG.md"
+# Changelog
+
+## my-package - 1.0.1
+
+### Patch changes
+
+- fix a bug
+```
+
+Git shows the release commit and its tag:
+
+```sh
+git log --oneline --decorate
+```
+
+```
+a0945d8 (HEAD -> main, tag: 1.0.1) chore(release): bump versions
+5d6e7f8 fix: fix a bug
+3c1b2a7 chore: set up unirelman
+```
+
+You released your first version with unirelman.
+
+## Next steps
+
+- [Automate releases with GitHub Actions](/unirelman/tutorials/github-action/)
+- [Publish to npm](/unirelman/guides/publish-to-npm/)
+- [How unirelman works](/unirelman/concepts/overview/)

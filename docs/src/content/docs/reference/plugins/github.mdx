@@ -1,0 +1,64 @@
+---
+title: GitHub
+description: Creates a GitHub release for each published version.
+---
+
+import PackageManagers from "../../../../components/PackageManagers.astro";
+
+<PackageManagers pkg="@unirelman/plugin-github" dev />
+
+```ts title="unirelman.config.ts"
+import { createGitHubPlugin } from "@unirelman/plugin-github";
+
+createGitHubPlugin();
+```
+
+## Options
+
+| Option       | Type                                                       | Default                                                                 | Description                                                                                                             |
+| ------------ | ---------------------------------------------------------- | ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `repository` | `string`                                                   | `GITHUB_REPOSITORY`                                                     | Repository, as `owner/name`.                                                                                            |
+| `token`      | `string`                                                   | `GITHUB_TOKEN`, then `GH_TOKEN`                                         | Token allowed to create releases.                                                                                       |
+| `apiUrl`     | `string`                                                   | `GITHUB_API_URL`, then `https://api.github.com`                         | GitHub API URL, for GitHub Enterprise Server.                                                                           |
+| `tagFormat`  | `GitTagFormat`                                             | The [Git plugin's default](/unirelman/reference/plugins/git/#tag-names) | Function that names the tag of a version, the same as the Git plugin's.                                                 |
+| `draft`      | `boolean \| ({ scopeName, version }) => boolean`           | `false`                                                                 | Whether a release is created as a draft.                                                                                |
+| `makeLatest` | `boolean \| string \| ({ scopeName, version }) => boolean` | `true`                                                                  | Whether a release becomes the latest release. A string names the only scope that does. Prereleases and drafts never do. |
+
+The defaults of `repository`, `token` and `apiUrl` are environment variables that GitHub Actions sets. An empty value counts as unset. The `createReleases` phase reads the repository and the token.
+
+## Phases
+
+| Phase            | Behavior                                                                            |
+| ---------------- | ----------------------------------------------------------------------------------- |
+| `createReleases` | Creates a GitHub release for each scope's current version whose release is missing. |
+
+Each release:
+
+- Uses the [tag name](/unirelman/reference/plugins/git/#tag-names) of the version as tag and title.
+- Targets the current commit. GitHub creates the tag when it's missing.
+- Has the [release notes](/unirelman/reference/glossary/#release-notes) of the version as body, or an empty body.
+- Is marked as a prerelease for prerelease versions.
+
+Existing releases, drafts included, stay unchanged.
+
+## Releases
+
+| Field         | Value                                                                                                      |
+| ------------- | ---------------------------------------------------------------------------------------------------------- |
+| `type`        | `github-release`                                                                                           |
+| `name`        | The tag name.                                                                                              |
+| `status`      | `existing` when a release exists for the tag.                                                              |
+| `meta.github` | `{ id, url, uploadUrl }` of the created or existing release. Absent from a release a dry run would create. |
+
+## Errors
+
+| Error                           | Cause                                                                             |
+| ------------------------------- | --------------------------------------------------------------------------------- |
+| `GitHubMissingOptionError`      | The repository or the token is missing from both the options and the environment. |
+| `GitHubInvalidRepositoryError`  | The repository has another format than `owner/name`.                              |
+| `GitHubUnknownLatestScopeError` | `makeLatest` names a scope the plugin is not registered for.                      |
+
+## Related
+
+- [Create GitHub releases](/unirelman/guides/github-releases/)
+- [Git plugin](/unirelman/reference/plugins/git/)
