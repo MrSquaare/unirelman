@@ -18,7 +18,12 @@ export const packageJsonDocumentSchema = z.record(z.string(), z.unknown());
 
 export type PackageJsonDocument = z.infer<typeof packageJsonDocumentSchema>;
 
+export const publishConfigSchema = z.looseObject({
+  registry: z.string().optional(),
+});
+
 export const publishPackageJsonSchema = packageJsonSchema.extend({
+  publishConfig: publishConfigSchema.optional(),
   scripts: z.record(z.string(), z.string()).optional(),
   dependencies: dependencyMapSchema.optional(),
   peerDependencies: dependencyMapSchema.optional(),

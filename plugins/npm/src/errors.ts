@@ -73,6 +73,19 @@ export class NpmInvalidPackageJsonVersionError extends NpmError {
   }
 }
 
+export class NpmUnsupportedYarnClassicError extends NpmError {
+  readonly packageManagerField: string;
+
+  constructor(packageManagerField: string) {
+    super(
+      `Unsupported packageManager "${packageManagerField}" in package.json: Yarn Classic (1.x) is not supported`,
+    );
+
+    this.name = "NpmUnsupportedYarnClassicError";
+    this.packageManagerField = packageManagerField;
+  }
+}
+
 export class NpmUnsupportedPackageManagerError extends NpmError {
   readonly packageManagerField: string;
   readonly supportedPackageManagers: readonly string[];

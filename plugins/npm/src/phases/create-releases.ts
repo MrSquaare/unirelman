@@ -33,6 +33,8 @@ const NPM_NOT_FOUND_ERROR_CODE = "E404";
 const NPM_AUTH_ERROR_CODES = ["ENEEDAUTH", "E401", "E403", "EOTP"];
 const NPM_TARBALL_EXTENSION = ".tgz";
 const PACK_DIRECTORY_PREFIX = "unirelman-npm-";
+const PACKAGE_SCOPE_PREFIX = "@";
+const PACKAGE_SCOPE_SEPARATOR = "/";
 
 const npmErrorSchema = z.object({
   error: z.object({
@@ -41,16 +43,41 @@ const npmErrorSchema = z.object({
   }),
 });
 
+export const resolveRegistryArgs = (packageJson: PublishPackageJson): string[] => {
+  const { name, publishConfig } = packageJson;
+
+  if (publishConfig === undefined) {
+    return [];
+  }
+
+  const scope = name.startsWith(PACKAGE_SCOPE_PREFIX)
+    ? name.split(PACKAGE_SCOPE_SEPARATOR)[0]
+    : undefined;
+  const scopedRegistryKey = scope === undefined ? undefined : `${scope}:registry`;
+  const scopedRegistry =
+    scopedRegistryKey === undefined ? undefined : publishConfig[scopedRegistryKey];
+
+  return [
+    ...(typeof scopedRegistry === "string" ? [`--${scopedRegistryKey}=${scopedRegistry}`] : []),
+    ...(publishConfig.registry === undefined ? [] : [`--registry=${publishConfig.registry}`]),
+  ];
+};
+
 export const hasNpmVersion = async (
   packageName: string,
   version: string,
   cwd: string,
+  registryArgs: readonly string[],
 ): Promise<boolean> => {
   const packageSpec = `${packageName}@${version}`;
-  const result = await execCommand("npm", ["view", packageSpec, "version", "--json"], {
-    cwd,
-    allowedExitCodes: NPM_ALLOWED_EXIT_CODES,
-  });
+  const result = await execCommand(
+    "npm",
+    ["view", packageSpec, "version", "--json", ...registryArgs],
+    {
+      cwd,
+      allowedExitCodes: NPM_ALLOWED_EXIT_CODES,
+    },
+  );
 
   if (result.exitCode === 0) {
     return true;
@@ -188,7 +215,12 @@ export const createCreateReleasesPhase = (
         continue;
       }
 
-      const versionExists = await thisMod.hasNpmVersion(packageJson.name, version, scope.path);
+      const versionExists = await thisMod.hasNpmVersion(
+        packageJson.name,
+        version,
+        scope.path,
+        thisMod.resolveRegistryArgs(packageJson),
+      );
 
       releases[scopeName] = [
         {

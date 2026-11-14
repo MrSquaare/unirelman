@@ -44,9 +44,59 @@ import {
   packPackage,
   publishPackage,
   readScopePackageManager,
+  resolveRegistryArgs,
   runNpmPublish,
 } from "./create-releases";
 import * as thisMod from "./create-releases";
+
+describe("resolveRegistryArgs", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("should pass the publish registry of an unscoped package", () => {
+    expect(
+      resolveRegistryArgs(
+        createPublishPackageJson({
+          name: "example",
+          publishConfig: { registry: "https://registry.example.com/" },
+        }),
+      ),
+    ).toEqual(["--registry=https://registry.example.com/"]);
+  });
+
+  it("should pass the scoped and the default publish registries of a scoped package", () => {
+    expect(
+      resolveRegistryArgs(
+        createPublishPackageJson({
+          name: "@example/core",
+          publishConfig: {
+            "@example:registry": "https://scoped.example.com/",
+            registry: "https://registry.example.com/",
+          },
+        }),
+      ),
+    ).toEqual([
+      "--@example:registry=https://scoped.example.com/",
+      "--registry=https://registry.example.com/",
+    ]);
+  });
+
+  it("should ignore the scoped registry key of another scope", () => {
+    expect(
+      resolveRegistryArgs(
+        createPublishPackageJson({
+          name: "@example/core",
+          publishConfig: { "@other:registry": "https://other.example.com/", access: "public" },
+        }),
+      ),
+    ).toEqual([]);
+  });
+
+  it("should pass no registry without publish config", () => {
+    expect(resolveRegistryArgs(createPublishPackageJson({ name: "@example/core" }))).toEqual([]);
+  });
+});
 
 describe("hasNpmVersion", () => {
   const packageDir = SCOPE_PATHS[SCOPE_NAMES.ALPHA];
@@ -58,9 +108,9 @@ describe("hasNpmVersion", () => {
   it("should return true when npm view finds the version", async () => {
     mockedExecCommand.mockResolvedValueOnce({ exitCode: 0, stdout: '"1.2.3"\n', stderr: "" });
 
-    await expect(hasNpmVersion(SCOPE_NAMES.ALPHA, VERSIONS.DEFAULT, packageDir)).resolves.toEqual(
-      true,
-    );
+    await expect(
+      hasNpmVersion(SCOPE_NAMES.ALPHA, VERSIONS.DEFAULT, packageDir, []),
+    ).resolves.toEqual(true);
     expect(mockedExecCommand).toHaveBeenCalledTimes(1);
     expect(mockedExecCommand).toHaveBeenNthCalledWith(
       1,
@@ -71,14 +121,30 @@ describe("hasNpmVersion", () => {
     expect(mockedParseJSON).not.toHaveBeenCalled();
   });
 
+  it("should look the version up in the given registry", async () => {
+    mockedExecCommand.mockResolvedValueOnce({ exitCode: 0, stdout: '"1.2.3"\n', stderr: "" });
+
+    await expect(
+      hasNpmVersion(SCOPE_NAMES.ALPHA, VERSIONS.DEFAULT, packageDir, [
+        "--registry=https://registry.example.com/",
+      ]),
+    ).resolves.toEqual(true);
+    expect(mockedExecCommand).toHaveBeenNthCalledWith(
+      1,
+      "npm",
+      ["view", "@scope/a@1.2.3", "version", "--json", "--registry=https://registry.example.com/"],
+      { cwd: packageDir, allowedExitCodes: [0, 1] },
+    );
+  });
+
   it("should return false when npm view reports the version as not found", async () => {
     const stdout = '{"error":{"code":"E404","summary":"No match found for version 1.2.3"}}';
 
     mockedExecCommand.mockResolvedValueOnce({ exitCode: 1, stdout, stderr: "" });
 
-    await expect(hasNpmVersion(SCOPE_NAMES.ALPHA, VERSIONS.DEFAULT, packageDir)).resolves.toEqual(
-      false,
-    );
+    await expect(
+      hasNpmVersion(SCOPE_NAMES.ALPHA, VERSIONS.DEFAULT, packageDir, []),
+    ).resolves.toEqual(false);
     expect(mockedParseJSON).toHaveBeenCalledTimes(1);
     expect(mockedParseJSON).toHaveBeenNthCalledWith(
       1,
@@ -95,7 +161,9 @@ describe("hasNpmVersion", () => {
       stderr: "",
     });
 
-    await expect(hasNpmVersion(SCOPE_NAMES.ALPHA, VERSIONS.DEFAULT, packageDir)).rejects.toThrow(
+    await expect(
+      hasNpmVersion(SCOPE_NAMES.ALPHA, VERSIONS.DEFAULT, packageDir, []),
+    ).rejects.toThrow(
       new NpmRegistryLookupError(SCOPE_NAMES.ALPHA, VERSIONS.DEFAULT, "connect ECONNREFUSED"),
     );
   });
@@ -397,6 +465,7 @@ describe("publishPackage", () => {
 
 describe("createCreateReleasesPhase", () => {
   const readScopePackageManagerSpy = vi.spyOn(thisMod, "readScopePackageManager");
+  const resolveRegistryArgsSpy = vi.spyOn(thisMod, "resolveRegistryArgs");
   const hasNpmVersionSpy = vi.spyOn(thisMod, "hasNpmVersion");
   const publishPackageSpy = vi.spyOn(thisMod, "publishPackage");
 
@@ -460,18 +529,23 @@ describe("createCreateReleasesPhase", () => {
       SCOPE_NAMES.BETA,
       packageJsonB,
     );
+    expect(resolveRegistryArgsSpy).toHaveBeenCalledTimes(2);
+    expect(resolveRegistryArgsSpy).toHaveBeenNthCalledWith(1, packageJsonA);
+    expect(resolveRegistryArgsSpy).toHaveBeenNthCalledWith(2, packageJsonB);
     expect(hasNpmVersionSpy).toHaveBeenCalledTimes(2);
     expect(hasNpmVersionSpy).toHaveBeenNthCalledWith(
       1,
       SCOPE_NAMES.ALPHA,
       VERSIONS.DEFAULT,
       SCOPE_PATHS[SCOPE_NAMES.ALPHA],
+      [],
     );
     expect(hasNpmVersionSpy).toHaveBeenNthCalledWith(
       2,
       SCOPE_NAMES.BETA,
       VERSIONS.MAJOR,
       SCOPE_PATHS[SCOPE_NAMES.BETA],
+      [],
     );
     expect(readScopePackageManagerSpy).toHaveBeenCalledTimes(2);
     expect(readScopePackageManagerSpy).toHaveBeenNthCalledWith(

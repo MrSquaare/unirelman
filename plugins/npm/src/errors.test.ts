@@ -12,6 +12,7 @@ import {
   NpmUnresolvedSpecifierError,
   NpmUnsupportedDependencyRangeError,
   NpmUnsupportedPackageManagerError,
+  NpmUnsupportedYarnClassicError,
 } from "./errors";
 
 describe("NpmError", () => {
@@ -119,6 +120,24 @@ describe("NpmInvalidPackageJsonVersionError", () => {
       );
       expect(error.name).toEqual("NpmInvalidPackageJsonVersionError");
       expect(error.scopeName).toEqual(SCOPE_NAMES.ALPHA);
+    });
+  });
+});
+
+describe("NpmUnsupportedYarnClassicError", () => {
+  describe("constructor", () => {
+    afterEach(() => {
+      vi.clearAllMocks();
+    });
+
+    it("should construct with correct message and name", () => {
+      const error = new NpmUnsupportedYarnClassicError("yarn@1.22.22");
+
+      expect(error.message).toEqual(
+        'Unsupported packageManager "yarn@1.22.22" in package.json: Yarn Classic (1.x) is not supported',
+      );
+      expect(error.name).toEqual("NpmUnsupportedYarnClassicError");
+      expect(error.packageManagerField).toEqual("yarn@1.22.22");
     });
   });
 });

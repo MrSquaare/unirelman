@@ -1,7 +1,7 @@
 import { mockedExecCommand } from "@unirelman/utils/testing/mock";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { NpmUnsupportedPackageManagerError } from "../errors";
+import { NpmUnsupportedPackageManagerError, NpmUnsupportedYarnClassicError } from "../errors";
 import { createPublishPackageJson } from "../types.fixture";
 import * as thisMod from "./package-manager";
 import {
@@ -11,6 +11,7 @@ import {
   resolveManifestDirectories,
   resolvePackageManager,
   resolvePackCommand,
+  resolveRunScriptCommand,
   runPackageScript,
 } from "./package-manager";
 
@@ -46,9 +47,19 @@ describe("parsePackageManagerField", () => {
     expect(parsePackageManagerField(" yarn ")).toEqual("yarn");
   });
 
+  it("should return yarn for Yarn 2 or later", () => {
+    expect(parsePackageManagerField("yarn@4.9.2")).toEqual("yarn");
+  });
+
   it("should throw when the package manager is not supported", () => {
     expect(() => parsePackageManagerField("deno@2.0.0")).toThrow(
       new NpmUnsupportedPackageManagerError("deno@2.0.0", ["npm", "pnpm", "yarn", "bun"]),
+    );
+  });
+
+  it("should throw when the field names Yarn Classic", () => {
+    expect(() => parsePackageManagerField("yarn@1.22.22")).toThrow(
+      new NpmUnsupportedYarnClassicError("yarn@1.22.22"),
     );
   });
 });
@@ -133,6 +144,40 @@ describe("resolvePackCommand", () => {
   });
 });
 
+describe("resolveRunScriptCommand", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("should run the script with npm without its pre and post scripts", () => {
+    expect(resolveRunScriptCommand("npm", "publish")).toEqual({
+      command: "npm",
+      args: ["run", "--ignore-scripts", "publish"],
+    });
+  });
+
+  it("should run the script with pnpm without its pre and post scripts", () => {
+    expect(resolveRunScriptCommand("pnpm", "publish")).toEqual({
+      command: "pnpm",
+      args: ["--config.enable-pre-post-scripts=false", "run", "publish"],
+    });
+  });
+
+  it("should run the script with yarn, which runs no pre and post scripts", () => {
+    expect(resolveRunScriptCommand("yarn", "publish")).toEqual({
+      command: "yarn",
+      args: ["run", "publish"],
+    });
+  });
+
+  it("should run the script of a bun package with npm without its pre and post scripts", () => {
+    expect(resolveRunScriptCommand("bun", "publish")).toEqual({
+      command: "npm",
+      args: ["run", "--ignore-scripts", "publish"],
+    });
+  });
+});
+
 describe("findUnresolvedSpecifier", () => {
   afterEach(() => {
     vi.clearAllMocks();
@@ -185,6 +230,8 @@ describe("findUnresolvedSpecifier", () => {
 });
 
 describe("runPackageScript", () => {
+  const resolveRunScriptCommandSpy = vi.spyOn(thisMod, "resolveRunScriptCommand");
+
   afterEach(() => {
     vi.clearAllMocks();
   });
@@ -201,9 +248,14 @@ describe("runPackageScript", () => {
     ).resolves.toEqual(undefined);
 
     expect(mockedExecCommand).toHaveBeenCalledTimes(1);
-    expect(mockedExecCommand).toHaveBeenNthCalledWith(1, "pnpm", ["run", "prepublishOnly"], {
-      cwd: "/repo/packages/a",
-    });
+    expect(resolveRunScriptCommandSpy).toHaveBeenCalledTimes(1);
+    expect(resolveRunScriptCommandSpy).toHaveBeenNthCalledWith(1, "pnpm", "prepublishOnly");
+    expect(mockedExecCommand).toHaveBeenNthCalledWith(
+      1,
+      "pnpm",
+      ["--config.enable-pre-post-scripts=false", "run", "prepublishOnly"],
+      { cwd: "/repo/packages/a" },
+    );
   });
 
   it("should run nothing when the script is not declared", async () => {
@@ -213,6 +265,7 @@ describe("runPackageScript", () => {
       runPackageScript("pnpm", "/repo/packages/a", packageJson, "prepublishOnly"),
     ).resolves.toEqual(undefined);
 
+    expect(resolveRunScriptCommandSpy).not.toHaveBeenCalled();
     expect(mockedExecCommand).not.toHaveBeenCalled();
   });
 });

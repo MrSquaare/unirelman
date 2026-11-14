@@ -4,11 +4,11 @@ import { join, relative, sep } from "node:path";
 import type { NpmPackageManager, PackageManagerManifest, PublishPackageJson } from "../types";
 
 import { DEFAULT_NPM_PACKAGE_MANAGER } from "../constants";
-import { NpmUnsupportedPackageManagerError } from "../errors";
+import { NpmUnsupportedPackageManagerError, NpmUnsupportedYarnClassicError } from "../errors";
 import { NPM_PACKAGE_MANAGERS } from "../types";
 import * as thisMod from "./package-manager";
 
-export type PackCommand = {
+export type PackageManagerCommand = {
   readonly command: NpmPackageManager;
   readonly args: readonly string[];
 };
@@ -25,16 +25,23 @@ const PUBLISHED_DEPENDENCY_FIELDS = [
   "optionalDependencies",
 ] as const;
 const YARN_TARBALL_FILE_NAME = "package.tgz";
+const YARN_CLASSIC_MAJOR_VERSION = "1";
+const PNPM_DISABLE_PRE_POST_SCRIPTS_OPTION = "--config.enable-pre-post-scripts=false";
+const NPM_IGNORE_SCRIPTS_OPTION = "--ignore-scripts";
 
 export const isNpmPackageManager = (value: string): value is NpmPackageManager => {
   return NPM_PACKAGE_MANAGERS.some((packageManager) => packageManager === value);
 };
 
 export const parsePackageManagerField = (field: string): NpmPackageManager => {
-  const [name = ""] = field.trim().split("@");
+  const [name = "", version = ""] = field.trim().split("@");
 
   if (!thisMod.isNpmPackageManager(name)) {
     throw new NpmUnsupportedPackageManagerError(field, NPM_PACKAGE_MANAGERS);
+  }
+
+  if (name === "yarn" && version.split(".")[0] === YARN_CLASSIC_MAJOR_VERSION) {
+    throw new NpmUnsupportedYarnClassicError(field);
   }
 
   return name;
@@ -68,7 +75,7 @@ export const resolvePackageManager = (
 export const resolvePackCommand = (
   packageManager: NpmPackageManager,
   destination: string,
-): PackCommand => {
+): PackageManagerCommand => {
   switch (packageManager) {
     case "npm":
     case "pnpm":
@@ -80,6 +87,21 @@ export const resolvePackCommand = (
       };
     case "bun":
       return { command: "bun", args: ["pm", "pack", "--destination", destination] };
+  }
+};
+
+export const resolveRunScriptCommand = (
+  packageManager: NpmPackageManager,
+  script: string,
+): PackageManagerCommand => {
+  switch (packageManager) {
+    case "npm":
+    case "bun":
+      return { command: "npm", args: ["run", NPM_IGNORE_SCRIPTS_OPTION, script] };
+    case "pnpm":
+      return { command: "pnpm", args: [PNPM_DISABLE_PRE_POST_SCRIPTS_OPTION, "run", script] };
+    case "yarn":
+      return { command: "yarn", args: ["run", script] };
   }
 };
 
@@ -107,5 +129,7 @@ export const runPackageScript = async (
     return;
   }
 
-  await execCommand(packageManager, ["run", script], { cwd });
+  const { command, args } = thisMod.resolveRunScriptCommand(packageManager, script);
+
+  await execCommand(command, args, { cwd });
 };
