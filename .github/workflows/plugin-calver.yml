@@ -1,0 +1,86 @@
+name: "@unirelman/plugin-calver"
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "plugins/calver/**"
+      - "internals/shared-config/**"
+      - "internals/testing/**"
+      - "packages/cli/**"
+      - "packages/core/**"
+      - "packages/helpers/**"
+      - "packages/utils/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "turbo.json"
+      - ".github/actions/setup-env/**"
+      - ".github/workflows/plugin-calver.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "plugins/calver/**"
+      - "internals/shared-config/**"
+      - "internals/testing/**"
+      - "packages/cli/**"
+      - "packages/core/**"
+      - "packages/helpers/**"
+      - "packages/utils/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "turbo.json"
+      - ".github/actions/setup-env/**"
+      - ".github/workflows/plugin-calver.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    name: Checks
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup environment
+        uses: ./.github/actions/setup-env
+
+      - name: Build
+        run: pnpm build --filter @unirelman/plugin-calver
+
+      - name: Typecheck
+        run: pnpm typecheck --filter @unirelman/plugin-calver
+
+      - name: Check
+        run: pnpm check --filter @unirelman/plugin-calver
+
+  test:
+    runs-on: ubuntu-latest
+    name: Test
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup environment
+        uses: ./.github/actions/setup-env
+
+      - name: Test
+        run: pnpm test --filter @unirelman/plugin-calver -- --coverage
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: plugins/calver/coverage/lcov.info
+          flags: plugin-calver
+          disable_search: true
+          fail_ci_if_error: true
