@@ -448,7 +448,7 @@ describe("createPreparePhase", () => {
     );
   });
 
-  it("should skip commit when generated paths do not produce staged changes", async () => {
+  it("should skip commit when the generated paths have no staged change, whatever else is staged", async () => {
     const fileOperations = createScopeFileOperationsMap();
     const context = createPhaseContext();
     const state = createPrepareState({ fileOperations });
