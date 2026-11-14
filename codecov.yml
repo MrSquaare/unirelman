@@ -36,6 +36,10 @@ flags:
     paths:
       - plugins/git/
     carryforward: true
+  plugin-github:
+    paths:
+      - plugins/github/
+    carryforward: true
   plugin-replace:
     paths:
       - plugins/replace/
