@@ -1,0 +1,82 @@
+name: "@unirelman/cli"
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "packages/cli/**"
+      - "internals/shared-config/**"
+      - "internals/testing/**"
+      - "packages/core/**"
+      - "packages/utils/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "turbo.json"
+      - ".github/actions/setup-env/**"
+      - ".github/workflows/cli.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "packages/cli/**"
+      - "internals/shared-config/**"
+      - "internals/testing/**"
+      - "packages/core/**"
+      - "packages/utils/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "turbo.json"
+      - ".github/actions/setup-env/**"
+      - ".github/workflows/cli.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    name: Checks
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup environment
+        uses: ./.github/actions/setup-env
+
+      - name: Build
+        run: pnpm build --filter @unirelman/cli
+
+      - name: Typecheck
+        run: pnpm typecheck --filter @unirelman/cli
+
+      - name: Check
+        run: pnpm check --filter @unirelman/cli
+
+  test:
+    runs-on: ubuntu-latest
+    name: Test
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup environment
+        uses: ./.github/actions/setup-env
+
+      - name: Test
+        run: pnpm test --filter @unirelman/cli -- --coverage
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: packages/cli/coverage/lcov.info
+          flags: cli
+          disable_search: true
+          fail_ci_if_error: true
