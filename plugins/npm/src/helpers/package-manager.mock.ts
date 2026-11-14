@@ -4,8 +4,7 @@ import {
   findUnresolvedSpecifier,
   resolveManifestDirectories,
   resolvePackageManager,
-  resolvePackCommand,
-  runPackageScript,
+  resolvePublishCommand,
 } from "./package-manager";
 
 vi.mock("./package-manager", async (importActual) => {
@@ -16,13 +15,11 @@ vi.mock("./package-manager", async (importActual) => {
     findUnresolvedSpecifier: vi.fn(actual.findUnresolvedSpecifier),
     resolveManifestDirectories: vi.fn(actual.resolveManifestDirectories),
     resolvePackageManager: vi.fn(actual.resolvePackageManager),
-    resolvePackCommand: vi.fn(actual.resolvePackCommand),
-    runPackageScript: vi.fn(),
+    resolvePublishCommand: vi.fn(actual.resolvePublishCommand),
   };
 });
 
 export const mockedFindUnresolvedSpecifier = vi.mocked(findUnresolvedSpecifier);
 export const mockedResolveManifestDirectories = vi.mocked(resolveManifestDirectories);
 export const mockedResolvePackageManager = vi.mocked(resolvePackageManager);
-export const mockedResolvePackCommand = vi.mocked(resolvePackCommand);
-export const mockedRunPackageScript = vi.mocked(runPackageScript);
+export const mockedResolvePublishCommand = vi.mocked(resolvePublishCommand);

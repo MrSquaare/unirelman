@@ -15,7 +15,6 @@ export {
   NpmPublishAuthError,
   NpmPublishError,
   NpmRegistryLookupError,
-  NpmTarballNotFoundError,
   NpmUnresolvedSpecifierError,
   NpmUnsupportedDependencyRangeError,
   NpmUnsupportedPackageManagerError,

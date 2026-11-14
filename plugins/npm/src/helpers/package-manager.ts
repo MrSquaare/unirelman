@@ -1,4 +1,5 @@
-import { execCommand } from "@unirelman/utils";
+import type { PrereleaseTag } from "@unirelman/helpers/prerelease";
+
 import { join, relative, sep } from "node:path";
 
 import type { NpmPackageManager, PackageManagerManifest, PublishPackageJson } from "../types";
@@ -24,10 +25,7 @@ const PUBLISHED_DEPENDENCY_FIELDS = [
   "peerDependencies",
   "optionalDependencies",
 ] as const;
-const YARN_TARBALL_FILE_NAME = "package.tgz";
 const YARN_CLASSIC_MAJOR_VERSION = "1";
-const PNPM_DISABLE_PRE_POST_SCRIPTS_OPTION = "--config.enable-pre-post-scripts=false";
-const NPM_IGNORE_SCRIPTS_OPTION = "--ignore-scripts";
 
 export const isNpmPackageManager = (value: string): value is NpmPackageManager => {
   return NPM_PACKAGE_MANAGERS.some((packageManager) => packageManager === value);
@@ -72,36 +70,21 @@ export const resolvePackageManager = (
   return thisMod.parsePackageManagerField(packageManagerField);
 };
 
-export const resolvePackCommand = (
+export const resolvePublishCommand = (
   packageManager: NpmPackageManager,
-  destination: string,
+  prerelease: PrereleaseTag | undefined,
 ): PackageManagerCommand => {
-  switch (packageManager) {
-    case "npm":
-    case "pnpm":
-      return { command: packageManager, args: ["pack", "--pack-destination", destination] };
-    case "yarn":
-      return {
-        command: "yarn",
-        args: ["pack", "--out", join(destination, YARN_TARBALL_FILE_NAME)],
-      };
-    case "bun":
-      return { command: "bun", args: ["pm", "pack", "--destination", destination] };
-  }
-};
+  const tagArgs = prerelease === undefined ? [] : ["--tag", prerelease.channel];
 
-export const resolveRunScriptCommand = (
-  packageManager: NpmPackageManager,
-  script: string,
-): PackageManagerCommand => {
   switch (packageManager) {
     case "npm":
-    case "bun":
-      return { command: "npm", args: ["run", NPM_IGNORE_SCRIPTS_OPTION, script] };
+      return { command: "npm", args: ["publish", "--json", ...tagArgs] };
     case "pnpm":
-      return { command: "pnpm", args: [PNPM_DISABLE_PRE_POST_SCRIPTS_OPTION, "run", script] };
+      return { command: "pnpm", args: ["publish", "--no-git-checks", ...tagArgs] };
     case "yarn":
-      return { command: "yarn", args: ["run", script] };
+      return { command: "yarn", args: ["npm", "publish", ...tagArgs] };
+    case "bun":
+      return { command: "bun", args: ["publish", ...tagArgs] };
   }
 };
 
@@ -117,19 +100,4 @@ export const findUnresolvedSpecifier = (
   }
 
   return undefined;
-};
-
-export const runPackageScript = async (
-  packageManager: NpmPackageManager,
-  cwd: string,
-  packageJson: PublishPackageJson,
-  script: string,
-): Promise<void> => {
-  if (packageJson.scripts?.[script] === undefined) {
-    return;
-  }
-
-  const { command, args } = thisMod.resolveRunScriptCommand(packageManager, script);
-
-  await execCommand(command, args, { cwd });
 };

@@ -136,16 +136,3 @@ export class NpmUnsupportedDependencyRangeError extends NpmError {
     this.nextVersion = nextVersion;
   }
 }
-
-export class NpmTarballNotFoundError extends NpmError {
-  readonly packageName: string;
-  readonly directory: string;
-
-  constructor(packageName: string, directory: string) {
-    super(`Failed to publish ${packageName}: packing wrote no tarball to ${directory}`);
-
-    this.name = "NpmTarballNotFoundError";
-    this.packageName = packageName;
-    this.directory = directory;
-  }
-}

@@ -8,7 +8,6 @@ import {
   NpmPublishAuthError,
   NpmPublishError,
   NpmRegistryLookupError,
-  NpmTarballNotFoundError,
   NpmUnresolvedSpecifierError,
   NpmUnsupportedDependencyRangeError,
   NpmUnsupportedPackageManagerError,
@@ -204,25 +203,6 @@ describe("NpmUnsupportedDependencyRangeError", () => {
       expect(error.dependencyName).toEqual("@scope/a");
       expect(error.specifier).toEqual(">=1.0.0 <2.0.0");
       expect(error.nextVersion).toEqual("2.0.0");
-    });
-  });
-});
-
-describe("NpmTarballNotFoundError", () => {
-  describe("constructor", () => {
-    afterEach(() => {
-      vi.clearAllMocks();
-    });
-
-    it("should construct with correct message and name", () => {
-      const error = new NpmTarballNotFoundError("@scope/a", "/tmp/unirelman-npm-abc");
-
-      expect(error.message).toEqual(
-        "Failed to publish @scope/a: packing wrote no tarball to /tmp/unirelman-npm-abc",
-      );
-      expect(error.name).toEqual("NpmTarballNotFoundError");
-      expect(error.packageName).toEqual("@scope/a");
-      expect(error.directory).toEqual("/tmp/unirelman-npm-abc");
     });
   });
 });

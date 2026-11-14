@@ -1,9 +1,7 @@
 import type { FS, Plugin, ScopeReleasesMap } from "@unirelman/core";
 import type { PrereleaseTag } from "@unirelman/helpers/prerelease";
 
-import { execCommand, parseJSON, runWithCleanup } from "@unirelman/utils";
-import { mkdtemp, readdir, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { execCommand, parseJSON } from "@unirelman/utils";
 import { join, resolve } from "node:path";
 import * as z from "zod";
 
@@ -14,7 +12,6 @@ import {
   NpmPublishAuthError,
   NpmPublishError,
   NpmRegistryLookupError,
-  NpmTarballNotFoundError,
   NpmUnresolvedSpecifierError,
 } from "../errors";
 import { readScopePackageJson, resolvePackageJsonVersion } from "../helpers/package-json";
@@ -22,8 +19,7 @@ import {
   findUnresolvedSpecifier,
   resolveManifestDirectories,
   resolvePackageManager,
-  resolvePackCommand,
-  runPackageScript,
+  resolvePublishCommand,
 } from "../helpers/package-manager";
 import { packageManagerManifestSchema, publishPackageJsonSchema } from "../types";
 import * as thisMod from "./create-releases";
@@ -31,8 +27,6 @@ import * as thisMod from "./create-releases";
 const NPM_ALLOWED_EXIT_CODES = [0, 1] as const;
 const NPM_NOT_FOUND_ERROR_CODE = "E404";
 const NPM_AUTH_ERROR_CODES = ["ENEEDAUTH", "E401", "E403", "EOTP"];
-const NPM_TARBALL_EXTENSION = ".tgz";
-const PACK_DIRECTORY_PREFIX = "unirelman-npm-";
 const PACKAGE_SCOPE_PREFIX = "@";
 const PACKAGE_SCOPE_SEPARATOR = "/";
 
@@ -111,35 +105,12 @@ export const readScopePackageManager = async (
   return resolvePackageManager(manifests);
 };
 
-export const packPackage = async (
-  packageManager: NpmPackageManager,
-  cwd: string,
-  destination: string,
-  packageName: string,
-): Promise<string> => {
-  const { command, args } = resolvePackCommand(packageManager, destination);
-
-  await execCommand(command, args, { cwd });
-
-  const tarballName = (await readdir(destination)).find((fileName) =>
-    fileName.endsWith(NPM_TARBALL_EXTENSION),
-  );
-
-  if (tarballName === undefined) {
-    throw new NpmTarballNotFoundError(packageName, destination);
-  }
-
-  return join(destination, tarballName);
-};
-
 export const runNpmPublish = async (
   packageSpec: string,
-  tarballPath: string,
   cwd: string,
-  prerelease: PrereleaseTag | undefined,
+  args: readonly string[],
 ): Promise<void> => {
-  const tagArgs = prerelease ? ["--tag", prerelease.channel] : [];
-  const result = await execCommand("npm", ["publish", tarballPath, "--json", ...tagArgs], {
+  const result = await execCommand("npm", args, {
     cwd,
     allowedExitCodes: NPM_ALLOWED_EXIT_CODES,
   });
@@ -160,29 +131,18 @@ export const runNpmPublish = async (
 export const publishPackage = async (
   packageManager: NpmPackageManager,
   cwd: string,
-  packageJson: PublishPackageJson,
   packageSpec: string,
   prerelease: PrereleaseTag | undefined,
 ): Promise<void> => {
-  const packDirectory = await mkdtemp(join(tmpdir(), PACK_DIRECTORY_PREFIX));
+  const { command, args } = resolvePublishCommand(packageManager, prerelease);
 
-  await runWithCleanup(
-    async () => {
-      await runPackageScript(packageManager, cwd, packageJson, "prepublishOnly");
+  if (packageManager === "npm") {
+    await thisMod.runNpmPublish(packageSpec, cwd, args);
 
-      const tarballPath = await thisMod.packPackage(
-        packageManager,
-        cwd,
-        packDirectory,
-        packageJson.name,
-      );
+    return;
+  }
 
-      await thisMod.runNpmPublish(packageSpec, tarballPath, cwd, prerelease);
-      await runPackageScript(packageManager, cwd, packageJson, "publish");
-      await runPackageScript(packageManager, cwd, packageJson, "postpublish");
-    },
-    () => rm(packDirectory, { recursive: true, force: true }),
-  );
+  await execCommand(command, args, { cwd });
 };
 
 export const createCreateReleasesPhase = (
@@ -265,7 +225,6 @@ export const createCreateReleasesPhase = (
       await thisMod.publishPackage(
         packageManager,
         scope.path,
-        packageJson,
         packageSpec,
         state.currentVersions[scopeName]?.meta.prerelease,
       );
