@@ -1,0 +1,82 @@
+{
+  "name": "@unirelman/helpers",
+  "version": "0.0.0",
+  "homepage": "https://github.com/MrSquaare/unirelman/tree/main/packages/helpers#readme",
+  "bugs": {
+    "url": "https://github.com/MrSquaare/unirelman/issues"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MrSquaare/unirelman.git"
+  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "exports": {
+    "./git": {
+      "@unirelman/source": "./src/git/index.ts",
+      "default": "./dist/git/index.mjs"
+    },
+    "./git/testing/mock": {
+      "@unirelman/source": "./src/git/testing/mock.ts"
+    },
+    "./group": {
+      "@unirelman/source": "./src/group/index.ts",
+      "default": "./dist/group/index.mjs"
+    },
+    "./prerelease": {
+      "@unirelman/source": "./src/prerelease/index.ts",
+      "default": "./dist/prerelease/index.mjs"
+    },
+    "./versioning": {
+      "@unirelman/source": "./src/versioning/index.ts",
+      "default": "./dist/versioning/index.mjs"
+    },
+    "./versioning/testing/mock": {
+      "@unirelman/source": "./src/versioning/testing/mock.ts"
+    },
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "test": "vitest run",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check",
+    "typecheck": "tsc --noEmit",
+    "check": "pnpm run fmt:check && pnpm run lint",
+    "check:fix": "pnpm run fmt && pnpm run lint:fix",
+    "clean": "rm -rf dist/"
+  },
+  "dependencies": {
+    "@unirelman/utils": "workspace:*",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "@unirelman/cli": "workspace:*",
+    "@unirelman/core": "workspace:*",
+    "@unirelman/shared-config": "workspace:*",
+    "@unirelman/testing": "workspace:*",
+    "@vitest/coverage-v8": "^5.1.0",
+    "oxfmt": "^0.78.0",
+    "oxlint": "^1.93.0",
+    "tsdown": "^0.23.7",
+    "typescript": "^6.0.3",
+    "vitest": "^5.1.0"
+  },
+  "peerDependencies": {
+    "@unirelman/cli": "workspace:^",
+    "@unirelman/core": "workspace:^"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}
