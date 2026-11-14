@@ -224,3 +224,33 @@ export class CorePhaseError extends CoreError {
     this.pluginName = pluginName;
   }
 }
+
+export class CoreUnknownPhaseResultScopeError extends CoreError {
+  readonly phaseName: string;
+  readonly pluginName: string;
+  readonly scopeName: string;
+
+  constructor(phaseName: string, pluginName: string, scopeName: string) {
+    super(
+      `Plugin "${pluginName}" returned a ${phaseName} result for scope "${scopeName}", which is not one of its scopes`,
+    );
+
+    this.name = "CoreUnknownPhaseResultScopeError";
+    this.phaseName = phaseName;
+    this.pluginName = pluginName;
+    this.scopeName = scopeName;
+  }
+}
+
+export class CoreTeardownError extends CoreError {
+  readonly errors: readonly CorePhaseError[];
+
+  constructor(errors: readonly CorePhaseError[]) {
+    super(
+      `Several plugins failed in the teardown phase:\n${errors.map((error) => error.message).join("\n")}`,
+    );
+
+    this.name = "CoreTeardownError";
+    this.errors = errors;
+  }
+}

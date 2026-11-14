@@ -9,6 +9,7 @@ import {
   CoreConflictingPhaseProvidersError,
   CoreEmptyFileOperationPathError,
   CoreMissingPhaseProviderError,
+  CoreUnknownPhaseResultScopeError,
   CoreUnstableNextVersionError,
 } from "../errors";
 import {
@@ -31,6 +32,7 @@ import {
   resolveCurrentVersions,
   resolveFileOperations,
   dedupeFileOperations,
+  assertPhaseResultScopes,
 } from "./phase";
 import * as thisMod from "./phase";
 
@@ -498,5 +500,49 @@ describe("filterPhaseState", () => {
       phaseState.fileOperations,
       new Set([SCOPE_NAMES.MISSING]),
     );
+  });
+});
+
+describe("assertPhaseResultScopes", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("should accept a result keyed by the plugin scopes", () => {
+    expect(() =>
+      assertPhaseResultScopes(
+        "getChanges",
+        "plugin",
+        { [SCOPE_NAMES.ALPHA]: [createChange()] },
+        new Set([SCOPE_NAMES.ALPHA, SCOPE_NAMES.BETA]),
+      ),
+    ).not.toThrow();
+  });
+
+  it("should accept an undefined result", () => {
+    expect(() =>
+      assertPhaseResultScopes("prepare", "plugin", undefined, new Set([SCOPE_NAMES.ALPHA])),
+    ).not.toThrow();
+  });
+
+  it("should throw an unknown phase result scope error when a result key is not a plugin scope", () => {
+    expect(() =>
+      assertPhaseResultScopes(
+        "computeNextVersion",
+        "plugin",
+        { [SCOPE_NAMES.ALPHA]: createVersion(), [SCOPE_NAMES.BETA]: createVersion() },
+        new Set([SCOPE_NAMES.ALPHA]),
+      ),
+    ).toThrow(
+      new CoreUnknownPhaseResultScopeError("computeNextVersion", "plugin", SCOPE_NAMES.BETA),
+    );
+  });
+
+  it("should throw an unknown phase result scope error when a result has an own __proto__ key", () => {
+    const result: Record<string, unknown> = JSON.parse('{"__proto__": []}');
+
+    expect(() =>
+      assertPhaseResultScopes("getChanges", "plugin", result, new Set([SCOPE_NAMES.ALPHA])),
+    ).toThrow(new CoreUnknownPhaseResultScopeError("getChanges", "plugin", "__proto__"));
   });
 });

@@ -16,6 +16,7 @@ import {
   CoreConflictingPhaseProvidersError,
   CoreEmptyFileOperationPathError,
   CoreMissingPhaseProviderError,
+  CoreUnknownPhaseResultScopeError,
   CoreUnstableNextVersionError,
 } from "../errors";
 import * as thisMod from "./phase";
@@ -184,4 +185,21 @@ export const filterPhaseState = <TState extends PhaseState>(
       filterScopeResultMap(resultMap, scopeNames),
     ]),
   ) as TState;
+};
+
+export const assertPhaseResultScopes = (
+  phaseName: PhaseName,
+  pluginName: string,
+  result: unknown,
+  scopeNames: ReadonlySet<string>,
+): void => {
+  if (typeof result !== "object" || result === null) {
+    return;
+  }
+
+  const unknownScopeName = Object.keys(result).find((scopeName) => !scopeNames.has(scopeName));
+
+  if (unknownScopeName !== undefined) {
+    throw new CoreUnknownPhaseResultScopeError(phaseName, pluginName, unknownScopeName);
+  }
 };

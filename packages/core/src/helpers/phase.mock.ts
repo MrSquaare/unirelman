@@ -10,6 +10,7 @@ import {
   resolveCurrentVersions,
   resolveFileOperations,
   dedupeFileOperations,
+  assertPhaseResultScopes,
 } from "./phase";
 
 vi.mock("./phase", async (importActual) => {
@@ -26,6 +27,7 @@ vi.mock("./phase", async (importActual) => {
     resolveFileOperations: vi.fn(actual.resolveFileOperations),
     dedupeFileOperations: vi.fn(actual.dedupeFileOperations),
     filterPhaseState: vi.fn(actual.filterPhaseState),
+    assertPhaseResultScopes: vi.fn(),
   };
 });
 
@@ -38,3 +40,4 @@ export const mockedResolveCurrentVersions = vi.mocked(resolveCurrentVersions);
 export const mockedResolveFileOperations = vi.mocked(resolveFileOperations);
 export const mockedDedupeFileOperations = vi.mocked(dedupeFileOperations);
 export const mockedFilterPhaseState = vi.mocked(filterPhaseState);
+export const mockedAssertPhaseResultScopes = vi.mocked(assertPhaseResultScopes);

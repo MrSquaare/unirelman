@@ -1,6 +1,7 @@
 import { MockedFS } from "../fs/index.mock";
 import {
   mockedAssertChangedScopeProviders,
+  mockedAssertPhaseResultScopes,
   mockedAssertStableNextVersions,
   mockedFilterPhaseState,
   mockedHasChanges,
@@ -17,7 +18,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { VersionMeta } from "../types/phases";
 
 import { Pipeline } from ".";
-import { CorePhaseError } from "../errors";
+import { CorePhaseError, CoreTeardownError } from "../errors";
 import { CONFIG_CWD, createResolvedConfig } from "../testing/fixtures/config";
 import {
   createChange,
@@ -763,6 +764,21 @@ describe("Pipeline", () => {
         },
         completeState,
       );
+      expect(mockedAssertPhaseResultScopes).toHaveBeenCalledTimes(2);
+      expect(mockedAssertPhaseResultScopes).toHaveBeenNthCalledWith(
+        1,
+        "getChanges",
+        "plugin-with-get-changes-a",
+        { [SCOPE_NAMES.ALPHA]: [firstChange] },
+        new Set([SCOPE_NAMES.ALPHA, SCOPE_NAMES.BETA]),
+      );
+      expect(mockedAssertPhaseResultScopes).toHaveBeenNthCalledWith(
+        2,
+        "getChanges",
+        "plugin-with-get-changes-b",
+        { [SCOPE_NAMES.ALPHA]: [secondChange] },
+        new Set([SCOPE_NAMES.ALPHA, SCOPE_NAMES.BETA]),
+      );
     });
 
     it("should skip plugins without matching phase function", async () => {
@@ -841,7 +857,44 @@ describe("Pipeline", () => {
         },
         completeState,
       );
+      expect(mockedAssertPhaseResultScopes).toHaveBeenCalledTimes(1);
+      expect(mockedAssertPhaseResultScopes).toHaveBeenNthCalledWith(
+        1,
+        "getChanges",
+        "plugin-with-get-changes",
+        { [SCOPE_NAMES.ALPHA]: [change] },
+        new Set([SCOPE_NAMES.ALPHA, SCOPE_NAMES.BETA]),
+      );
     });
+
+    it.each([
+      "getCurrentVersion",
+      "parseCurrentVersion",
+      "getChanges",
+      "computeNextVersion",
+      "getDependencyChanges",
+      "generateFileOperations",
+      "getReleaseNotes",
+      "createReleases",
+    ] as const)(
+      "should return a new empty result on each %s run when no plugin provides the phase",
+      async (phaseName) => {
+        const pipeline = new Pipeline({
+          cwd: CONFIG_CWD,
+          config: createResolvedConfig({ extends: { plugins: [] } }),
+          createLogger: mockCreateLogger,
+        });
+        const run = { pipeline: "version", dryRun: false } as const;
+
+        const firstResult = await pipeline["executePhase"](phaseName, run, createPrepareState());
+        const secondResult = await pipeline["executePhase"](phaseName, run, createPrepareState());
+
+        expect(firstResult).toEqual({});
+        expect(secondResult).toEqual({});
+        expect(secondResult).not.toBe(firstResult);
+        expect(mockedAssertPhaseResultScopes).not.toHaveBeenCalled();
+      },
+    );
 
     it("should skip plugin when no scope name is selected", async () => {
       const logger = new MockLogger();
@@ -889,6 +942,7 @@ describe("Pipeline", () => {
 
       expect(mockedFilterPhaseState).not.toHaveBeenCalled();
       expect(getChanges).not.toHaveBeenCalled();
+      expect(mockedAssertPhaseResultScopes).not.toHaveBeenCalled();
       expect(logger.debug).toHaveBeenCalledTimes(3);
       expect(logger.debug).toHaveBeenNthCalledWith(1, "Starting getChanges phase");
       expect(logger.debug).toHaveBeenNthCalledWith(
@@ -926,6 +980,87 @@ describe("Pipeline", () => {
           createCreateReleasesState(),
         ),
       ).rejects.toThrow(new CorePhaseError("createReleases", "failing-plugin", error));
+
+      expect(mockedAssertPhaseResultScopes).not.toHaveBeenCalled();
+    });
+
+    it("should run every teardown hook, then throw the phase error of the failing one", async () => {
+      const error = new Error("teardown failed");
+      const failingTeardown = vi.fn().mockRejectedValueOnce(error);
+      const teardown = vi.fn().mockResolvedValueOnce(undefined);
+      const failingPlugin = createPluginRegistration({
+        extends: { plugin: { name: "failing-plugin", teardown: failingTeardown } },
+      });
+      const plugin = createPluginRegistration({
+        extends: { plugin: { name: "plugin", teardown } },
+      });
+
+      mockedCreatePluginContext
+        .mockReturnValueOnce(createPluginContext())
+        .mockReturnValueOnce(createPluginContext());
+
+      const pipeline = new Pipeline({
+        cwd: CONFIG_CWD,
+        config: createResolvedConfig({ extends: { plugins: [failingPlugin, plugin] } }),
+        createLogger: mockCreateLogger,
+      });
+
+      await expect(
+        pipeline["executePhase"](
+          "teardown",
+          { pipeline: "version", dryRun: false, error: undefined },
+          {},
+        ),
+      ).rejects.toThrow(new CorePhaseError("teardown", "failing-plugin", error));
+
+      expect(failingTeardown).toHaveBeenCalledTimes(1);
+      expect(teardown).toHaveBeenCalledTimes(1);
+      expect(mockedAssertPhaseResultScopes).toHaveBeenCalledTimes(1);
+      expect(mockedAssertPhaseResultScopes).toHaveBeenNthCalledWith(
+        1,
+        "teardown",
+        "plugin",
+        undefined,
+        new Set([SCOPE_NAMES.ALPHA, SCOPE_NAMES.BETA]),
+      );
+    });
+
+    it("should throw a teardown error holding every phase error when several teardown hooks fail", async () => {
+      const firstError = new Error("first teardown failed");
+      const secondError = new Error("second teardown failed");
+      const firstPlugin = createPluginRegistration({
+        extends: {
+          plugin: { name: "first-plugin", teardown: vi.fn().mockRejectedValueOnce(firstError) },
+        },
+      });
+      const secondPlugin = createPluginRegistration({
+        extends: {
+          plugin: { name: "second-plugin", teardown: vi.fn().mockRejectedValueOnce(secondError) },
+        },
+      });
+
+      mockedCreatePluginContext
+        .mockReturnValueOnce(createPluginContext())
+        .mockReturnValueOnce(createPluginContext());
+
+      const pipeline = new Pipeline({
+        cwd: CONFIG_CWD,
+        config: createResolvedConfig({ extends: { plugins: [firstPlugin, secondPlugin] } }),
+        createLogger: mockCreateLogger,
+      });
+
+      await expect(
+        pipeline["executePhase"](
+          "teardown",
+          { pipeline: "version", dryRun: false, error: undefined },
+          {},
+        ),
+      ).rejects.toThrow(
+        new CoreTeardownError([
+          new CorePhaseError("teardown", "first-plugin", firstError),
+          new CorePhaseError("teardown", "second-plugin", secondError),
+        ]),
+      );
     });
 
     it.each(["initialize", "prepare", "finalize", "teardown"] as const)(
@@ -990,6 +1125,14 @@ describe("Pipeline", () => {
             pipeline: "version",
           },
           state,
+        );
+        expect(mockedAssertPhaseResultScopes).toHaveBeenCalledTimes(1);
+        expect(mockedAssertPhaseResultScopes).toHaveBeenNthCalledWith(
+          1,
+          phaseName,
+          "plugin-with-phase",
+          undefined,
+          new Set([SCOPE_NAMES.ALPHA, SCOPE_NAMES.BETA]),
         );
       },
     );

@@ -20,6 +20,8 @@ import {
   CorePhaseError,
   CoreScopePathOutsideCwdError,
   CoreUnknownConfigPluginScopeError,
+  CoreUnknownPhaseResultScopeError,
+  CoreTeardownError,
 } from "./errors";
 import { PLUGIN_NAMES, SCOPE_NAMES, SCOPE_PATHS } from "./testing/fixtures/constants";
 
@@ -360,6 +362,40 @@ describe("CorePhaseError", () => {
         'Plugin "npm" failed in the createReleases phase: unexpected value',
       );
       expect(error.cause).toEqual("unexpected value");
+    });
+  });
+});
+
+describe("CoreUnknownPhaseResultScopeError", () => {
+  describe("constructor", () => {
+    it("should initialize CoreUnknownPhaseResultScopeError with the phase, the plugin and the scope", () => {
+      const error = new CoreUnknownPhaseResultScopeError("getChanges", "changesets", "gamma");
+
+      expect(error.name).toEqual("CoreUnknownPhaseResultScopeError");
+      expect(error.phaseName).toEqual("getChanges");
+      expect(error.pluginName).toEqual("changesets");
+      expect(error.scopeName).toEqual("gamma");
+      expect(error.message).toEqual(
+        'Plugin "changesets" returned a getChanges result for scope "gamma", which is not one of its scopes',
+      );
+    });
+  });
+});
+
+describe("CoreTeardownError", () => {
+  describe("constructor", () => {
+    it("should initialize CoreTeardownError with every phase error", () => {
+      const errors = [
+        new CorePhaseError("teardown", "git", new Error("git failed")),
+        new CorePhaseError("teardown", "npm", new Error("npm failed")),
+      ];
+      const error = new CoreTeardownError(errors);
+
+      expect(error.name).toEqual("CoreTeardownError");
+      expect(error.errors).toEqual(errors);
+      expect(error.message).toEqual(
+        'Several plugins failed in the teardown phase:\nPlugin "git" failed in the teardown phase: git failed\nPlugin "npm" failed in the teardown phase: npm failed',
+      );
     });
   });
 });

@@ -21,10 +21,11 @@ import type {
 } from "../types/phases";
 import type { PluginContext } from "../types/plugin";
 
-import { CorePhaseError } from "../errors";
+import { CorePhaseError, CoreTeardownError } from "../errors";
 import { FS } from "../fs";
 import {
   assertChangedScopeProviders,
+  assertPhaseResultScopes,
   assertStableNextVersions,
   filterPhaseState,
   hasChanges,
@@ -53,7 +54,7 @@ type PipelineRun = {
 type PhaseRun<TName extends PhaseName> = Omit<PhaseFunctionContext<TName>, keyof PluginContext>;
 
 type PhaseResultMerger<TName extends PhaseName> = {
-  readonly empty: PhaseFunctionResult<TName>;
+  readonly createEmpty: () => PhaseFunctionResult<TName>;
   readonly merge: (
     accumulatedResult: PhaseFunctionResult<TName>,
     result: PhaseFunctionResult<TName>,
@@ -61,18 +62,18 @@ type PhaseResultMerger<TName extends PhaseName> = {
 };
 
 const PHASE_RESULT_MERGERS: { readonly [TName in PhaseName]: PhaseResultMerger<TName> } = {
-  initialize: { empty: undefined, merge: () => undefined },
-  getCurrentVersion: { empty: {}, merge: shallowMerge },
-  parseCurrentVersion: { empty: {}, merge: shallowMerge },
-  getChanges: { empty: {}, merge: mergeArrayRecords },
-  computeNextVersion: { empty: {}, merge: shallowMerge },
-  getDependencyChanges: { empty: {}, merge: mergeArrayRecords },
-  generateFileOperations: { empty: {}, merge: mergeArrayRecords },
-  prepare: { empty: undefined, merge: () => undefined },
-  getReleaseNotes: { empty: {}, merge: shallowMerge },
-  createReleases: { empty: {}, merge: mergeArrayRecords },
-  finalize: { empty: undefined, merge: () => undefined },
-  teardown: { empty: undefined, merge: () => undefined },
+  initialize: { createEmpty: () => undefined, merge: () => undefined },
+  getCurrentVersion: { createEmpty: () => ({}), merge: shallowMerge },
+  parseCurrentVersion: { createEmpty: () => ({}), merge: shallowMerge },
+  getChanges: { createEmpty: () => ({}), merge: mergeArrayRecords },
+  computeNextVersion: { createEmpty: () => ({}), merge: shallowMerge },
+  getDependencyChanges: { createEmpty: () => ({}), merge: mergeArrayRecords },
+  generateFileOperations: { createEmpty: () => ({}), merge: mergeArrayRecords },
+  prepare: { createEmpty: () => undefined, merge: () => undefined },
+  getReleaseNotes: { createEmpty: () => ({}), merge: shallowMerge },
+  createReleases: { createEmpty: () => ({}), merge: mergeArrayRecords },
+  finalize: { createEmpty: () => undefined, merge: () => undefined },
+  teardown: { createEmpty: () => undefined, merge: () => undefined },
 };
 
 export class Pipeline {
@@ -267,7 +268,8 @@ export class Pipeline {
     phaseState: PhaseFunctionState<TName>,
   ): Promise<PhaseFunctionResult<TName>> {
     const merger: PhaseResultMerger<TName> = PHASE_RESULT_MERGERS[name];
-    let accumulatedResult = merger.empty;
+    const teardownErrors: CorePhaseError[] = [];
+    let accumulatedResult = merger.createEmpty();
 
     this.logger.debug(`Starting ${name} phase`);
 
@@ -297,14 +299,33 @@ export class Pipeline {
 
       this.logger.debug(`Executing ${name} phase for plugin: ${plugin.name}`);
 
+      let result: PhaseFunctionResult<TName>;
+
       try {
-        accumulatedResult = merger.merge(
-          accumulatedResult,
-          await phaseFunction(phaseContext, filteredPhaseState),
-        );
+        result = await phaseFunction(phaseContext, filteredPhaseState);
       } catch (error) {
-        throw new CorePhaseError(name, plugin.name, error);
+        const phaseError = new CorePhaseError(name, plugin.name, error);
+
+        if (name !== "teardown") {
+          throw phaseError;
+        }
+
+        teardownErrors.push(phaseError);
+
+        continue;
       }
+
+      assertPhaseResultScopes(name, plugin.name, result, filteredScopeNames);
+
+      accumulatedResult = merger.merge(accumulatedResult, result);
+    }
+
+    if (teardownErrors.length === 1) {
+      throw teardownErrors[0];
+    }
+
+    if (teardownErrors.length > 1) {
+      throw new CoreTeardownError(teardownErrors);
     }
 
     this.logger.debug(`Finished ${name} phase`);
