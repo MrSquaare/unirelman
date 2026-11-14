@@ -17,6 +17,19 @@ export class ChangelogInvalidHeaderError extends ChangelogError {
   }
 }
 
+export class ChangelogInvalidLevelHeaderError extends ChangelogError {
+  readonly level: string;
+  readonly levelHeader: string;
+
+  constructor(level: string, levelHeader: string) {
+    super(`Changelog level header of "${level}" is not one line: ${levelHeader}`);
+
+    this.name = "ChangelogInvalidLevelHeaderError";
+    this.level = level;
+    this.levelHeader = levelHeader;
+  }
+}
+
 export class ChangelogInvalidSectionHeaderError extends ChangelogError {
   readonly sectionHeader: string;
 

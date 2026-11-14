@@ -41,10 +41,6 @@ export const resolveGroupedChangeMessages = (
   return groupedChanges;
 };
 
-export const resolveEmptyChangelogMarkdown = (noChangeMessage: string): string => {
-  return `### ${CHANGELOG_EMPTY_HEADING}\n\n- ${noChangeMessage}`;
-};
-
 export const resolveChangeEntry = (message: string): string => {
   const [firstLine, ...continuationLines] = message.split(LINE_BREAK_PATTERN);
 
@@ -52,6 +48,10 @@ export const resolveChangeEntry = (message: string): string => {
     `- ${firstLine}`,
     ...continuationLines.map((line) => (line.length === 0 ? line : `${LIST_ITEM_INDENT}${line}`)),
   ].join("\n");
+};
+
+export const resolveEmptyChangelogMarkdown = (noChangeMessage: string): string => {
+  return `### ${CHANGELOG_EMPTY_HEADING}\n\n${thisMod.resolveChangeEntry(noChangeMessage)}`;
 };
 
 export const resolveChangelogGroupsMarkdown = (

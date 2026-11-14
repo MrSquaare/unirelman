@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { ChangelogInvalidLevelHeaderError } from "../errors";
 import {
   resolveDefaultChangelogNoChangeMessage,
   resolveRootChangelogSectionHeader,
@@ -48,5 +49,11 @@ describe("resolveChangelogPluginOptions", () => {
       levelHeaders: { major: "Breaking", minor: "Minor changes", patch: "Patch changes" },
       noChangeMessage,
     });
+  });
+
+  it("should throw when a level header has a line break", () => {
+    expect(() =>
+      resolveChangelogPluginOptions({ levelHeaders: { patch: "Fixes\n## 1.0.0" } }),
+    ).toThrow(new ChangelogInvalidLevelHeaderError("patch", "Fixes\n## 1.0.0"));
   });
 });

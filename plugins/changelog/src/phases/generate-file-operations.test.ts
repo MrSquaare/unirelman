@@ -61,14 +61,6 @@ describe("resolveGroupedChangeMessages", () => {
   });
 });
 
-describe("resolveEmptyChangelogMarkdown", () => {
-  it("should render the no-change subsection with the message", () => {
-    expect(resolveEmptyChangelogMarkdown("Nothing changed.")).toEqual(
-      "### Changes\n\n- Nothing changed.",
-    );
-  });
-});
-
 describe("resolveChangeEntry", () => {
   it("should render a single-line message as a list item", () => {
     expect(resolveChangeEntry("fix a bug")).toEqual("- fix a bug");
@@ -83,6 +75,28 @@ describe("resolveChangeEntry", () => {
   it("should split a multiline message with CRLF line endings", () => {
     expect(resolveChangeEntry("add a feature\r\n\r\nDetails.")).toEqual(
       "- add a feature\n\n  Details.",
+    );
+  });
+});
+
+describe("resolveEmptyChangelogMarkdown", () => {
+  const resolveChangeEntrySpy = vi.spyOn(thisMod, "resolveChangeEntry");
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("should render the no-change subsection with the message", () => {
+    expect(resolveEmptyChangelogMarkdown("Nothing changed.")).toEqual(
+      "### Changes\n\n- Nothing changed.",
+    );
+    expect(resolveChangeEntrySpy).toHaveBeenCalledTimes(1);
+    expect(resolveChangeEntrySpy).toHaveBeenNthCalledWith(1, "Nothing changed.");
+  });
+
+  it("should indent the continuation lines of a multiline message under the list item", () => {
+    expect(resolveEmptyChangelogMarkdown("Nothing changed.\n\n## 2.0.0")).toEqual(
+      "### Changes\n\n- Nothing changed.\n\n  ## 2.0.0",
     );
   });
 });
@@ -136,7 +150,8 @@ describe("resolveChangelogGroupsMarkdown", () => {
         "Nothing changed.",
       ),
     ).toEqual("### Changes\n\n- Nothing changed.");
-    expect(resolveChangeEntrySpy).not.toHaveBeenCalled();
+    expect(resolveChangeEntrySpy).toHaveBeenCalledTimes(1);
+    expect(resolveChangeEntrySpy).toHaveBeenNthCalledWith(1, "Nothing changed.");
     expect(resolveEmptyChangelogMarkdownSpy).toHaveBeenCalledTimes(1);
     expect(resolveEmptyChangelogMarkdownSpy).toHaveBeenNthCalledWith(1, "Nothing changed.");
   });
