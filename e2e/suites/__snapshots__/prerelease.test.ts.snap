@@ -1,0 +1,45 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`prerelease > named group > should fail when targeting a grouped scope as an independent scope 1`] = `
+"unirelman · Configure prerelease
+error: Unknown independent scope "@example/core". Known independent scopes: @example/cli
+❌ The command failed.
+"
+`;
+
+exports[`prerelease > single package > should fail when downgrading a prerelease channel 1`] = `
+"unirelman · Configure prerelease
+error: Prerelease channel "alpha" is not allowed. Allowed channels: rc
+❌ The command failed.
+"
+`;
+
+exports[`prerelease > single package > should fail when selecting an unknown prerelease channel 1`] = `
+"unirelman · Configure prerelease
+error: Prerelease channel "zeta" is not allowed. Allowed channels: alpha, beta, rc
+❌ The command failed.
+"
+`;
+
+exports[`prerelease > single package > should print the prerelease transitions as JSON 1`] = `
+{
+  "entered": "{
+  "group": null,
+  "scopes": [
+    "example"
+  ],
+  "channel": "beta",
+  "previousChannel": null
+}
+",
+  "exited": "{
+  "group": null,
+  "scopes": [
+    "example"
+  ],
+  "channel": null,
+  "previousChannel": "beta"
+}
+",
+}
+`;

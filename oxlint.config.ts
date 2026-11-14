@@ -4,6 +4,7 @@ export default {
   ...config,
   ignorePatterns: [
     ...(config.ignorePatterns ?? []),
+    "e2e/**",
     "integrations/**",
     "internals/**",
     "packages/**",

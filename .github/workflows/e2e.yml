@@ -1,0 +1,58 @@
+name: "@unirelman/e2e"
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "e2e/**"
+      - "packages/**"
+      - "plugins/**"
+      - "integrations/**"
+      - "internals/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "turbo.json"
+      - ".github/actions/setup-env/**"
+      - ".github/workflows/e2e.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    name: Checks
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup environment
+        uses: ./.github/actions/setup-env
+
+      - name: Typecheck
+        run: pnpm typecheck --filter @unirelman/e2e
+
+      - name: Check
+        run: pnpm check --filter @unirelman/e2e
+
+  test:
+    runs-on: ubuntu-latest
+    name: Test
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup environment
+        uses: ./.github/actions/setup-env
+
+      - name: Build
+        run: pnpm build
+
+      - name: Test
+        run: pnpm test:e2e

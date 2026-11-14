@@ -1,0 +1,8 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`npm > should fail when the registry rejects the credentials 1`] = `
+"unirelman · Publish
+error: Plugin "npm" failed in the createReleases phase: Failed to publish example@1.0.1: npm could not authenticate or authorize the publish (E401)
+❌ An error occurred during publishing.
+"
+`;

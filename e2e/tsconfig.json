@@ -1,0 +1,10 @@
+{
+  "extends": "@unirelman/shared-config/tsconfig",
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "declaration": false,
+    "emitDeclarationOnly": false,
+    "noEmit": true
+  },
+  "include": ["lib", "suites", "vitest.config.ts"]
+}

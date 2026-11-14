@@ -1,0 +1,292 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`github-action > root scope > should open the release pull request, then publish the merged release 1`] = `
+{
+  "packages": {
+    "@example/core": {
+      "distTags": {
+        "latest": "1.1.0",
+      },
+      "versions": [
+        "1.1.0",
+      ],
+    },
+    "example": {
+      "distTags": {
+        "latest": "1.1.0",
+      },
+      "versions": [
+        "1.1.0",
+      ],
+    },
+  },
+  "pullRequests": [
+    {
+      "base": "main",
+      "body": "## Releases
+
+- \`root\`: 1.0.0 → 1.1.0
+- \`@example/core\`: 1.0.0 → 1.1.0",
+      "head": "unirelman:unirelman/release",
+      "number": 1,
+      "state": "closed",
+      "title": "chore(release): bump versions",
+    },
+  ],
+  "releases": [
+    {
+      "body": "### Minor changes
+
+- add a feature",
+      "draft": false,
+      "html_url": "https://github.com/unirelman/example/releases/tag/1.1.0",
+      "id": 1,
+      "make_latest": "true",
+      "name": "1.1.0",
+      "prerelease": false,
+      "tag_name": "1.1.0",
+      "target_commitish": "9ae573cd4547300c1442b2fd91dc03752ad5f7a1",
+      "upload_url": "https://uploads.github.com/repos/unirelman/example/releases/1/assets{?name,label}",
+    },
+    {
+      "body": "### Minor changes
+
+- add a feature",
+      "draft": false,
+      "html_url": "https://github.com/unirelman/example/releases/tag/@example/core@1.1.0",
+      "id": 2,
+      "make_latest": "true",
+      "name": "@example/core@1.1.0",
+      "prerelease": false,
+      "tag_name": "@example/core@1.1.0",
+      "target_commitish": "9ae573cd4547300c1442b2fd91dc03752ad5f7a1",
+      "upload_url": "https://uploads.github.com/repos/unirelman/example/releases/2/assets{?name,label}",
+    },
+    {
+      "body": "",
+      "draft": false,
+      "html_url": "https://github.com/unirelman/example/releases/tag/@example/ui@2026.01.01.0",
+      "id": 3,
+      "make_latest": "true",
+      "name": "@example/ui@2026.01.01.0",
+      "prerelease": false,
+      "tag_name": "@example/ui@2026.01.01.0",
+      "target_commitish": "9ae573cd4547300c1442b2fd91dc03752ad5f7a1",
+      "upload_url": "https://uploads.github.com/repos/unirelman/example/releases/3/assets{?name,label}",
+    },
+  ],
+  "remote": {
+    "branches": [
+      "main",
+      "unirelman/release",
+    ],
+    "tags": [
+      "1.1.0",
+      "@example/core@1.1.0",
+      "@example/ui@2026.01.01.0",
+    ],
+  },
+  "result": {
+    "outputs": {
+      "releases": "{"root":[{"type":"npm-package","name":"example@1.1.0","status":"created","meta":{}},{"type":"git-tag","name":"1.1.0","status":"created","meta":{}},{"type":"github-release","name":"1.1.0","status":"created","meta":{"github":{"id":1,"url":"https://github.com/unirelman/example/releases/tag/1.1.0","uploadUrl":"https://uploads.github.com/repos/unirelman/example/releases/1/assets{?name,label}"}}}],"@example/core":[{"type":"npm-package","name":"@example/core@1.1.0","status":"created","meta":{}},{"type":"git-tag","name":"@example/core@1.1.0","status":"created","meta":{}},{"type":"github-release","name":"@example/core@1.1.0","status":"created","meta":{"github":{"id":2,"url":"https://github.com/unirelman/example/releases/tag/@example/core@1.1.0","uploadUrl":"https://uploads.github.com/repos/unirelman/example/releases/2/assets{?name,label}"}}}],"@example/ui":[{"type":"git-tag","name":"@example/ui@2026.01.01.0","status":"created","meta":{}},{"type":"github-release","name":"@example/ui@2026.01.01.0","status":"created","meta":{"github":{"id":3,"url":"https://github.com/unirelman/example/releases/tag/@example/ui@2026.01.01.0","uploadUrl":"https://uploads.github.com/repos/unirelman/example/releases/3/assets{?name,label}"}}}]}",
+    },
+  },
+}
+`;
+
+exports[`github-action > single package > should open a pull request enabling publishing, then publish current versions once merged 1`] = `
+{
+  "enablePublishingRun": {
+    "packages": {},
+    "pullRequests": [
+      {
+        "base": "main",
+        "body": "Merging this pull request enables publishing: the next run publishes the current version of every scope that is not published yet.",
+        "head": "unirelman:unirelman/release",
+        "number": 1,
+        "state": "open",
+        "title": "chore(release): enable publishing",
+      },
+    ],
+    "releases": [],
+    "remote": {
+      "branches": [
+        "main",
+        "unirelman/release",
+      ],
+      "tags": [],
+    },
+    "result": {
+      "outputs": {
+        "pr-number": "1",
+      },
+    },
+  },
+  "publishRun": {
+    "packages": {
+      "example": {
+        "distTags": {
+          "latest": "1.0.0",
+        },
+        "versions": [
+          "1.0.0",
+        ],
+      },
+    },
+    "pullRequests": [
+      {
+        "base": "main",
+        "body": "Merging this pull request enables publishing: the next run publishes the current version of every scope that is not published yet.",
+        "head": "unirelman:unirelman/release",
+        "number": 1,
+        "state": "closed",
+        "title": "chore(release): enable publishing",
+      },
+    ],
+    "releases": [
+      {
+        "body": "",
+        "draft": false,
+        "html_url": "https://github.com/unirelman/example/releases/tag/1.0.0",
+        "id": 1,
+        "make_latest": "true",
+        "name": "1.0.0",
+        "prerelease": false,
+        "tag_name": "1.0.0",
+        "target_commitish": "e177649558c0e2009c777754f3bb1d688e3daccc",
+        "upload_url": "https://uploads.github.com/repos/unirelman/example/releases/1/assets{?name,label}",
+      },
+    ],
+    "remote": {
+      "branches": [
+        "main",
+        "unirelman/release",
+      ],
+      "tags": [
+        "1.0.0",
+      ],
+    },
+    "result": {
+      "outputs": {
+        "releases": "{"example":[{"type":"npm-package","name":"example@1.0.0","status":"created","meta":{}},{"type":"git-tag","name":"1.0.0","status":"created","meta":{}},{"type":"github-release","name":"1.0.0","status":"created","meta":{"github":{"id":1,"url":"https://github.com/unirelman/example/releases/tag/1.0.0","uploadUrl":"https://uploads.github.com/repos/unirelman/example/releases/1/assets{?name,label}"}}}]}",
+      },
+    },
+  },
+}
+`;
+
+exports[`github-action > single package > should open the release pull request, then publish the merged release 1`] = `
+{
+  "publishRun": {
+    "packages": {
+      "example": {
+        "distTags": {
+          "latest": "1.0.1",
+        },
+        "versions": [
+          "1.0.1",
+        ],
+      },
+    },
+    "pullRequests": [
+      {
+        "base": "main",
+        "body": "## Releases
+
+- \`example\`: 1.0.0 → 1.0.1",
+        "head": "unirelman:unirelman/release",
+        "number": 1,
+        "state": "closed",
+        "title": "chore(release): bump versions",
+      },
+    ],
+    "releases": [
+      {
+        "body": "### Patch changes
+
+- fix a bug",
+        "draft": false,
+        "html_url": "https://github.com/unirelman/example/releases/tag/1.0.1",
+        "id": 1,
+        "make_latest": "true",
+        "name": "1.0.1",
+        "prerelease": false,
+        "tag_name": "1.0.1",
+        "target_commitish": "fa29d3ed9184dbcc430021aeb858132e805ccff0",
+        "upload_url": "https://uploads.github.com/repos/unirelman/example/releases/1/assets{?name,label}",
+      },
+    ],
+    "remote": {
+      "branches": [
+        "main",
+        "unirelman/release",
+      ],
+      "tags": [
+        "1.0.1",
+      ],
+    },
+    "result": {
+      "outputs": {
+        "releases": "{"example":[{"type":"npm-package","name":"example@1.0.1","status":"created","meta":{}},{"type":"git-tag","name":"1.0.1","status":"created","meta":{}},{"type":"github-release","name":"1.0.1","status":"created","meta":{"github":{"id":1,"url":"https://github.com/unirelman/example/releases/tag/1.0.1","uploadUrl":"https://uploads.github.com/repos/unirelman/example/releases/1/assets{?name,label}"}}}]}",
+      },
+    },
+  },
+  "versionRun": {
+    "packages": {},
+    "pullRequests": [
+      {
+        "base": "main",
+        "body": "## Releases
+
+- \`example\`: 1.0.0 → 1.0.1",
+        "head": "unirelman:unirelman/release",
+        "number": 1,
+        "state": "open",
+        "title": "chore(release): bump versions",
+      },
+    ],
+    "releases": [],
+    "remote": {
+      "branches": [
+        "main",
+        "unirelman/release",
+      ],
+      "tags": [],
+    },
+    "result": {
+      "outputs": {
+        "pr-number": "1",
+      },
+    },
+  },
+}
+`;
+
+exports[`github-action > single package > should update the open release pull request with new changes 1`] = `
+{
+  "pullRequests": [
+    {
+      "base": "main",
+      "body": "## Releases
+
+- \`example\`: 1.0.0 → 1.1.0",
+      "head": "unirelman:unirelman/release",
+      "number": 1,
+      "state": "open",
+      "title": "chore(release): bump versions",
+    },
+  ],
+  "remote": {
+    "branches": [
+      "main",
+      "unirelman/release",
+    ],
+    "tags": [],
+  },
+  "result": {
+    "outputs": {
+      "pr-number": "1",
+    },
+  },
+}
+`;
