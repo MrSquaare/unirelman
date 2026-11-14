@@ -26,6 +26,9 @@ import * as thisMod from "./create-releases";
 
 const NPM_ALLOWED_EXIT_CODES = [0, 1] as const;
 const NPM_NOT_FOUND_ERROR_CODE = "E404";
+const PNPM_NOT_FOUND_ERROR_CODES = ["E404", "ERR_PNPM_PACKAGE_NOT_FOUND", "ERR_PNPM_FETCH_404"];
+const YARN_PACKAGE_NOT_FOUND_ERROR = 35;
+const LINE_BREAK = "\n";
 const NPM_AUTH_ERROR_CODES = ["ENEEDAUTH", "E401", "E403", "EOTP"];
 const PACKAGE_SCOPE_PREFIX = "@";
 const PACKAGE_SCOPE_SEPARATOR = "/";
@@ -35,6 +38,23 @@ const npmErrorSchema = z.object({
     code: z.string().optional(),
     summary: z.string(),
   }),
+});
+
+const pnpmErrorSchema = z.object({
+  error: z.object({
+    code: z.string(),
+    summary: z.string().optional(),
+    message: z.string().optional(),
+  }),
+});
+
+const yarnInfoSchema = z.object({
+  version: z.string(),
+});
+
+const yarnErrorSchema = z.object({
+  name: z.number(),
+  data: z.string(),
 });
 
 export const resolveRegistryArgs = (packageJson: PublishPackageJson): string[] => {
@@ -84,6 +104,82 @@ export const hasNpmVersion = async (
   }
 
   throw new NpmRegistryLookupError(packageName, version, output.error.summary);
+};
+
+export const hasPnpmVersion = async (
+  packageName: string,
+  version: string,
+  cwd: string,
+): Promise<boolean> => {
+  const packageSpec = `${packageName}@${version}`;
+  const result = await execCommand("pnpm", ["info", packageSpec, "version", "--json"], {
+    cwd,
+    allowedExitCodes: NPM_ALLOWED_EXIT_CODES,
+  });
+
+  if (result.exitCode === 0) {
+    return true;
+  }
+
+  const { error } = parseJSON(`pnpm info ${packageSpec}`, result.stdout, pnpmErrorSchema);
+
+  if (PNPM_NOT_FOUND_ERROR_CODES.includes(error.code)) {
+    return false;
+  }
+
+  throw new NpmRegistryLookupError(
+    packageName,
+    version,
+    error.summary ?? error.message ?? error.code,
+  );
+};
+
+export const hasYarnVersion = async (
+  packageName: string,
+  version: string,
+  cwd: string,
+): Promise<boolean> => {
+  const packageSpec = `${packageName}@${version}`;
+  const result = await execCommand(
+    "yarn",
+    ["npm", "info", packageSpec, "--fields", "version", "--json"],
+    { cwd, allowedExitCodes: NPM_ALLOWED_EXIT_CODES },
+  );
+  const [firstLine = ""] = result.stdout.split(LINE_BREAK);
+
+  if (result.exitCode === 0) {
+    return parseJSON(`yarn npm info ${packageSpec}`, firstLine, yarnInfoSchema).version === version;
+  }
+
+  const error = parseJSON(`yarn npm info ${packageSpec}`, firstLine, yarnErrorSchema);
+
+  if (error.name === YARN_PACKAGE_NOT_FOUND_ERROR) {
+    return false;
+  }
+
+  throw new NpmRegistryLookupError(packageName, version, error.data);
+};
+
+export const hasPublishedVersion = async (
+  packageManager: NpmPackageManager,
+  packageJson: PublishPackageJson,
+  version: string,
+  cwd: string,
+): Promise<boolean> => {
+  switch (packageManager) {
+    case "npm":
+    case "bun":
+      return thisMod.hasNpmVersion(
+        packageJson.name,
+        version,
+        cwd,
+        thisMod.resolveRegistryArgs(packageJson),
+      );
+    case "pnpm":
+      return thisMod.hasPnpmVersion(packageJson.name, version, cwd);
+    case "yarn":
+      return thisMod.hasYarnVersion(packageJson.name, version, cwd);
+  }
 };
 
 export const readScopePackageManager = async (
@@ -175,11 +271,17 @@ export const createCreateReleasesPhase = (
         continue;
       }
 
-      const versionExists = await thisMod.hasNpmVersion(
-        packageJson.name,
+      const packageManager = await thisMod.readScopePackageManager(
+        context.fs,
+        context.cwd,
+        scope.path,
+        options.packageManager,
+      );
+      const versionExists = await thisMod.hasPublishedVersion(
+        packageManager,
+        packageJson,
         version,
         scope.path,
-        thisMod.resolveRegistryArgs(packageJson),
       );
 
       releases[scopeName] = [
@@ -199,12 +301,6 @@ export const createCreateReleasesPhase = (
         continue;
       }
 
-      const packageManager = await thisMod.readScopePackageManager(
-        context.fs,
-        context.cwd,
-        scope.path,
-        options.packageManager,
-      );
       const unresolvedSpecifier =
         packageManager === "npm" ? findUnresolvedSpecifier(packageJson) : undefined;
 

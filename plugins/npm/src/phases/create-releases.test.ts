@@ -35,6 +35,9 @@ import { createPublishPackageJson } from "../types.fixture";
 import {
   createCreateReleasesPhase,
   hasNpmVersion,
+  hasPnpmVersion,
+  hasPublishedVersion,
+  hasYarnVersion,
   publishPackage,
   readScopePackageManager,
   resolveRegistryArgs,
@@ -159,6 +162,221 @@ describe("hasNpmVersion", () => {
     ).rejects.toThrow(
       new NpmRegistryLookupError(SCOPE_NAMES.ALPHA, VERSIONS.DEFAULT, "connect ECONNREFUSED"),
     );
+  });
+});
+
+describe("hasPnpmVersion", () => {
+  const packageDir = SCOPE_PATHS[SCOPE_NAMES.ALPHA];
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("should return true when pnpm info finds the version", async () => {
+    mockedExecCommand.mockResolvedValueOnce({ exitCode: 0, stdout: '"1.2.3"', stderr: "" });
+
+    await expect(hasPnpmVersion(SCOPE_NAMES.ALPHA, VERSIONS.DEFAULT, packageDir)).resolves.toEqual(
+      true,
+    );
+    expect(mockedExecCommand).toHaveBeenCalledTimes(1);
+    expect(mockedExecCommand).toHaveBeenNthCalledWith(
+      1,
+      "pnpm",
+      ["info", "@scope/a@1.2.3", "version", "--json"],
+      { cwd: packageDir, allowedExitCodes: [0, 1] },
+    );
+    expect(mockedParseJSON).not.toHaveBeenCalled();
+  });
+
+  it.each(["E404", "ERR_PNPM_PACKAGE_NOT_FOUND", "ERR_PNPM_FETCH_404"])(
+    "should return false when pnpm info reports %s",
+    async (code) => {
+      const stdout = `{"error":{"code":"${code}","message":"not found"}}`;
+
+      mockedExecCommand.mockResolvedValueOnce({ exitCode: 1, stdout, stderr: "" });
+
+      await expect(
+        hasPnpmVersion(SCOPE_NAMES.ALPHA, VERSIONS.DEFAULT, packageDir),
+      ).resolves.toEqual(false);
+      expect(mockedParseJSON).toHaveBeenCalledTimes(1);
+      expect(mockedParseJSON).toHaveBeenNthCalledWith(
+        1,
+        "pnpm info @scope/a@1.2.3",
+        stdout,
+        mockedParseJSON.mock.calls[0]?.[2],
+      );
+    },
+  );
+
+  it("should throw with the npm summary when pnpm info fails for another reason", async () => {
+    mockedExecCommand.mockResolvedValueOnce({
+      exitCode: 1,
+      stdout: '{"error":{"code":"ECONNREFUSED","summary":"connect ECONNREFUSED"}}',
+      stderr: "",
+    });
+
+    await expect(hasPnpmVersion(SCOPE_NAMES.ALPHA, VERSIONS.DEFAULT, packageDir)).rejects.toThrow(
+      new NpmRegistryLookupError(SCOPE_NAMES.ALPHA, VERSIONS.DEFAULT, "connect ECONNREFUSED"),
+    );
+  });
+
+  it("should throw with the pnpm message when pnpm info fails for another reason", async () => {
+    mockedExecCommand.mockResolvedValueOnce({
+      exitCode: 1,
+      stdout: '{"error":{"code":"ERR_PNPM_FETCH_401","message":"Unauthorized"}}',
+      stderr: "",
+    });
+
+    await expect(hasPnpmVersion(SCOPE_NAMES.ALPHA, VERSIONS.DEFAULT, packageDir)).rejects.toThrow(
+      new NpmRegistryLookupError(SCOPE_NAMES.ALPHA, VERSIONS.DEFAULT, "Unauthorized"),
+    );
+  });
+
+  it("should throw with the error code when pnpm info gives no message", async () => {
+    mockedExecCommand.mockResolvedValueOnce({
+      exitCode: 1,
+      stdout: '{"error":{"code":"ERR_PNPM_UNKNOWN"}}',
+      stderr: "",
+    });
+
+    await expect(hasPnpmVersion(SCOPE_NAMES.ALPHA, VERSIONS.DEFAULT, packageDir)).rejects.toThrow(
+      new NpmRegistryLookupError(SCOPE_NAMES.ALPHA, VERSIONS.DEFAULT, "ERR_PNPM_UNKNOWN"),
+    );
+  });
+});
+
+describe("hasYarnVersion", () => {
+  const packageDir = SCOPE_PATHS[SCOPE_NAMES.ALPHA];
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("should return true when yarn npm info returns the version", async () => {
+    mockedExecCommand.mockResolvedValueOnce({
+      exitCode: 0,
+      stdout: '{"name":"@scope/a","version":"1.2.3"}\n',
+      stderr: "",
+    });
+
+    await expect(hasYarnVersion(SCOPE_NAMES.ALPHA, VERSIONS.DEFAULT, packageDir)).resolves.toEqual(
+      true,
+    );
+    expect(mockedExecCommand).toHaveBeenCalledTimes(1);
+    expect(mockedExecCommand).toHaveBeenNthCalledWith(
+      1,
+      "yarn",
+      ["npm", "info", "@scope/a@1.2.3", "--fields", "version", "--json"],
+      { cwd: packageDir, allowedExitCodes: [0, 1] },
+    );
+    expect(mockedParseJSON).toHaveBeenCalledTimes(1);
+    expect(mockedParseJSON).toHaveBeenNthCalledWith(
+      1,
+      "yarn npm info @scope/a@1.2.3",
+      '{"name":"@scope/a","version":"1.2.3"}',
+      mockedParseJSON.mock.calls[0]?.[2],
+    );
+  });
+
+  it("should return false when yarn npm info returns another version", async () => {
+    mockedExecCommand.mockResolvedValueOnce({
+      exitCode: 0,
+      stdout: '{"name":"@scope/a","version":"1.1.0"}\n',
+      stderr: "",
+    });
+
+    await expect(hasYarnVersion(SCOPE_NAMES.ALPHA, VERSIONS.DEFAULT, packageDir)).resolves.toEqual(
+      false,
+    );
+  });
+
+  it("should return false when yarn npm info reports the package as not found", async () => {
+    mockedExecCommand.mockResolvedValueOnce({
+      exitCode: 1,
+      stdout:
+        '{"type":"error","name":35,"displayName":"YN0035","data":"Package not found"}\n{"type":"error","name":35,"displayName":"YN0035","data":"  Response Code: 404 (Not Found)"}\n',
+      stderr: "",
+    });
+
+    await expect(hasYarnVersion(SCOPE_NAMES.ALPHA, VERSIONS.DEFAULT, packageDir)).resolves.toEqual(
+      false,
+    );
+  });
+
+  it("should throw when yarn npm info fails for another reason", async () => {
+    mockedExecCommand.mockResolvedValueOnce({
+      exitCode: 1,
+      stdout: '{"type":"error","name":41,"displayName":"YN0041","data":"Invalid authentication"}\n',
+      stderr: "",
+    });
+
+    await expect(hasYarnVersion(SCOPE_NAMES.ALPHA, VERSIONS.DEFAULT, packageDir)).rejects.toThrow(
+      new NpmRegistryLookupError(SCOPE_NAMES.ALPHA, VERSIONS.DEFAULT, "Invalid authentication"),
+    );
+  });
+});
+
+describe("hasPublishedVersion", () => {
+  const packageDir = SCOPE_PATHS[SCOPE_NAMES.ALPHA];
+  const resolveRegistryArgsSpy = vi.spyOn(thisMod, "resolveRegistryArgs");
+  const hasNpmVersionSpy = vi.spyOn(thisMod, "hasNpmVersion");
+  const hasPnpmVersionSpy = vi.spyOn(thisMod, "hasPnpmVersion");
+  const hasYarnVersionSpy = vi.spyOn(thisMod, "hasYarnVersion");
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it.each(["npm", "bun"] as const)(
+    "should look the version up with npm and the publish registry for a %s package",
+    async (packageManager) => {
+      const packageJson = createPublishPackageJson({
+        name: "example",
+        publishConfig: { registry: "https://registry.example.com/" },
+      });
+
+      hasNpmVersionSpy.mockResolvedValueOnce(true);
+
+      await expect(
+        hasPublishedVersion(packageManager, packageJson, VERSIONS.DEFAULT, packageDir),
+      ).resolves.toEqual(true);
+      expect(resolveRegistryArgsSpy).toHaveBeenCalledTimes(1);
+      expect(resolveRegistryArgsSpy).toHaveBeenNthCalledWith(1, packageJson);
+      expect(hasNpmVersionSpy).toHaveBeenCalledTimes(1);
+      expect(hasNpmVersionSpy).toHaveBeenNthCalledWith(1, "example", VERSIONS.DEFAULT, packageDir, [
+        "--registry=https://registry.example.com/",
+      ]);
+      expect(hasPnpmVersionSpy).not.toHaveBeenCalled();
+      expect(hasYarnVersionSpy).not.toHaveBeenCalled();
+    },
+  );
+
+  it("should look the version up with pnpm for a pnpm package", async () => {
+    const packageJson = createPublishPackageJson({ name: "example" });
+
+    hasPnpmVersionSpy.mockResolvedValueOnce(false);
+
+    await expect(
+      hasPublishedVersion("pnpm", packageJson, VERSIONS.DEFAULT, packageDir),
+    ).resolves.toEqual(false);
+    expect(hasPnpmVersionSpy).toHaveBeenCalledTimes(1);
+    expect(hasPnpmVersionSpy).toHaveBeenNthCalledWith(1, "example", VERSIONS.DEFAULT, packageDir);
+    expect(hasNpmVersionSpy).not.toHaveBeenCalled();
+    expect(hasYarnVersionSpy).not.toHaveBeenCalled();
+  });
+
+  it("should look the version up with yarn for a yarn package", async () => {
+    const packageJson = createPublishPackageJson({ name: "example" });
+
+    hasYarnVersionSpy.mockResolvedValueOnce(true);
+
+    await expect(
+      hasPublishedVersion("yarn", packageJson, VERSIONS.DEFAULT, packageDir),
+    ).resolves.toEqual(true);
+    expect(hasYarnVersionSpy).toHaveBeenCalledTimes(1);
+    expect(hasYarnVersionSpy).toHaveBeenNthCalledWith(1, "example", VERSIONS.DEFAULT, packageDir);
+    expect(hasNpmVersionSpy).not.toHaveBeenCalled();
+    expect(hasPnpmVersionSpy).not.toHaveBeenCalled();
   });
 });
 
@@ -341,8 +559,7 @@ describe("publishPackage", () => {
 
 describe("createCreateReleasesPhase", () => {
   const readScopePackageManagerSpy = vi.spyOn(thisMod, "readScopePackageManager");
-  const resolveRegistryArgsSpy = vi.spyOn(thisMod, "resolveRegistryArgs");
-  const hasNpmVersionSpy = vi.spyOn(thisMod, "hasNpmVersion");
+  const hasPublishedVersionSpy = vi.spyOn(thisMod, "hasPublishedVersion");
   const publishPackageSpy = vi.spyOn(thisMod, "publishPackage");
 
   afterEach(() => {
@@ -364,7 +581,7 @@ describe("createCreateReleasesPhase", () => {
     mockedReadScopePackageJson
       .mockResolvedValueOnce(packageJsonA)
       .mockResolvedValueOnce(packageJsonB);
-    hasNpmVersionSpy.mockResolvedValueOnce(false).mockResolvedValueOnce(false);
+    hasPublishedVersionSpy.mockResolvedValueOnce(false).mockResolvedValueOnce(false);
     publishPackageSpy.mockResolvedValueOnce(undefined).mockResolvedValueOnce(undefined);
 
     const phase = createCreateReleasesPhase(
@@ -405,23 +622,20 @@ describe("createCreateReleasesPhase", () => {
       SCOPE_NAMES.BETA,
       packageJsonB,
     );
-    expect(resolveRegistryArgsSpy).toHaveBeenCalledTimes(2);
-    expect(resolveRegistryArgsSpy).toHaveBeenNthCalledWith(1, packageJsonA);
-    expect(resolveRegistryArgsSpy).toHaveBeenNthCalledWith(2, packageJsonB);
-    expect(hasNpmVersionSpy).toHaveBeenCalledTimes(2);
-    expect(hasNpmVersionSpy).toHaveBeenNthCalledWith(
+    expect(hasPublishedVersionSpy).toHaveBeenCalledTimes(2);
+    expect(hasPublishedVersionSpy).toHaveBeenNthCalledWith(
       1,
-      SCOPE_NAMES.ALPHA,
+      "pnpm",
+      packageJsonA,
       VERSIONS.DEFAULT,
       SCOPE_PATHS[SCOPE_NAMES.ALPHA],
-      [],
     );
-    expect(hasNpmVersionSpy).toHaveBeenNthCalledWith(
+    expect(hasPublishedVersionSpy).toHaveBeenNthCalledWith(
       2,
-      SCOPE_NAMES.BETA,
+      "pnpm",
+      packageJsonB,
       VERSIONS.MAJOR,
       SCOPE_PATHS[SCOPE_NAMES.BETA],
-      [],
     );
     expect(readScopePackageManagerSpy).toHaveBeenCalledTimes(2);
     expect(readScopePackageManagerSpy).toHaveBeenNthCalledWith(
@@ -479,7 +693,7 @@ describe("createCreateReleasesPhase", () => {
 
     readScopePackageManagerSpy.mockResolvedValueOnce("npm");
     mockedReadScopePackageJson.mockResolvedValueOnce(packageJson);
-    hasNpmVersionSpy.mockResolvedValueOnce(false);
+    hasPublishedVersionSpy.mockResolvedValueOnce(false);
     publishPackageSpy.mockResolvedValueOnce(undefined);
 
     const phase = createCreateReleasesPhase(
@@ -510,7 +724,7 @@ describe("createCreateReleasesPhase", () => {
     await expect(phase(context, createCreateReleasesState())).resolves.toEqual({});
     expect(readScopePackageManagerSpy).not.toHaveBeenCalled();
     expect(mockedReadScopePackageJson).not.toHaveBeenCalled();
-    expect(hasNpmVersionSpy).not.toHaveBeenCalled();
+    expect(hasPublishedVersionSpy).not.toHaveBeenCalled();
     expect(publishPackageSpy).not.toHaveBeenCalled();
     expect(context.logger.info).toHaveBeenCalledTimes(1);
     expect(context.logger.info).toHaveBeenNthCalledWith(
@@ -532,7 +746,7 @@ describe("createCreateReleasesPhase", () => {
     );
 
     await expect(phase(context, createCreateReleasesState())).resolves.toEqual({});
-    expect(hasNpmVersionSpy).not.toHaveBeenCalled();
+    expect(hasPublishedVersionSpy).not.toHaveBeenCalled();
     expect(readScopePackageManagerSpy).not.toHaveBeenCalled();
     expect(publishPackageSpy).not.toHaveBeenCalled();
     expect(context.logger.info).toHaveBeenCalledTimes(1);
@@ -552,7 +766,8 @@ describe("createCreateReleasesPhase", () => {
     });
 
     mockedReadScopePackageJson.mockResolvedValueOnce(packageJson);
-    hasNpmVersionSpy.mockResolvedValueOnce(true);
+    readScopePackageManagerSpy.mockResolvedValueOnce("npm");
+    hasPublishedVersionSpy.mockResolvedValueOnce(true);
 
     const phase = createCreateReleasesPhase(
       createResolvedNpmPluginOptions({ extends: { publish: true, packageManager: undefined } }),
@@ -563,7 +778,14 @@ describe("createCreateReleasesPhase", () => {
         { type: "npm-package", name: "@scope/a@1.2.3", status: "existing", meta: {} },
       ],
     });
-    expect(readScopePackageManagerSpy).not.toHaveBeenCalled();
+    expect(hasPublishedVersionSpy).toHaveBeenCalledTimes(1);
+    expect(hasPublishedVersionSpy).toHaveBeenNthCalledWith(
+      1,
+      "npm",
+      packageJson,
+      VERSIONS.DEFAULT,
+      SCOPE_PATHS[SCOPE_NAMES.ALPHA],
+    );
     expect(publishPackageSpy).not.toHaveBeenCalled();
     expect(context.logger.info).toHaveBeenCalledTimes(1);
     expect(context.logger.info).toHaveBeenNthCalledWith(
@@ -584,7 +806,7 @@ describe("createCreateReleasesPhase", () => {
 
     readScopePackageManagerSpy.mockResolvedValueOnce("npm");
     mockedReadScopePackageJson.mockResolvedValueOnce(packageJson);
-    hasNpmVersionSpy.mockResolvedValueOnce(false);
+    hasPublishedVersionSpy.mockResolvedValueOnce(false);
 
     const phase = createCreateReleasesPhase(
       createResolvedNpmPluginOptions({ extends: { publish: true, packageManager: undefined } }),
@@ -607,7 +829,7 @@ describe("createCreateReleasesPhase", () => {
     mockedReadScopePackageJson.mockResolvedValueOnce(
       createPublishPackageJson({ name: SCOPE_NAMES.ALPHA, version: VERSIONS.DEFAULT }),
     );
-    hasNpmVersionSpy.mockResolvedValueOnce(false);
+    hasPublishedVersionSpy.mockResolvedValueOnce(false);
     publishPackageSpy.mockResolvedValueOnce(undefined);
 
     await createCreateReleasesPhase(
@@ -634,7 +856,7 @@ describe("createCreateReleasesPhase", () => {
 
     readScopePackageManagerSpy.mockResolvedValueOnce("pnpm");
     mockedReadScopePackageJson.mockResolvedValueOnce(packageJson);
-    hasNpmVersionSpy.mockResolvedValueOnce(false);
+    hasPublishedVersionSpy.mockResolvedValueOnce(false);
     publishPackageSpy.mockResolvedValueOnce(undefined);
 
     await createCreateReleasesPhase(
@@ -658,7 +880,7 @@ describe("createCreateReleasesPhase", () => {
 
     readScopePackageManagerSpy.mockResolvedValueOnce("npm");
     mockedReadScopePackageJson.mockResolvedValueOnce(packageJson);
-    hasNpmVersionSpy.mockResolvedValueOnce(false);
+    hasPublishedVersionSpy.mockResolvedValueOnce(false);
 
     await expect(
       createCreateReleasesPhase(
