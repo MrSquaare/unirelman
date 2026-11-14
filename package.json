@@ -18,6 +18,13 @@
     "deps:upgrade": "taze -w"
   },
   "devDependencies": {
+    "@unirelman/cli": "workspace:*",
+    "@unirelman/plugin-changelog": "workspace:*",
+    "@unirelman/plugin-changesets": "workspace:*",
+    "@unirelman/plugin-git": "workspace:*",
+    "@unirelman/plugin-github": "workspace:*",
+    "@unirelman/plugin-npm": "workspace:*",
+    "@unirelman/plugin-semver": "workspace:*",
     "@unirelman/shared-config": "workspace:*",
     "oxfmt": "^0.78.0",
     "oxlint": "^1.93.0",

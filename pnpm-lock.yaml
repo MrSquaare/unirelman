@@ -166,6 +166,27 @@ importers:
 
   .:
     devDependencies:
+      '@unirelman/cli':
+        specifier: workspace:*
+        version: link:packages/cli
+      '@unirelman/plugin-changelog':
+        specifier: workspace:*
+        version: link:plugins/changelog
+      '@unirelman/plugin-changesets':
+        specifier: workspace:*
+        version: link:plugins/changesets
+      '@unirelman/plugin-git':
+        specifier: workspace:*
+        version: link:plugins/git
+      '@unirelman/plugin-github':
+        specifier: workspace:*
+        version: link:plugins/github
+      '@unirelman/plugin-npm':
+        specifier: workspace:*
+        version: link:plugins/npm
+      '@unirelman/plugin-semver':
+        specifier: workspace:*
+        version: link:plugins/semver
       '@unirelman/shared-config':
         specifier: workspace:*
         version: link:internals/shared-config
@@ -315,6 +336,24 @@ importers:
       '@types/node':
         specifier: ^24.19.2
         version: 24.19.2
+      '@unirelman/plugin-changelog':
+        specifier: workspace:*
+        version: link:../../plugins/changelog
+      '@unirelman/plugin-changesets':
+        specifier: workspace:*
+        version: link:../../plugins/changesets
+      '@unirelman/plugin-github':
+        specifier: workspace:*
+        version: link:../../plugins/github
+      '@unirelman/plugin-npm':
+        specifier: workspace:*
+        version: link:../../plugins/npm
+      '@unirelman/plugin-replace':
+        specifier: workspace:*
+        version: link:../../plugins/replace
+      '@unirelman/plugin-semver':
+        specifier: workspace:*
+        version: link:../../plugins/semver
       '@unirelman/shared-config':
         specifier: workspace:*
         version: link:../../internals/shared-config

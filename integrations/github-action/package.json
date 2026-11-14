@@ -37,6 +37,12 @@
   },
   "devDependencies": {
     "@types/node": "^24.19.2",
+    "@unirelman/plugin-changelog": "workspace:*",
+    "@unirelman/plugin-changesets": "workspace:*",
+    "@unirelman/plugin-github": "workspace:*",
+    "@unirelman/plugin-npm": "workspace:*",
+    "@unirelman/plugin-replace": "workspace:*",
+    "@unirelman/plugin-semver": "workspace:*",
     "@unirelman/shared-config": "workspace:*",
     "@unirelman/testing": "workspace:*",
     "@vitest/coverage-v8": "^5.1.0",
