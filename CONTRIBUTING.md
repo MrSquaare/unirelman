@@ -7,6 +7,7 @@
   - [Prerequisites](#prerequisites)
   - [Installation](#installation)
 - [Development](#development)
+- [Documentation](#documentation)
 
 ## Guidelines
 
@@ -70,3 +71,19 @@ Run the tests:
 ```shell
 pnpm test
 ```
+
+Run the end-to-end tests only:
+
+```shell
+pnpm test:e2e
+```
+
+## Documentation
+
+The documentation is a [Starlight](https://starlight.astro.build/) site in [docs](docs). Start it locally:
+
+```shell
+pnpm --filter @unirelman/docs dev
+```
+
+Update the documentation in the same pull request as the change it describes.
