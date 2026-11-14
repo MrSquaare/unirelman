@@ -51,7 +51,7 @@ export const hasGitTag = async (cwd: string, tag: string): Promise<boolean> => {
 };
 
 export const runGitTag = async (cwd: string, tag: string, annotated: boolean): Promise<void> => {
-  const args = annotated ? ["tag", "-a", tag, "-m", tag] : ["tag", tag];
+  const args = annotated ? ["tag", "-a", tag, "-m", tag] : ["tag", "--no-sign", tag];
 
   await execCommand("git", args, { cwd });
 };

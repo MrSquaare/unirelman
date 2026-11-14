@@ -7,6 +7,7 @@ import type { GitCommitMessage, ResolvedGitPluginOptions } from "../types";
 import * as thisMod from "./prepare";
 
 const GIT_QUERY_EXIT_CODES = [0, 1] as const;
+const GIT_LITERAL_PATHSPECS_OPTION = "--literal-pathspecs";
 
 export const resolveGitAddPaths = (fileOperations: ScopeFileOperationsMap): string[] => {
   const paths = new Set<string>();
@@ -47,10 +48,14 @@ export const isPathAddableToGit = async (
     return true;
   }
 
-  const result = await execCommand("git", ["ls-files", "--error-unmatch", "--", filePath], {
-    cwd,
-    allowedExitCodes: GIT_QUERY_EXIT_CODES,
-  });
+  const result = await execCommand(
+    "git",
+    [GIT_LITERAL_PATHSPECS_OPTION, "ls-files", "--error-unmatch", "--", filePath],
+    {
+      cwd,
+      allowedExitCodes: GIT_QUERY_EXIT_CODES,
+    },
+  );
 
   return result.exitCode === 0;
 };
@@ -72,20 +77,37 @@ export const runGitAddPaths = async (cwd: string, paths: ReadonlyArray<string>):
     return;
   }
 
-  await execCommand("git", ["add", "--", ...paths], { cwd });
+  await execCommand("git", [GIT_LITERAL_PATHSPECS_OPTION, "add", "--", ...paths], { cwd });
 };
 
-export const hasStagedChanges = async (cwd: string): Promise<boolean> => {
-  const result = await execCommand("git", ["diff", "--cached", "--quiet"], {
-    cwd,
-    allowedExitCodes: GIT_QUERY_EXIT_CODES,
-  });
+export const hasStagedChanges = async (
+  cwd: string,
+  paths: ReadonlyArray<string>,
+): Promise<boolean> => {
+  const result = await execCommand(
+    "git",
+    [GIT_LITERAL_PATHSPECS_OPTION, "diff", "--cached", "--quiet", "--", ...paths],
+    {
+      cwd,
+      allowedExitCodes: GIT_QUERY_EXIT_CODES,
+    },
+  );
 
   return result.exitCode === 1;
 };
 
-export const runGitCommit = async (cwd: string, message: string): Promise<void> => {
-  await execCommand("git", ["commit", "-m", message], { cwd });
+export const runGitCommit = async (
+  cwd: string,
+  message: string,
+  paths: ReadonlyArray<string>,
+): Promise<void> => {
+  await execCommand(
+    "git",
+    [GIT_LITERAL_PATHSPECS_OPTION, "commit", "-m", message, "--", ...paths],
+    {
+      cwd,
+    },
+  );
 };
 
 export const createPreparePhase = (
@@ -121,13 +143,13 @@ export const createPreparePhase = (
 
     await thisMod.runGitAddPaths(context.cwd, addablePaths);
 
-    if (!(await thisMod.hasStagedChanges(context.cwd))) {
+    if (!(await thisMod.hasStagedChanges(context.cwd, addablePaths))) {
       context.logger.info("Skipping git commit: no staged changes from file operations");
 
       return;
     }
 
-    await thisMod.runGitCommit(context.cwd, commitMessage);
+    await thisMod.runGitCommit(context.cwd, commitMessage, addablePaths);
     context.logger.info(`Created git commit: ${commitMessage}`);
   };
 };

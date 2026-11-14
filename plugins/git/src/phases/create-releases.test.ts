@@ -167,7 +167,7 @@ describe("runGitTag", () => {
 
     await expect(runGitTag(CONFIG_CWD, tag, false)).resolves.toEqual(undefined);
     expect(mockedExecCommand).toHaveBeenCalledTimes(1);
-    expect(mockedExecCommand).toHaveBeenNthCalledWith(1, "git", ["tag", tag], {
+    expect(mockedExecCommand).toHaveBeenNthCalledWith(1, "git", ["tag", "--no-sign", tag], {
       cwd: CONFIG_CWD,
     });
   });

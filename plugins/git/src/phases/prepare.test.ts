@@ -113,7 +113,13 @@ describe("isPathAddableToGit", () => {
     expect(mockedExecCommand).toHaveBeenNthCalledWith(
       1,
       "git",
-      ["ls-files", "--error-unmatch", "--", "packages/a/deleted-committed-file.md"],
+      [
+        "--literal-pathspecs",
+        "ls-files",
+        "--error-unmatch",
+        "--",
+        "packages/a/deleted-committed-file.md",
+      ],
       {
         cwd: CONFIG_CWD,
         allowedExitCodes: [0, 1],
@@ -138,7 +144,7 @@ describe("isPathAddableToGit", () => {
     expect(mockedExecCommand).toHaveBeenNthCalledWith(
       1,
       "git",
-      ["ls-files", "--error-unmatch", "--", "untracked-deleted.md"],
+      ["--literal-pathspecs", "ls-files", "--error-unmatch", "--", "untracked-deleted.md"],
       {
         cwd: CONFIG_CWD,
         allowedExitCodes: [0, 1],
@@ -197,7 +203,7 @@ describe("runGitAddPaths", () => {
     expect(mockedExecCommand).toHaveBeenNthCalledWith(
       1,
       "git",
-      ["add", "--", "CHANGELOG.md", "packages/a/package.json"],
+      ["--literal-pathspecs", "add", "--", "CHANGELOG.md", "packages/a/package.json"],
       {
         cwd: CONFIG_CWD,
       },
@@ -223,12 +229,14 @@ describe("hasStagedChanges", () => {
       stderr: "",
     });
 
-    await expect(hasStagedChanges(CONFIG_CWD)).resolves.toEqual(false);
+    await expect(hasStagedChanges(CONFIG_CWD, ["CHANGELOG.md"])).resolves.toEqual(false);
     expect(mockedExecCommand).toHaveBeenCalledTimes(1);
-    expect(mockedExecCommand).toHaveBeenNthCalledWith(1, "git", ["diff", "--cached", "--quiet"], {
-      cwd: CONFIG_CWD,
-      allowedExitCodes: [0, 1],
-    });
+    expect(mockedExecCommand).toHaveBeenNthCalledWith(
+      1,
+      "git",
+      ["--literal-pathspecs", "diff", "--cached", "--quiet", "--", "CHANGELOG.md"],
+      { cwd: CONFIG_CWD, allowedExitCodes: [0, 1] },
+    );
   });
 
   it("should return true when there are staged changes", async () => {
@@ -238,12 +246,14 @@ describe("hasStagedChanges", () => {
       stderr: "",
     });
 
-    await expect(hasStagedChanges(CONFIG_CWD)).resolves.toEqual(true);
+    await expect(hasStagedChanges(CONFIG_CWD, ["CHANGELOG.md"])).resolves.toEqual(true);
     expect(mockedExecCommand).toHaveBeenCalledTimes(1);
-    expect(mockedExecCommand).toHaveBeenNthCalledWith(1, "git", ["diff", "--cached", "--quiet"], {
-      cwd: CONFIG_CWD,
-      allowedExitCodes: [0, 1],
-    });
+    expect(mockedExecCommand).toHaveBeenNthCalledWith(
+      1,
+      "git",
+      ["--literal-pathspecs", "diff", "--cached", "--quiet", "--", "CHANGELOG.md"],
+      { cwd: CONFIG_CWD, allowedExitCodes: [0, 1] },
+    );
   });
 });
 
@@ -252,7 +262,7 @@ describe("runGitCommit", () => {
     vi.clearAllMocks();
   });
 
-  it("should run git commit with provided message", async () => {
+  it("should commit only the given paths with the provided message", async () => {
     const message = "chore(release): bump versions";
 
     mockedExecCommand.mockResolvedValueOnce({
@@ -261,11 +271,16 @@ describe("runGitCommit", () => {
       stderr: "",
     });
 
-    await expect(runGitCommit(CONFIG_CWD, message)).resolves.toEqual(undefined);
+    await expect(
+      runGitCommit(CONFIG_CWD, message, ["CHANGELOG.md", "app/[slug]/page.mdx"]),
+    ).resolves.toEqual(undefined);
     expect(mockedExecCommand).toHaveBeenCalledTimes(1);
-    expect(mockedExecCommand).toHaveBeenNthCalledWith(1, "git", ["commit", "-m", message], {
-      cwd: CONFIG_CWD,
-    });
+    expect(mockedExecCommand).toHaveBeenNthCalledWith(
+      1,
+      "git",
+      ["--literal-pathspecs", "commit", "-m", message, "--", "CHANGELOG.md", "app/[slug]/page.mdx"],
+      { cwd: CONFIG_CWD },
+    );
   });
 });
 
@@ -313,12 +328,13 @@ describe("createPreparePhase", () => {
     expect(runGitAddPathsSpy).toHaveBeenCalledTimes(1);
     expect(runGitAddPathsSpy).toHaveBeenNthCalledWith(1, context.cwd, ["CHANGELOG.md"]);
     expect(hasStagedChangesSpy).toHaveBeenCalledTimes(1);
-    expect(hasStagedChangesSpy).toHaveBeenNthCalledWith(1, context.cwd);
+    expect(hasStagedChangesSpy).toHaveBeenNthCalledWith(1, context.cwd, ["CHANGELOG.md"]);
     expect(runGitCommitSpy).toHaveBeenCalledTimes(1);
     expect(runGitCommitSpy).toHaveBeenNthCalledWith(
       1,
       context.cwd,
       "chore(release): bump versions",
+      ["CHANGELOG.md"],
     );
     expect(context.logger.info).toHaveBeenCalledTimes(1);
     expect(context.logger.info).toHaveBeenNthCalledWith(
@@ -463,7 +479,7 @@ describe("createPreparePhase", () => {
     expect(runGitAddPathsSpy).toHaveBeenCalledTimes(1);
     expect(runGitAddPathsSpy).toHaveBeenNthCalledWith(1, context.cwd, ["CHANGELOG.md"]);
     expect(hasStagedChangesSpy).toHaveBeenCalledTimes(1);
-    expect(hasStagedChangesSpy).toHaveBeenNthCalledWith(1, context.cwd);
+    expect(hasStagedChangesSpy).toHaveBeenNthCalledWith(1, context.cwd, ["CHANGELOG.md"]);
     expect(runGitCommitSpy).not.toHaveBeenCalled();
     expect(context.logger.info).toHaveBeenCalledTimes(1);
     expect(context.logger.info).toHaveBeenNthCalledWith(
