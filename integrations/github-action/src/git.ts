@@ -10,12 +10,12 @@ const GITHUB_ACTIONS_BOT_USER_NAME = "github-actions[bot]";
 const GITHUB_ACTIONS_BOT_USER_EMAIL = `${GITHUB_ACTIONS_BOT_USER_ID}+${GITHUB_ACTIONS_BOT_USER_NAME}@users.noreply.github.com`;
 const GIT_IDENTITY_VARIABLES = ["GIT_AUTHOR_IDENT", "GIT_COMMITTER_IDENT"] as const;
 
-export const hasGitIdentity = async (): Promise<boolean> => {
+export const hasGitIdentity = async (cwd: string): Promise<boolean> => {
   for (const variable of GIT_IDENTITY_VARIABLES) {
     const { exitCode } = await getExecOutput(
       "git",
       ["-c", "user.useConfigOnly=true", "var", variable],
-      { ignoreReturnCode: true, silent: true },
+      { cwd, ignoreReturnCode: true, silent: true },
     );
 
     if (exitCode !== 0) {
@@ -26,13 +26,13 @@ export const hasGitIdentity = async (): Promise<boolean> => {
   return true;
 };
 
-export const configureGitIdentity = async (): Promise<void> => {
-  if (await thisMod.hasGitIdentity()) {
+export const configureGitIdentity = async (cwd: string): Promise<void> => {
+  if (await thisMod.hasGitIdentity(cwd)) {
     return;
   }
 
-  await exec("git", ["config", "user.name", GITHUB_ACTIONS_BOT_USER_NAME]);
-  await exec("git", ["config", "user.email", GITHUB_ACTIONS_BOT_USER_EMAIL]);
+  await exec("git", ["config", "user.name", GITHUB_ACTIONS_BOT_USER_NAME], { cwd });
+  await exec("git", ["config", "user.email", GITHUB_ACTIONS_BOT_USER_EMAIL], { cwd });
 };
 
 export const resolvePublishedGitTags = (output: PublishOutput): string[] => {
@@ -42,29 +42,33 @@ export const resolvePublishedGitTags = (output: PublishOutput): string[] => {
     .map((release) => release.name);
 };
 
-export const pushGitTags = async (tags: readonly string[]): Promise<void> => {
+export const pushGitTags = async (cwd: string, tags: readonly string[]): Promise<void> => {
   if (tags.length === 0) {
     return;
   }
 
-  await exec("git", ["push", "origin", ...tags.map((tag) => `refs/tags/${tag}`)]);
+  await exec("git", ["push", "origin", ...tags.map((tag) => `refs/tags/${tag}`)], { cwd });
 };
 
-export const commitFiles = async (paths: readonly string[], message: string): Promise<void> => {
-  await exec("git", ["add", "--", ...paths]);
-  await exec("git", ["commit", "-m", message]);
+export const commitFiles = async (
+  cwd: string,
+  paths: readonly string[],
+  message: string,
+): Promise<void> => {
+  await exec("git", ["add", "--", ...paths], { cwd });
+  await exec("git", ["commit", "-m", message], { cwd });
 };
 
-export const checkoutBranch = async (branch: string): Promise<void> => {
-  await exec("git", ["checkout", "-B", branch]);
+export const checkoutBranch = async (cwd: string, branch: string): Promise<void> => {
+  await exec("git", ["checkout", "-B", branch], { cwd });
 };
 
-export const readHeadCommit = async (): Promise<string> => {
-  const { stdout } = await getExecOutput("git", ["rev-parse", "HEAD"]);
+export const readHeadCommit = async (cwd: string): Promise<string> => {
+  const { stdout } = await getExecOutput("git", ["rev-parse", "HEAD"], { cwd });
 
   return stdout.trim();
 };
 
-export const pushBranch = async (branch: string): Promise<void> => {
-  await exec("git", ["push", "--force", "origin", branch]);
+export const pushBranch = async (cwd: string, branch: string): Promise<void> => {
+  await exec("git", ["push", "--force", "origin", branch], { cwd });
 };

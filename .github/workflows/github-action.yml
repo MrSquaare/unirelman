@@ -64,7 +64,9 @@ jobs:
         run: pnpm check --filter @unirelman/github-action
 
       - name: Check committed build
-        run: git diff --exit-code -- integrations/github-action/dist
+        run: |
+          git add --intent-to-add -- integrations/github-action/dist
+          git diff --exit-code -- integrations/github-action/dist
 
   test:
     runs-on: ubuntu-latest

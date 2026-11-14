@@ -26223,7 +26223,7 @@ const GITHUB_ACTIONS_BOT_USER_ID = 41898282;
 const GITHUB_ACTIONS_BOT_USER_NAME = "github-actions[bot]";
 const GITHUB_ACTIONS_BOT_USER_EMAIL = `${GITHUB_ACTIONS_BOT_USER_ID}+${GITHUB_ACTIONS_BOT_USER_NAME}@users.noreply.github.com`;
 const GIT_IDENTITY_VARIABLES = ["GIT_AUTHOR_IDENT", "GIT_COMMITTER_IDENT"];
-const hasGitIdentity = async () => {
+const hasGitIdentity = async (cwd) => {
 	for (const variable of GIT_IDENTITY_VARIABLES) {
 		const { exitCode } = await getExecOutput("git", [
 			"-c",
@@ -26231,6 +26231,7 @@ const hasGitIdentity = async () => {
 			"var",
 			variable
 		], {
+			cwd,
 			ignoreReturnCode: true,
 			silent: true
 		});
@@ -26238,60 +26239,60 @@ const hasGitIdentity = async () => {
 	}
 	return true;
 };
-const configureGitIdentity = async () => {
-	if (await hasGitIdentity()) return;
+const configureGitIdentity = async (cwd) => {
+	if (await hasGitIdentity(cwd)) return;
 	await exec("git", [
 		"config",
 		"user.name",
 		GITHUB_ACTIONS_BOT_USER_NAME
-	]);
+	], { cwd });
 	await exec("git", [
 		"config",
 		"user.email",
 		GITHUB_ACTIONS_BOT_USER_EMAIL
-	]);
+	], { cwd });
 };
 const resolvePublishedGitTags = (output) => {
 	return Object.values(output.releases).flat().filter((release) => release.type === GIT_TAG_RELEASE_TYPE).map((release) => release.name);
 };
-const pushGitTags = async (tags) => {
+const pushGitTags = async (cwd, tags) => {
 	if (tags.length === 0) return;
 	await exec("git", [
 		"push",
 		"origin",
 		...tags.map((tag) => `refs/tags/${tag}`)
-	]);
+	], { cwd });
 };
-const commitFiles = async (paths, message) => {
+const commitFiles = async (cwd, paths, message) => {
 	await exec("git", [
 		"add",
 		"--",
 		...paths
-	]);
+	], { cwd });
 	await exec("git", [
 		"commit",
 		"-m",
 		message
-	]);
+	], { cwd });
 };
-const checkoutBranch = async (branch) => {
+const checkoutBranch = async (cwd, branch) => {
 	await exec("git", [
 		"checkout",
 		"-B",
 		branch
-	]);
+	], { cwd });
 };
-const readHeadCommit = async () => {
-	const { stdout } = await getExecOutput("git", ["rev-parse", "HEAD"]);
+const readHeadCommit = async (cwd) => {
+	const { stdout } = await getExecOutput("git", ["rev-parse", "HEAD"], { cwd });
 	return stdout.trim();
 };
-const pushBranch = async (branch) => {
+const pushBranch = async (cwd, branch) => {
 	await exec("git", [
 		"push",
 		"--force",
 		"origin",
 		branch
-	]);
+	], { cwd });
 };
 // src/inputs.ts
 const readActionInputs = () => {
@@ -26363,14 +26364,14 @@ const writeActionSettings = (store, settings) => {
 // src/main.ts
 const runPublishStep = async (inputs, environment) => {
 	const publishOutput = await runUnirelmanPublish(inputs.command, inputs.workingDirectory, environment);
-	await pushGitTags(resolvePublishedGitTags(publishOutput));
+	await pushGitTags(inputs.workingDirectory, resolvePublishedGitTags(publishOutput));
 	setOutput("releases", JSON.stringify(publishOutput.releases));
 };
 const runVersionStep = async (inputs, environment) => {
-	await checkoutBranch(inputs.branch);
-	const baseCommit = await readHeadCommit();
+	await checkoutBranch(inputs.workingDirectory, inputs.branch);
+	const baseCommit = await readHeadCommit(inputs.workingDirectory);
 	const versionOutput = await runUnirelmanVersion(inputs.command, inputs.workingDirectory, environment);
-	if (versionOutput.files.length > 0 && await readHeadCommit() === baseCommit) throw new ActionMissingReleaseCommitError();
+	if (versionOutput.files.length > 0 && await readHeadCommit(inputs.workingDirectory) === baseCommit) throw new ActionMissingReleaseCommitError();
 	return versionOutput;
 };
 const syncReleasePullRequest = async (octokit, repository, inputs, store, settings, versionOutput) => {
@@ -26385,9 +26386,9 @@ const syncReleasePullRequest = async (octokit, repository, inputs, store, settin
 	}
 	if (!settings.publishingEnabled) {
 		await writeActionSettings(store, { publishingEnabled: true });
-		await commitFiles([resolveActionSettingsPath(store)], ACTION_ENABLE_PUBLISHING_COMMIT_MESSAGE);
+		await commitFiles(inputs.workingDirectory, [resolveActionSettingsPath(store)], ACTION_ENABLE_PUBLISHING_COMMIT_MESSAGE);
 	}
-	await pushBranch(inputs.branch);
+	await pushBranch(inputs.workingDirectory, inputs.branch);
 	const pullRequest = hasReleaseChanges ? {
 		title: inputs.prTitle,
 		body: formatReleasePullRequestBody(versionOutput)
@@ -26405,7 +26406,7 @@ const runAction = async () => {
 	const environment = resolveUnirelmanEnvironment(process.env, inputs.githubToken);
 	const store = new Store(inputs.workingDirectory, ACTION_STORE_DIR);
 	const settings = await readActionSettings(store);
-	await configureGitIdentity();
+	await configureGitIdentity(inputs.workingDirectory);
 	if (settings.publishingEnabled) await runPublishStep(inputs, environment);
 	else info("Skipped publish: publishing is enabled by merging the release pull request");
 	const versionOutput = await runVersionStep(inputs, environment);

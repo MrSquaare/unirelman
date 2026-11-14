@@ -13,7 +13,8 @@ import {
 } from "./git";
 import * as thisMod from "./git";
 
-const IDENTITY_OPTIONS = { ignoreReturnCode: true, silent: true };
+const CWD = "/workspace";
+const IDENTITY_OPTIONS = { cwd: CWD, ignoreReturnCode: true, silent: true };
 
 describe("hasGitIdentity", () => {
   afterEach(() => {
@@ -25,7 +26,7 @@ describe("hasGitIdentity", () => {
       .mockResolvedValueOnce({ exitCode: 0, stdout: "", stderr: "" })
       .mockResolvedValueOnce({ exitCode: 0, stdout: "", stderr: "" });
 
-    await expect(hasGitIdentity()).resolves.toEqual(true);
+    await expect(hasGitIdentity(CWD)).resolves.toEqual(true);
     expect(mockedGetExecOutput).toHaveBeenCalledTimes(2);
     expect(mockedGetExecOutput).toHaveBeenNthCalledWith(
       1,
@@ -44,7 +45,7 @@ describe("hasGitIdentity", () => {
   it("should return false when the author identity is missing", async () => {
     mockedGetExecOutput.mockResolvedValueOnce({ exitCode: 128, stdout: "", stderr: "" });
 
-    await expect(hasGitIdentity()).resolves.toEqual(false);
+    await expect(hasGitIdentity(CWD)).resolves.toEqual(false);
     expect(mockedGetExecOutput).toHaveBeenCalledTimes(1);
   });
 
@@ -53,7 +54,7 @@ describe("hasGitIdentity", () => {
       .mockResolvedValueOnce({ exitCode: 0, stdout: "", stderr: "" })
       .mockResolvedValueOnce({ exitCode: 128, stdout: "", stderr: "" });
 
-    await expect(hasGitIdentity()).resolves.toEqual(false);
+    await expect(hasGitIdentity(CWD)).resolves.toEqual(false);
     expect(mockedGetExecOutput).toHaveBeenCalledTimes(2);
   });
 });
@@ -68,25 +69,28 @@ describe("configureGitIdentity", () => {
   it("should configure the GitHub Actions bot when no identity is configured", async () => {
     hasGitIdentitySpy.mockResolvedValueOnce(false);
 
-    await expect(configureGitIdentity()).resolves.toEqual(undefined);
+    await expect(configureGitIdentity(CWD)).resolves.toEqual(undefined);
     expect(hasGitIdentitySpy).toHaveBeenCalledTimes(1);
+    expect(hasGitIdentitySpy).toHaveBeenNthCalledWith(1, CWD);
     expect(mockedExec).toHaveBeenCalledTimes(2);
-    expect(mockedExec).toHaveBeenNthCalledWith(1, "git", [
-      "config",
-      "user.name",
-      "github-actions[bot]",
-    ]);
-    expect(mockedExec).toHaveBeenNthCalledWith(2, "git", [
-      "config",
-      "user.email",
-      "41898282+github-actions[bot]@users.noreply.github.com",
-    ]);
+    expect(mockedExec).toHaveBeenNthCalledWith(
+      1,
+      "git",
+      ["config", "user.name", "github-actions[bot]"],
+      { cwd: CWD },
+    );
+    expect(mockedExec).toHaveBeenNthCalledWith(
+      2,
+      "git",
+      ["config", "user.email", "41898282+github-actions[bot]@users.noreply.github.com"],
+      { cwd: CWD },
+    );
   });
 
   it("should keep the configured identity", async () => {
     hasGitIdentitySpy.mockResolvedValueOnce(true);
 
-    await expect(configureGitIdentity()).resolves.toEqual(undefined);
+    await expect(configureGitIdentity(CWD)).resolves.toEqual(undefined);
     expect(mockedExec).not.toHaveBeenCalled();
   });
 });
@@ -119,18 +123,18 @@ describe("pushGitTags", () => {
   });
 
   it("should push every tag to origin", async () => {
-    await expect(pushGitTags(["@scope/a@1.0.1", "2.0.0"])).resolves.toEqual(undefined);
+    await expect(pushGitTags(CWD, ["@scope/a@1.0.1", "2.0.0"])).resolves.toEqual(undefined);
     expect(mockedExec).toHaveBeenCalledTimes(1);
-    expect(mockedExec).toHaveBeenNthCalledWith(1, "git", [
-      "push",
-      "origin",
-      "refs/tags/@scope/a@1.0.1",
-      "refs/tags/2.0.0",
-    ]);
+    expect(mockedExec).toHaveBeenNthCalledWith(
+      1,
+      "git",
+      ["push", "origin", "refs/tags/@scope/a@1.0.1", "refs/tags/2.0.0"],
+      { cwd: CWD },
+    );
   });
 
   it("should push nothing when there are no tags", async () => {
-    await expect(pushGitTags([])).resolves.toEqual(undefined);
+    await expect(pushGitTags(CWD, [])).resolves.toEqual(undefined);
     expect(mockedExec).not.toHaveBeenCalled();
   });
 });
@@ -142,19 +146,25 @@ describe("commitFiles", () => {
 
   it("should stage the given paths and commit them with the message", async () => {
     await expect(
-      commitFiles([".unirelman/github-action/settings.json"], "chore(release): enable publishing"),
+      commitFiles(
+        CWD,
+        [".unirelman/github-action/settings.json"],
+        "chore(release): enable publishing",
+      ),
     ).resolves.toEqual(undefined);
     expect(mockedExec).toHaveBeenCalledTimes(2);
-    expect(mockedExec).toHaveBeenNthCalledWith(1, "git", [
-      "add",
-      "--",
-      ".unirelman/github-action/settings.json",
-    ]);
-    expect(mockedExec).toHaveBeenNthCalledWith(2, "git", [
-      "commit",
-      "-m",
-      "chore(release): enable publishing",
-    ]);
+    expect(mockedExec).toHaveBeenNthCalledWith(
+      1,
+      "git",
+      ["add", "--", ".unirelman/github-action/settings.json"],
+      { cwd: CWD },
+    );
+    expect(mockedExec).toHaveBeenNthCalledWith(
+      2,
+      "git",
+      ["commit", "-m", "chore(release): enable publishing"],
+      { cwd: CWD },
+    );
   });
 });
 
@@ -164,9 +174,11 @@ describe("checkoutBranch", () => {
   });
 
   it("should create or reset the branch on the current commit", async () => {
-    await expect(checkoutBranch("unirelman/release")).resolves.toEqual(undefined);
+    await expect(checkoutBranch(CWD, "unirelman/release")).resolves.toEqual(undefined);
     expect(mockedExec).toHaveBeenCalledTimes(1);
-    expect(mockedExec).toHaveBeenNthCalledWith(1, "git", ["checkout", "-B", "unirelman/release"]);
+    expect(mockedExec).toHaveBeenNthCalledWith(1, "git", ["checkout", "-B", "unirelman/release"], {
+      cwd: CWD,
+    });
   });
 });
 
@@ -178,9 +190,11 @@ describe("readHeadCommit", () => {
   it("should return the trimmed HEAD commit", async () => {
     mockedGetExecOutput.mockResolvedValueOnce({ exitCode: 0, stdout: "abc123\n", stderr: "" });
 
-    await expect(readHeadCommit()).resolves.toEqual("abc123");
+    await expect(readHeadCommit(CWD)).resolves.toEqual("abc123");
     expect(mockedGetExecOutput).toHaveBeenCalledTimes(1);
-    expect(mockedGetExecOutput).toHaveBeenNthCalledWith(1, "git", ["rev-parse", "HEAD"]);
+    expect(mockedGetExecOutput).toHaveBeenNthCalledWith(1, "git", ["rev-parse", "HEAD"], {
+      cwd: CWD,
+    });
   });
 });
 
@@ -190,13 +204,13 @@ describe("pushBranch", () => {
   });
 
   it("should force-push the branch to origin", async () => {
-    await expect(pushBranch("unirelman/release")).resolves.toEqual(undefined);
+    await expect(pushBranch(CWD, "unirelman/release")).resolves.toEqual(undefined);
     expect(mockedExec).toHaveBeenCalledTimes(1);
-    expect(mockedExec).toHaveBeenNthCalledWith(1, "git", [
-      "push",
-      "--force",
-      "origin",
-      "unirelman/release",
-    ]);
+    expect(mockedExec).toHaveBeenNthCalledWith(
+      1,
+      "git",
+      ["push", "--force", "origin", "unirelman/release"],
+      { cwd: CWD },
+    );
   });
 });

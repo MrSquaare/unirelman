@@ -79,7 +79,9 @@ describe("runPublishStep", () => {
     expect(mockedResolvePublishedGitTags).toHaveBeenCalledTimes(1);
     expect(mockedResolvePublishedGitTags).toHaveBeenNthCalledWith(1, PUBLISH_OUTPUT);
     expect(mockedPushGitTags).toHaveBeenCalledTimes(1);
-    expect(mockedPushGitTags).toHaveBeenNthCalledWith(1, ["@scope/a@1.0.0"]);
+    expect(mockedPushGitTags).toHaveBeenNthCalledWith(1, inputs.workingDirectory, [
+      "@scope/a@1.0.0",
+    ]);
     expect(mockedSetOutput).toHaveBeenCalledTimes(1);
     expect(mockedSetOutput).toHaveBeenNthCalledWith(
       1,
@@ -103,7 +105,11 @@ describe("runVersionStep", () => {
     await expect(runVersionStep(inputs, UNIRELMAN_ENVIRONMENT)).resolves.toEqual(VERSION_OUTPUT);
 
     expect(mockedCheckoutBranch).toHaveBeenCalledTimes(1);
-    expect(mockedCheckoutBranch).toHaveBeenNthCalledWith(1, "unirelman/release");
+    expect(mockedCheckoutBranch).toHaveBeenNthCalledWith(
+      1,
+      inputs.workingDirectory,
+      "unirelman/release",
+    );
     expect(mockedRunUnirelmanVersion).toHaveBeenCalledTimes(1);
     expect(mockedRunUnirelmanVersion).toHaveBeenNthCalledWith(
       1,
@@ -112,6 +118,8 @@ describe("runVersionStep", () => {
       UNIRELMAN_ENVIRONMENT,
     );
     expect(mockedReadHeadCommit).toHaveBeenCalledTimes(2);
+    expect(mockedReadHeadCommit).toHaveBeenNthCalledWith(1, inputs.workingDirectory);
+    expect(mockedReadHeadCommit).toHaveBeenNthCalledWith(2, inputs.workingDirectory);
   });
 
   it("should not compare commits when the version pipeline changed no file", async () => {
@@ -165,7 +173,11 @@ describe("syncReleasePullRequest", () => {
     expect(mockedWriteActionSettings).not.toHaveBeenCalled();
     expect(mockedCommitFiles).not.toHaveBeenCalled();
     expect(mockedPushBranch).toHaveBeenCalledTimes(1);
-    expect(mockedPushBranch).toHaveBeenNthCalledWith(1, "unirelman/release");
+    expect(mockedPushBranch).toHaveBeenNthCalledWith(
+      1,
+      inputs.workingDirectory,
+      "unirelman/release",
+    );
     expect(mockedFormatReleasePullRequestBody).toHaveBeenCalledTimes(1);
     expect(mockedFormatReleasePullRequestBody).toHaveBeenNthCalledWith(1, VERSION_OUTPUT);
     expect(mockedUpsertReleasePullRequest).toHaveBeenCalledTimes(1);
@@ -213,6 +225,7 @@ describe("syncReleasePullRequest", () => {
     expect(mockedCommitFiles).toHaveBeenCalledTimes(1);
     expect(mockedCommitFiles).toHaveBeenNthCalledWith(
       1,
+      inputs.workingDirectory,
       [SETTINGS_PATH],
       "chore(release): enable publishing",
     );
@@ -347,6 +360,7 @@ describe("runAction", () => {
     expect(mockedReadActionSettings).toHaveBeenCalledTimes(1);
     expect(mockedReadActionSettings).toHaveBeenNthCalledWith(1, store);
     expect(mockedConfigureGitIdentity).toHaveBeenCalledTimes(1);
+    expect(mockedConfigureGitIdentity).toHaveBeenNthCalledWith(1, inputs.workingDirectory);
     expect(runPublishStepSpy).toHaveBeenCalledTimes(1);
     expect(runPublishStepSpy).toHaveBeenNthCalledWith(1, inputs, UNIRELMAN_ENVIRONMENT);
     expect(runVersionStepSpy).toHaveBeenCalledTimes(1);

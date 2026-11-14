@@ -43,7 +43,7 @@ export const runPublishStep = async (
     environment,
   );
 
-  await pushGitTags(resolvePublishedGitTags(publishOutput));
+  await pushGitTags(inputs.workingDirectory, resolvePublishedGitTags(publishOutput));
   setOutput("releases", JSON.stringify(publishOutput.releases));
 };
 
@@ -51,16 +51,19 @@ export const runVersionStep = async (
   inputs: ActionInputs,
   environment: Record<string, string>,
 ): Promise<VersionOutput> => {
-  await checkoutBranch(inputs.branch);
+  await checkoutBranch(inputs.workingDirectory, inputs.branch);
 
-  const baseCommit = await readHeadCommit();
+  const baseCommit = await readHeadCommit(inputs.workingDirectory);
   const versionOutput = await runUnirelmanVersion(
     inputs.command,
     inputs.workingDirectory,
     environment,
   );
 
-  if (versionOutput.files.length > 0 && (await readHeadCommit()) === baseCommit) {
+  if (
+    versionOutput.files.length > 0 &&
+    (await readHeadCommit(inputs.workingDirectory)) === baseCommit
+  ) {
     throw new ActionMissingReleaseCommitError();
   }
 
@@ -89,10 +92,14 @@ export const syncReleasePullRequest = async (
 
   if (!settings.publishingEnabled) {
     await writeActionSettings(store, { publishingEnabled: true });
-    await commitFiles([resolveActionSettingsPath(store)], ACTION_ENABLE_PUBLISHING_COMMIT_MESSAGE);
+    await commitFiles(
+      inputs.workingDirectory,
+      [resolveActionSettingsPath(store)],
+      ACTION_ENABLE_PUBLISHING_COMMIT_MESSAGE,
+    );
   }
 
-  await pushBranch(inputs.branch);
+  await pushBranch(inputs.workingDirectory, inputs.branch);
 
   const pullRequest = hasReleaseChanges
     ? { title: inputs.prTitle, body: formatReleasePullRequestBody(versionOutput) }
@@ -120,7 +127,7 @@ export const runAction = async (): Promise<void> => {
   const store = new Store(inputs.workingDirectory, ACTION_STORE_DIR);
   const settings = await readActionSettings(store);
 
-  await configureGitIdentity();
+  await configureGitIdentity(inputs.workingDirectory);
 
   if (settings.publishingEnabled) {
     await thisMod.runPublishStep(inputs, environment);
