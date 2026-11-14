@@ -61,6 +61,10 @@ describe("resolveVersionOutput", () => {
 });
 
 describe("resolvePublishOutput", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should return the releases of every scope with their meta", () => {
     expect(
       resolvePublishOutput({
