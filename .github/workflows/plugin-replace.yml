@@ -1,0 +1,84 @@
+name: "@unirelman/plugin-replace"
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "plugins/replace/**"
+      - "internals/shared-config/**"
+      - "internals/testing/**"
+      - "packages/cli/**"
+      - "packages/core/**"
+      - "packages/utils/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "turbo.json"
+      - ".github/actions/setup-env/**"
+      - ".github/workflows/plugin-replace.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "plugins/replace/**"
+      - "internals/shared-config/**"
+      - "internals/testing/**"
+      - "packages/cli/**"
+      - "packages/core/**"
+      - "packages/utils/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "turbo.json"
+      - ".github/actions/setup-env/**"
+      - ".github/workflows/plugin-replace.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    name: Checks
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup environment
+        uses: ./.github/actions/setup-env
+
+      - name: Build
+        run: pnpm build --filter @unirelman/plugin-replace
+
+      - name: Typecheck
+        run: pnpm typecheck --filter @unirelman/plugin-replace
+
+      - name: Check
+        run: pnpm check --filter @unirelman/plugin-replace
+
+  test:
+    runs-on: ubuntu-latest
+    name: Test
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup environment
+        uses: ./.github/actions/setup-env
+
+      - name: Test
+        run: pnpm test --filter @unirelman/plugin-replace -- --coverage
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: plugins/replace/coverage/lcov.info
+          flags: plugin-replace
+          disable_search: true
+          fail_ci_if_error: true
