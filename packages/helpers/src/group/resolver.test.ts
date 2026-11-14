@@ -1,10 +1,14 @@
 import { SCOPE_NAMES } from "@unirelman/core/testing/fixtures";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { GroupDuplicateScopeError, GroupEmptyError, GroupUnknownScopeError } from "./errors";
 import { resolveGroups } from "./resolver";
 
 describe("resolveGroups", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should return one group named all with every scope for true", () => {
     expect(resolveGroups(true, [SCOPE_NAMES.ALPHA, SCOPE_NAMES.BETA])).toEqual([
       { name: "all", scopes: [SCOPE_NAMES.ALPHA, SCOPE_NAMES.BETA] },

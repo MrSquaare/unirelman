@@ -82,6 +82,10 @@ describe("parseConfig", () => {
 });
 
 describe("isPathInside", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should return true for a path inside the parent path", () => {
     expect(isPathInside(CONFIG_CWD, `${CONFIG_CWD}/packages/alpha`)).toEqual(true);
   });

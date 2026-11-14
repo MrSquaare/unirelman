@@ -32,6 +32,10 @@ describe("readTerminalState", () => {
 });
 
 describe("resolveOutputMode", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should return the requested mode", () => {
     expect(resolveOutputMode("json", { stdin: true, stderr: true })).toEqual("json");
   });

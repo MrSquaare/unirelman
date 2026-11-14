@@ -8,6 +8,10 @@ import {
 } from "./pipeline-summary";
 
 describe("resolveVersionSummary", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should return one line per versioned scope", () => {
     expect(
       resolveVersionSummary({
@@ -41,6 +45,10 @@ describe("resolveVersionSummary", () => {
 });
 
 describe("resolvePublishSummary", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should return one line per created release", () => {
     expect(
       resolvePublishSummary({

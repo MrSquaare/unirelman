@@ -8,6 +8,10 @@ import { execCommand, ExecError, ExecSpawnError, formatCommand } from "./exec";
 const CONFIG_CWD = "/repo";
 
 describe("formatCommand", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should join command and arguments with spaces", () => {
     expect(formatCommand("git", ["commit", "-m", "message"])).toEqual("git commit -m message");
   });

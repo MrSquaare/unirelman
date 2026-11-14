@@ -187,6 +187,10 @@ describe("assertSinglePhaseProviders", () => {
 });
 
 describe("hasChanges", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should return true when a scope has changes", () => {
     expect(hasChanges({ [SCOPE_NAMES.ALPHA]: [createChange()] })).toEqual(true);
   });
@@ -197,6 +201,10 @@ describe("hasChanges", () => {
 });
 
 describe("assertStableNextVersions", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should pass when every previous next version is kept", () => {
     expect(
       assertStableNextVersions(
@@ -229,6 +237,10 @@ describe("assertStableNextVersions", () => {
 });
 
 describe("hasNewScopes", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should return true when a scope gets a next version", () => {
     expect(
       hasNewScopes(
@@ -249,6 +261,10 @@ describe("hasNewScopes", () => {
 });
 
 describe("resolveCurrentVersions", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should merge the parsed meta into the meta of each current version", () => {
     const alphaVersion = createVersion({
       extends: { version: "1.1.0-alpha.0", meta: { source: "npm" } as VersionMeta },
@@ -275,6 +291,10 @@ describe("resolveCurrentVersions", () => {
 });
 
 describe("resolveFileOperations", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should resolve relative paths to absolute and preserve already absolute paths", () => {
     const fileOperations = {
       [SCOPE_NAMES.ALPHA]: [
@@ -397,6 +417,10 @@ describe("dedupeFileOperations", () => {
 });
 
 describe("isSameFileOperation", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should return true for file writes with the same content", () => {
     expect(
       isSameFileOperation(

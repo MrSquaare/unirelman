@@ -198,6 +198,10 @@ describe("resolveNextVersion", () => {
 });
 
 describe("resolveSharedCurrentVersion", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should return the current version shared by every scope", () => {
     expect(
       resolveSharedCurrentVersion([SCOPE_NAMES.ALPHA, SCOPE_NAMES.BETA], {

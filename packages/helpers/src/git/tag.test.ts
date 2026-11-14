@@ -35,6 +35,10 @@ describe("isRootScope", () => {
 });
 
 describe("resolveDefaultGitTag", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should return the version for the root scope", () => {
     expect(
       resolveDefaultGitTag({ scopeName: "my-package", version: "1.0.1", isRootScope: true }),

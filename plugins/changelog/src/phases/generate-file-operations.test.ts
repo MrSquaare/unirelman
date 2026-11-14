@@ -41,6 +41,10 @@ afterEach(() => {
 });
 
 describe("resolveGroupedChangeMessages", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should group changes by change level", () => {
     const changesMap = createScopeChangesMap();
     const alphaChanges = changesMap[SCOPE_NAMES.ALPHA];
@@ -62,6 +66,10 @@ describe("resolveGroupedChangeMessages", () => {
 });
 
 describe("resolveChangeEntry", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should render a single-line message as a list item", () => {
     expect(resolveChangeEntry("fix a bug")).toEqual("- fix a bug");
   });
@@ -259,6 +267,10 @@ describe("resolveRootChangelogMarkdown", () => {
 });
 
 describe("resolveNextChangelogContent", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should write the header and the sections in a new changelog", () => {
     expect(resolveNextChangelogContent("## New", "", "# Changelog")).toEqual(
       "# Changelog\n\n## New\n",

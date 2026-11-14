@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ChangelogInvalidLevelHeaderError } from "../errors";
 import {
@@ -10,6 +10,10 @@ import {
 import { resolveChangelogPluginOptions } from "./options";
 
 describe("resolveChangelogPluginOptions", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should resolve default options when no options are provided", () => {
     expect(resolveChangelogPluginOptions()).toEqual({
       mode: "root",

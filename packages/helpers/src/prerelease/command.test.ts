@@ -32,6 +32,10 @@ import {
 import { prereleaseStateSchema } from "./types";
 
 describe("parsePrereleaseOptions", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should return enter selection when scope and channel are provided", () => {
     expect(
       parsePrereleaseOptions({ scope: SCOPE_NAMES.ALPHA, channel: "alpha", exit: false }, [
@@ -104,6 +108,10 @@ describe("parsePrereleaseOptions", () => {
 
 describe("resolvePrereleaseTarget", () => {
   const groups = [{ name: "product", scopes: [SCOPE_NAMES.ALPHA] }];
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
 
   it("should return the fixed group named by --group", () => {
     expect(
@@ -193,6 +201,10 @@ describe("promptPrereleaseTarget", () => {
 });
 
 describe("resolveAllowedChannels", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should return every channel when the target is in release mode", () => {
     expect(resolveAllowedChannels(["alpha", "beta", "rc"], undefined)).toEqual([
       "alpha",
@@ -261,6 +273,10 @@ describe("promptChannel", () => {
 
 describe("resolvePrereleaseUpdate", () => {
   const target = { group: "product", scopes: [SCOPE_NAMES.ALPHA, SCOPE_NAMES.BETA] };
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
 
   it("should put every scope of the target on the selected channel", () => {
     expect(

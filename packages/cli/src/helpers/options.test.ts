@@ -89,6 +89,10 @@ describe("assertCommandOptions", () => {
 });
 
 describe("findInvalidOptionKeys", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should return the keys whose value has another type", () => {
     expect(findInvalidOptionKeys({ config: true, dryRun: true }, ARGS)).toEqual(["config"]);
   });

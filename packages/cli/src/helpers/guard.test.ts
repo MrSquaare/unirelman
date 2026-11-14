@@ -25,6 +25,10 @@ describe("isCLIPlugin", () => {
 });
 
 describe("isCommandGroup", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should return true for a command group", () => {
     const group: CommandGroup = { meta: { name: "group" }, subCommands: {} };
 
@@ -44,6 +48,10 @@ describe("isCommandGroup", () => {
 });
 
 describe("isUnknownOptionToken", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should return true for an unknown option token", () => {
     expect(isUnknownOptionToken({ kind: "unknownOption", rawName: "--levle" })).toEqual(true);
   });
@@ -54,6 +62,10 @@ describe("isUnknownOptionToken", () => {
 });
 
 describe("isPositionalToken", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should return true for a positional token", () => {
     expect(isPositionalToken({ kind: "positional", value: "version" })).toEqual(true);
   });

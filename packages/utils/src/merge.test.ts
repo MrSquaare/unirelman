@@ -1,8 +1,12 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { mergeArrayRecords, shallowMerge } from "./merge";
 
 describe("shallowMerge", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should merge two objects", () => {
     expect(shallowMerge({ a: 1 }, { b: 2 })).toEqual({ a: 1, b: 2 });
   });
@@ -17,6 +21,10 @@ describe("shallowMerge", () => {
 });
 
 describe("mergeArrayRecords", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should concatenate arrays under matching keys", () => {
     expect(mergeArrayRecords({ a: [1] }, { a: [2, 3] })).toEqual({ a: [1, 2, 3] });
   });
