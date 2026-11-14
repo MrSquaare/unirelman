@@ -24,6 +24,10 @@ flags:
     paths:
       - plugins/changelog/
     carryforward: true
+  plugin-changesets:
+    paths:
+      - plugins/changesets/
+    carryforward: true
   plugin-replace:
     paths:
       - plugins/replace/
