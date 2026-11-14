@@ -1,9 +1,13 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { createSemverVersionMeta } from "../types.fixture";
 import { isSemverVersionMeta } from "./guard";
 
 describe("isSemverVersionMeta", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should return true when meta contains semver object", () => {
     const meta = createSemverVersionMeta();
 

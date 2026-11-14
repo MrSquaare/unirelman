@@ -14,6 +14,10 @@ import {
 import { createSemverVersion } from "./types.fixture";
 
 describe("parseSemverVersion", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should parse semver version", () => {
     expect(parseSemverVersion("1.2.3")).toEqual({ major: 1, minor: 2, patch: 3 });
   });
@@ -28,12 +32,20 @@ describe("parseSemverVersion", () => {
 });
 
 describe("formatSemverVersion", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should format version to a dot-separated string", () => {
     expect(formatSemverVersion({ major: 1, minor: 2, patch: 3 })).toEqual("1.2.3");
   });
 });
 
 describe("resolveHighestChangeLevel", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should return the highest change level", () => {
     expect(
       resolveHighestChangeLevel([
@@ -50,6 +62,10 @@ describe("resolveHighestChangeLevel", () => {
 });
 
 describe("resolveSemverVersionLevel", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should return patch level when patch is set", () => {
     expect(resolveSemverVersionLevel({ major: 1, minor: 2, patch: 3 })).toEqual("patch");
   });
@@ -130,6 +146,10 @@ describe("isSemverPrereleaseBaseStale", () => {
 });
 
 describe("semverScheme", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should describe the semver versioning scheme", () => {
     expect(semverScheme).toEqual({
       name: "semver",
