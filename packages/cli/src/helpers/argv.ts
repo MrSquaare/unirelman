@@ -19,6 +19,8 @@ export type ParsedArgv = {
 };
 
 const OPTION_PREFIX = "-";
+const LONG_OPTION_PREFIX = "--";
+const OPTION_TERMINATOR = "--";
 
 export const resolveParseOptions = (optionDefs: OptionsDef): ParseArgsOptionsConfig => {
   return Object.fromEntries(
@@ -47,12 +49,46 @@ export const resolveOptionValue = (optionDef: OptionDef, token: OptionToken): st
   return token.value;
 };
 
+export const resolveShortOptionGroup = (
+  arg: string,
+  typesByAlias: ReadonlyMap<string, OptionDef["type"]>,
+): string => {
+  if (!arg.startsWith(OPTION_PREFIX) || arg.startsWith(LONG_OPTION_PREFIX)) {
+    return arg;
+  }
+
+  for (let index = 1; index < arg.length; index++) {
+    const type = typesByAlias.get(arg[index]);
+
+    if (type === "string") {
+      return arg;
+    }
+
+    if (type === undefined) {
+      return arg.slice(0, index + 1);
+    }
+  }
+
+  return arg;
+};
+
 export const parseArgv = (argv: readonly string[], optionDefs: OptionsDef): ParsedArgv => {
   const keysByOptionName = new Map(
     Object.keys(optionDefs).map((key) => [resolveOptionName(key), key]),
   );
+  const typesByAlias = new Map(
+    Object.values(optionDefs).flatMap((optionDef) =>
+      optionDef.alias === undefined ? [] : [[optionDef.alias, optionDef.type] as const],
+    ),
+  );
+  const terminatorIndex = argv.indexOf(OPTION_TERMINATOR);
+  const args = argv.map((arg, index) =>
+    terminatorIndex !== -1 && index > terminatorIndex
+      ? arg
+      : thisMod.resolveShortOptionGroup(arg, typesByAlias),
+  );
   const { tokens } = parseArgs({
-    args: [...argv],
+    args,
     options: thisMod.resolveParseOptions(optionDefs),
     strict: false,
     allowPositionals: true,
@@ -60,13 +96,8 @@ export const parseArgv = (argv: readonly string[], optionDefs: OptionsDef): Pars
   });
   const values: Record<string, string | boolean> = {};
   const argvTokens: ArgvToken[] = [];
-  let unknownOptionIndex: number | undefined;
 
   for (const token of tokens) {
-    if (token.index === unknownOptionIndex) {
-      continue;
-    }
-
     if (token.kind === "positional") {
       argvTokens.push({ kind: "positional", value: token.value });
 
@@ -81,8 +112,6 @@ export const parseArgv = (argv: readonly string[], optionDefs: OptionsDef): Pars
 
     if (key === undefined) {
       argvTokens.push({ kind: "unknownOption", rawName: token.rawName });
-
-      unknownOptionIndex = token.index;
 
       continue;
     }

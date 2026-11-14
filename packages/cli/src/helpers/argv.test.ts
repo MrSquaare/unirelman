@@ -4,7 +4,12 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { CLIMissingOptionValueError, CLIUnexpectedOptionValueError } from "../errors";
 import * as thisMod from "./argv";
-import { parseArgv, resolveOptionValue, resolveParseOptions } from "./argv";
+import {
+  parseArgv,
+  resolveOptionValue,
+  resolveParseOptions,
+  resolveShortOptionGroup,
+} from "./argv";
 
 const ARGS = {
   config: { type: "string", alias: "C", description: "Config" },
@@ -28,6 +33,10 @@ describe("resolveParseOptions", () => {
 });
 
 describe("resolveOptionValue", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should return true for a boolean option", () => {
     expect(resolveOptionValue(ARGS.dryRun, { rawName: "--dry-run" })).toEqual(true);
   });
@@ -63,7 +72,39 @@ describe("resolveOptionValue", () => {
   });
 });
 
+describe("resolveShortOptionGroup", () => {
+  const typesByAlias = new Map([
+    ["v", "boolean"],
+    ["C", "string"],
+  ] as const);
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("should keep a group of known boolean aliases", () => {
+    expect(resolveShortOptionGroup("-vv", typesByAlias)).toEqual("-vv");
+  });
+
+  it("should cut a group after its first unknown alias", () => {
+    expect(resolveShortOptionGroup("-vmC", typesByAlias)).toEqual("-vm");
+  });
+
+  it("should keep the rest of a group after a string alias as its value", () => {
+    expect(resolveShortOptionGroup("-vCmfoo", typesByAlias)).toEqual("-vCmfoo");
+  });
+
+  it("should return a long option unchanged", () => {
+    expect(resolveShortOptionGroup("--mC", typesByAlias)).toEqual("--mC");
+  });
+
+  it("should return a positional unchanged", () => {
+    expect(resolveShortOptionGroup("create", typesByAlias)).toEqual("create");
+  });
+});
+
 describe("parseArgv", () => {
+  const resolveShortOptionGroupSpy = vi.spyOn(thisMod, "resolveShortOptionGroup");
   const resolveParseOptionsSpy = vi.spyOn(thisMod, "resolveParseOptions");
   const resolveOptionValueSpy = vi.spyOn(thisMod, "resolveOptionValue");
 
@@ -81,6 +122,33 @@ describe("parseArgv", () => {
           { kind: "positional", value: "create" },
         ],
       },
+    );
+    expect(resolveShortOptionGroupSpy).toHaveBeenCalledTimes(6);
+    expect(resolveShortOptionGroupSpy).toHaveBeenNthCalledWith(1, "-C", new Map([["C", "string"]]));
+    expect(resolveShortOptionGroupSpy).toHaveBeenNthCalledWith(
+      2,
+      "a.ts",
+      new Map([["C", "string"]]),
+    );
+    expect(resolveShortOptionGroupSpy).toHaveBeenNthCalledWith(
+      3,
+      "changesets",
+      new Map([["C", "string"]]),
+    );
+    expect(resolveShortOptionGroupSpy).toHaveBeenNthCalledWith(
+      4,
+      "--level",
+      new Map([["C", "string"]]),
+    );
+    expect(resolveShortOptionGroupSpy).toHaveBeenNthCalledWith(
+      5,
+      "create",
+      new Map([["C", "string"]]),
+    );
+    expect(resolveShortOptionGroupSpy).toHaveBeenNthCalledWith(
+      6,
+      "--dry-run",
+      new Map([["C", "string"]]),
     );
     expect(resolveParseOptionsSpy).toHaveBeenCalledTimes(1);
     expect(resolveParseOptionsSpy).toHaveBeenNthCalledWith(1, ARGS);
@@ -123,13 +191,31 @@ describe("parseArgv", () => {
     });
   });
 
+  it("should keep the argument after a cut short option group", () => {
+    expect(parseArgv(["create", "-mC", "--dry-run"], ARGS)).toEqual({
+      values: { dryRun: true },
+      tokens: [
+        { kind: "positional", value: "create" },
+        { kind: "unknownOption", rawName: "-m" },
+      ],
+    });
+  });
+
   it("should keep arguments after the option terminator as positionals", () => {
-    expect(parseArgv(["version", "--", "--dry-run"], ARGS)).toEqual({
+    expect(parseArgv(["version", "--", "--dry-run", "-mC"], ARGS)).toEqual({
       values: {},
       tokens: [
         { kind: "positional", value: "version" },
         { kind: "positional", value: "--dry-run" },
+        { kind: "positional", value: "-mC" },
       ],
     });
+    expect(resolveShortOptionGroupSpy).toHaveBeenCalledTimes(2);
+    expect(resolveShortOptionGroupSpy).toHaveBeenNthCalledWith(
+      1,
+      "version",
+      new Map([["C", "string"]]),
+    );
+    expect(resolveShortOptionGroupSpy).toHaveBeenNthCalledWith(2, "--", new Map([["C", "string"]]));
   });
 });

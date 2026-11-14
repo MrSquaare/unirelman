@@ -123,6 +123,18 @@ describe("parseCommandLine", () => {
     });
   });
 
+  it("should read a global option following a short option group cut at a command option", () => {
+    expect(parseCommandLine(["changesets", "create", "-mC", "--json"])).toEqual({
+      globalOptionDefs: expectedOptionDefs,
+      options: { ...createGlobalOptions(), outputMode: "json" },
+      tokens: [
+        { kind: "positional", value: "changesets" },
+        { kind: "positional", value: "create" },
+        { kind: "unknownOption", rawName: "-m" },
+      ],
+    });
+  });
+
   it("should return interactive output mode when interactive option is provided", () => {
     expect(parseCommandLine(["--interactive", "version"])).toEqual({
       globalOptionDefs: expectedOptionDefs,
