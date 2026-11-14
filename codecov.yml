@@ -8,6 +8,10 @@ coverage:
         informational: true
 
 flags:
+  core:
+    paths:
+      - packages/core/
+    carryforward: true
   utils:
     paths:
       - packages/utils/
