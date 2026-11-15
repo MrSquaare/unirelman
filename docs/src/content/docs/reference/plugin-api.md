@@ -166,15 +166,16 @@ Report `existing` when the destination already has the version, and `created` wh
 
 ### Scope maps
 
-Results are keyed by scope name:
+Scopes, state, and results are maps keyed by scope name. A phase returns a `Map`, such as `new Map([["@example/core", version]])`.
 
 ```ts
-type ScopeVersionMap = Record<string, Version>;
-type ScopeVersionMetaMap = Record<string, VersionMeta>;
-type ScopeChangesMap = Record<string, Change[]>;
-type ScopeFileOperationsMap = Record<string, FileOperation[]>;
-type ScopeReleaseNotesMap = Record<string, string>;
-type ScopeReleasesMap = Record<string, Release[]>;
+type ScopeMap = ReadonlyMap<string, Scope>;
+type ScopeVersionMap = ReadonlyMap<string, Version>;
+type ScopeVersionMetaMap = ReadonlyMap<string, VersionMeta>;
+type ScopeChangesMap = ReadonlyMap<string, Change[]>;
+type ScopeFileOperationsMap = ReadonlyMap<string, FileOperation[]>;
+type ScopeReleaseNotesMap = ReadonlyMap<string, string>;
+type ScopeReleasesMap = ReadonlyMap<string, Release[]>;
 ```
 
 ## Meta

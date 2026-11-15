@@ -17,7 +17,7 @@ createGitPlugin();
 
 | Option          | Type                                     | Default                           | Description                                                                                                           |
 | --------------- | ---------------------------------------- | --------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `commitMessage` | `string \| ({ nextVersions }) => string` | `"chore(release): bump versions"` | Message of the release commit. `nextVersions` maps each scope name to its next version.                               |
+| `commitMessage` | `string \| ({ nextVersions }) => string` | `"chore(release): bump versions"` | Message of the release commit. `nextVersions` is a `ReadonlyMap` of each scope name to its next version.              |
 | `tagFormat`     | `GitTagFormat`                           | See [Tag names](#tag-names)       | Function that names the tag of a version.                                                                             |
 | `annotatedTags` | `boolean`                                | `false`                           | Whether tags are annotated, with the tag name as message. Lightweight tags are never signed, even with `tag.gpgSign`. |
 

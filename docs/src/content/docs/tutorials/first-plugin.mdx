@@ -23,7 +23,7 @@ A [plugin](/unirelman/reference/glossary/#plugin) is an object with a `name` and
 1. Create `version-file-plugin.ts` at the root of the project:
 
    ```ts title="version-file-plugin.ts"
-   import type { Plugin, ScopeVersionMap } from "@unirelman/core";
+   import type { Plugin, ScopeVersionMap, Version } from "@unirelman/core";
 
    import { join } from "node:path";
 
@@ -33,13 +33,13 @@ A [plugin](/unirelman/reference/glossary/#plugin) is an object with a `name` and
      return {
        name: "version-file",
        getCurrentVersion: async (context): Promise<ScopeVersionMap> => {
-         const versions: ScopeVersionMap = {};
+         const versions = new Map<string, Version>();
 
-         for (const scopeName in context.scopes) {
-           const filePath = join(context.scopes[scopeName].path, VERSION_FILE_NAME);
+         for (const [scopeName, scope] of context.scopes) {
+           const filePath = join(scope.path, VERSION_FILE_NAME);
            const content = await context.fs.read(filePath);
 
-           versions[scopeName] = { version: content.trim(), meta: {} };
+           versions.set(scopeName, { version: content.trim(), meta: {} });
          }
 
          return versions;
@@ -48,7 +48,7 @@ A [plugin](/unirelman/reference/glossary/#plugin) is an object with a `name` and
    };
    ```
 
-   `context.scopes` holds the scopes the plugin is registered for, and `context.fs` reads files of the project.
+   `context.scopes` maps the name of each scope the plugin is registered for to the scope, and `context.fs` reads files of the project. Phases return their results as maps keyed by scope name.
 
 2. Create the `VERSION` file with the current version:
 
@@ -64,8 +64,8 @@ The `generateFileOperations` phase returns the [file operations](/unirelman/refe
 
 Add the phase to the plugin:
 
-```ts title="version-file-plugin.ts" ins={1,11-27}
-import type { Plugin, ScopeFileOperationsMap, ScopeVersionMap } from "@unirelman/core";
+```ts title="version-file-plugin.ts" ins={1,11-33}
+import type { FileOperation, Plugin, ScopeFileOperationsMap, ScopeVersionMap } from "@unirelman/core";
 
 // ...
 
@@ -76,18 +76,24 @@ export const createVersionFilePlugin = (): Plugin => {
       // ...
     },
     generateFileOperations: async (context, state): Promise<ScopeFileOperationsMap> => {
-      const fileOperations: ScopeFileOperationsMap = {};
+      const fileOperations = new Map<string, FileOperation[]>();
 
-      for (const scopeName in state.nextVersions) {
-        fileOperations[scopeName] = [
+      for (const [scopeName, scope] of context.scopes) {
+        const nextVersion = state.nextVersions.get(scopeName);
+
+        if (nextVersion === undefined) {
+          continue;
+        }
+
+        fileOperations.set(scopeName, [
           {
             type: "version-file",
-            path: join(context.scopes[scopeName].path, VERSION_FILE_NAME),
+            path: join(scope.path, VERSION_FILE_NAME),
             action: "write",
-            content: `${state.nextVersions[scopeName].version}\n`,
+            content: `${nextVersion.version}\n`,
             meta: {},
           },
-        ];
+        ]);
       }
 
       return fileOperations;
@@ -138,7 +144,7 @@ A plugin with commands is a `CLIPlugin`, from `@unirelman/cli`. Its commands are
 
 Add a `show` command that prints the version of a scope:
 
-```ts title="version-file-plugin.ts" ins={1,3,8-28}
+```ts title="version-file-plugin.ts" ins={1,3,8-37}
 import type { CLIPlugin } from "@unirelman/cli";
 
 import { defineCommand } from "@unirelman/cli";
@@ -161,9 +167,15 @@ export const createVersionFilePlugin = (): CLIPlugin => {
             (await ui.select({
               message: "Select a scope",
               option: "--scope",
-              options: Object.keys(context.scopes).map((value) => ({ value, label: value })),
+              options: [...context.scopes.keys()].map((value) => ({ value, label: value })),
             }));
-          const filePath = join(context.scopes[scopeName].path, VERSION_FILE_NAME);
+          const scope = context.scopes.get(scopeName);
+
+          if (scope === undefined) {
+            throw new Error(`Failed to show the version: unknown scope ${scopeName}.`);
+          }
+
+          const filePath = join(scope.path, VERSION_FILE_NAME);
 
           return { scope: scopeName, version: (await context.fs.read(filePath)).trim() };
         },
