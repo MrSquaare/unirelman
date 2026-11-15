@@ -1,6 +1,6 @@
 ---
 title: Plugin API
-description: The contract between unirelman and its plugins - phases, context, state, entities and meta.
+description: "The contract between unirelman and its plugins: phases, context, state, entities, and meta."
 ---
 
 Types are exported by `@unirelman/core`, except the [CLI plugin](#cli-plugins) API, exported by `@unirelman/cli`.
@@ -37,7 +37,7 @@ type PhaseFunction<TName extends PhaseName> = (
 ) => PhaseFunctionResult<TName> | Promise<PhaseFunctionResult<TName>>;
 ```
 
-Within a phase, plugins run in the order of the configuration. Each plugin only receives the scopes it's registered for, in `context.scopes` and in every scope map of `state`, and returns results only for those scopes: a result for any other scope fails with `CoreUnknownPhaseResultScopeError`, except in phases returning `void`, whose results are ignored. Results of all plugins are combined as described below. For a phase with one plugin per scope, two plugins providing it for the same scope fail with `CoreConflictingPhaseProvidersError` when the configuration loads.
+Within a phase, plugins run in the order of the configuration. Each plugin only receives the scopes it's registered for, in `context.scopes` and in every scope map of `state`, and returns results only for those scopes: a result for any other scope fails with `CoreUnknownPhaseResultScopeError`, except in phases returning `void`, whose results are ignored. Results of all plugins are combined as the Combination column states. For a phase with one plugin per scope, two plugins providing it for the same scope fail with `CoreConflictingPhaseProvidersError` when the configuration loads.
 
 | Phase                    | Pipelines | State                                                        | Result                   | Combination                                                         |
 | ------------------------ | --------- | ------------------------------------------------------------ | ------------------------ | ------------------------------------------------------------------- |
@@ -184,7 +184,7 @@ type ScopeReleasesMap = Record<string, Release[]>;
 ```ts
 declare module "@unirelman/core" {
   interface VersionMeta {
-    myScheme?: { value: number };
+    counter?: { value: number };
   }
 }
 ```
@@ -267,10 +267,12 @@ defineCommand({
 | --------- | ----------------------------------------------------------------------------------------------------- |
 | `meta`    | Name and description of the command in the help.                                                      |
 | `title`   | First message of the command.                                                                         |
-| `options` | Options of the command. See below.                                                                    |
+| `options` | Options of the command. See [Command options](#command-options).                                      |
 | `run`     | Runs the command with the parsed `options` and the [command UI](#command-ui), and returns its result. |
 | `success` | Builds the end of the command from its result: `summary` lines, then the last `message`.              |
 | `failure` | Optional. Last message of the command when it fails.                                                  |
+
+#### Command options
 
 Each key of `options` is a camel-case name starting with a lowercase letter, which becomes the kebab-case flag: `dryRun` gives `--dry-run`. Each entry:
 

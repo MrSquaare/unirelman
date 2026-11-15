@@ -49,13 +49,11 @@ Creates a changeset in `.unirelman/changesets/`, named `<timestamp>-<random>.md`
 unirelman changesets create [--scopes <scopes>] [--level <level>] [--message <message>]
 ```
 
-| Option      | Description                                                                    |
-| ----------- | ------------------------------------------------------------------------------ |
-| `--scopes`  | Comma-separated scope names, such as `@example/core,@example/ui`.              |
-| `--level`   | [Level](/unirelman/reference/glossary/#level) of the change, case-insensitive. |
-| `--message` | Message of the change.                                                         |
-
-Missing options are prompted.
+| Option      | Description                                                                                           |
+| ----------- | ----------------------------------------------------------------------------------------------------- |
+| `--scopes`  | Comma-separated scope names, such as `@example/core,@example/ui`. Prompted when missing.              |
+| `--level`   | [Level](/unirelman/reference/glossary/#level) of the change, case-insensitive. Prompted when missing. |
+| `--message` | Message of the change. Prompted when missing.                                                         |
 
 #### JSON document
 

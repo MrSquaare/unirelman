@@ -10,7 +10,7 @@ import PackageManagers from "../../../../components/PackageManagers.astro";
 ```ts title="unirelman.config.ts"
 import { createCalverPlugin } from "@unirelman/plugin-calver";
 
-createCalverPlugin({ prereleaseChannels: ["alpha", "beta"] });
+createCalverPlugin();
 ```
 
 ## Options
@@ -84,7 +84,7 @@ With `--json`, the command prints this document, validated by `prereleaseOutputS
 ```json
 {
   "group": null,
-  "scopes": ["@example/app"],
+  "scopes": ["@example/ui"],
   "channel": "beta",
   "previousChannel": "alpha"
 }
@@ -101,7 +101,7 @@ With `--json`, the command prints this document, validated by `prereleaseOutputS
 
 ```json title=".unirelman/calver/prerelease.json"
 {
-  "@example/app": { "channel": "beta" }
+  "@example/ui": { "channel": "beta" }
 }
 ```
 

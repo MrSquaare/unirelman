@@ -10,9 +10,7 @@ import PackageManagers from "../../../components/PackageManagers.astro";
 
 In this tutorial, you automate the project from [Release your first package](/unirelman/tutorials/first-release/) on GitHub. At the end, every change merged into `main` updates a [release pull request](/unirelman/reference/glossary/#release-pull-request), and merging that pull request publishes the release: a Git tag and a GitHub release with the changelog section as notes.
 
-## Before you begin
-
-You need:
+## Prerequisites
 
 - The project from [Release your first package](/unirelman/tutorials/first-release/), pushed to a GitHub repository.
 - Permission to change the repository settings.
@@ -234,7 +232,7 @@ jobs:
 </TabItem>
 </Tabs>
 
-A few lines matter:
+In this workflow:
 
 - `fetch-depth: 0` fetches the whole history and its tags, which the Git plugin checks before tagging a version.
 - The install step installs the unirelman CLI of your project, which the GitHub Action runs: with `npx --no-install unirelman` by default, or with its `command` input, as in the yarn workflow.

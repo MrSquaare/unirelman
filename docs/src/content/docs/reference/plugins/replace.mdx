@@ -36,15 +36,15 @@ createReplacePlugin({
 
 ## Files
 
-| Member         | Type                          | Description                                                                        |
-| -------------- | ----------------------------- | ---------------------------------------------------------------------------------- |
-| `path`         | `string`                      | Path of the file, relative to the project root.                                    |
-| `scope`        | `string`                      | Scope whose versions the entry uses.                                               |
-| `search`       | `RegExp \| (input) => RegExp` | Text to replace. Every match is replaced.                                          |
-| `replace`      | `(input) => string`           | Replacement, inserted as is.                                                       |
-| `allowNoMatch` | `boolean`                     | Whether an entry without a match is skipped instead of throwing. Default: `false`. |
+| Member         | Type                          | Default  | Description                                                      |
+| -------------- | ----------------------------- | -------- | ---------------------------------------------------------------- |
+| `path`         | `string`                      | Required | Path of the file, relative to the project root.                  |
+| `scope`        | `string`                      | Required | Scope whose versions the entry uses.                             |
+| `search`       | `RegExp \| (input) => RegExp` | Required | Text to replace. Every match is replaced.                        |
+| `replace`      | `(input) => string`           | Required | Replacement, inserted as is.                                     |
+| `allowNoMatch` | `boolean`                     | `false`  | Whether an entry without a match is skipped instead of throwing. |
 
-`input` is `{ scopeName, currentVersion, nextVersion }`. An entry applies when its scope gets a next version; the entries of a file apply in order.
+`input` is `{ scopeName, currentVersion, nextVersion }`, with `currentVersion` `undefined` when no plugin provides the current version. An entry applies when its scope gets a next version; the entries of a file apply in order.
 
 ## Errors
 

@@ -1,6 +1,6 @@
 ---
 title: Glossary
-description: The terms used across unirelman, its plugins and this documentation.
+description: The terms used across unirelman, its plugins, and this documentation.
 ---
 
 ### Change
@@ -22,6 +22,10 @@ A named [prerelease](#prerelease) stage, such as `alpha`, `beta` or `rc`, declar
 ### Configuration file
 
 The `unirelman.config.*` file that declares the [scopes](#scope) and the [plugin registrations](#plugin-registration). See [Configuration](/unirelman/reference/configuration/).
+
+### Core
+
+The `@unirelman/core` package, which runs the [pipelines](#pipeline), combines the results of the [plugins](#plugin), and applies the [file operations](#file-operation). See [Phases and pipelines](/unirelman/concepts/pipelines/).
 
 ### Current version
 

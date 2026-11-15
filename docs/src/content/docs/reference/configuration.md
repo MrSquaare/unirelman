@@ -1,6 +1,6 @@
 ---
 title: Configuration
-description: The unirelman configuration file, its scopes and its plugin registrations.
+description: The unirelman configuration file, its scopes, and its plugin registrations.
 ---
 
 ## Configuration file
@@ -32,7 +32,7 @@ export default defineConfig({
 
 Maps each [scope](/unirelman/reference/glossary/#scope) name to its folder, relative to the project root.
 
-```ts
+```ts title="unirelman.config.ts"
 scopes: {
   root: "./",
   "@example/core": "packages/core",
@@ -56,13 +56,13 @@ The [plugin registrations](/unirelman/reference/glossary/#plugin-registration), 
 
 - **A plugin**, which applies to every scope:
 
-  ```ts
+  ```ts title="unirelman.config.ts"
   createExamplePlugin(),
   ```
 
 - **An object** with the plugin and the scopes it applies to, every scope when `scopes` is omitted:
 
-  ```ts
+  ```ts title="unirelman.config.ts"
   {
     plugin: createExamplePlugin(),
     scopes: ["@example/core"],

@@ -12,8 +12,16 @@ This guide shows how to publish packages to the npm registry with the [npm plugi
 
 ## Register the plugin
 
+<PackageManagers pkg="@unirelman/plugin-npm" dev />
+
 ```ts title="unirelman.config.ts"
-createNpmPlugin();
+import { createNpmPlugin } from "@unirelman/plugin-npm";
+
+// ...
+plugins: [
+  // ...
+  createNpmPlugin(),
+],
 ```
 
 `publish` publishes each scope whose current version is missing from the registry, so running it again is safe.
@@ -48,9 +56,11 @@ createNpmPlugin({ packageManager: "pnpm" });
 
 npm itself resolves neither specifier: with npm as package manager, a package that depends on `workspace:` or `catalog:` fails with `NpmUnresolvedSpecifierError`.
 
-## Publish from GitHub Actions with trusted publishing
+## Publish from GitHub Actions
 
-Trusted publishing lets GitHub Actions publish with a short-lived identity token, and adds [provenance](https://docs.npmjs.com/generating-provenance-statements) for public repositories and packages. It requires npm 11.5.1 or later and Node.js 22.14 or later; Node.js 24 meets both. pnpm supports it too; `bun publish` does not yet, so publish Bun packages with a token.
+### With trusted publishing
+
+Trusted publishing lets GitHub Actions publish with a short-lived identity token, and adds [provenance](https://docs.npmjs.com/generating-provenance-statements) for public repositories and packages. It works with npm 11.5.1 or later, on Node.js 22.14 or later, and with pnpm. Publish Bun packages with a token.
 
 1. On [npmjs.com](https://www.npmjs.com/), open the settings of each package and add a **trusted publisher**:
    - **Organization or user** and **Repository**: your GitHub repository.
@@ -70,7 +80,9 @@ Trusted publishing lets GitHub Actions publish with a short-lived identity token
 
 3. Run the workflow on a GitHub-hosted runner, the runner type npm trusted publishing supports.
 
-## Publish from GitHub Actions with a token
+4. For a restricted package, also expose a read-only granular access token, as described in [With a token](#with-a-token): the plugin checks the registry with `npm view`, which trusted publishing doesn't authenticate. npm still publishes with trusted publishing.
+
+### With a token
 
 Create an npm access token and store it as a repository secret, such as `NPM_TOKEN`. Then expose the token to your package manager:
 
@@ -149,8 +161,6 @@ To add provenance, grant the job `id-token: write`, and set the environment vari
 | pnpm            | `PNPM_CONFIG_PROVENANCE`      |
 | yarn            | `YARN_NPM_PUBLISH_PROVENANCE` |
 
-`bun publish` cannot generate provenance statements yet.
-
 ## Publish a scoped package for the first time
 
 npm publishes a scoped package, such as `@example/core`, as restricted by default. Make it public in its `package.json`:
@@ -167,7 +177,7 @@ npm publishes a scoped package, such as `@example/core`, as restricted by defaul
 
 When npm rejects the publish with `ENEEDAUTH`, `E401`, `E403` or `EOTP`, the publish fails with an error such as:
 
-```
+```txt
 error: Plugin "npm" failed in the createReleases phase: Failed to publish @example/core@1.0.1: npm could not authenticate or authorize the publish (E401)
 ```
 

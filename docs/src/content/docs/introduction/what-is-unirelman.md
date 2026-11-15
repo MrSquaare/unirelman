@@ -1,11 +1,11 @@
 ---
 title: What is unirelman?
-description: The universal release manager, what it does and how it's built.
+description: The universal release manager, what it does, and how it's built.
 sidebar:
   order: 1
 ---
 
-unirelman is a universal release manager: it versions, changelogs and publishes any project, from a single package to a monorepo that mixes versioning schemes.
+unirelman is a universal release manager: it versions, changelogs, and publishes any project, from a single package to a monorepo that mixes versioning schemes.
 
 ## Context
 
@@ -18,15 +18,15 @@ unirelman runs a release in two commands, `version` and `publish`, and plugins d
 ## Features
 
 - **Changesets**: record each change in a file, with its scopes, level, and message. See the [Changesets plugin](/unirelman/reference/plugins/changesets/).
-- **Semantic and calendar versioning**: see [Choose a versioning scheme](/unirelman/guides/versioning-schemes/).
-- **Prereleases**: move a scope through channels such as `alpha`, `beta` and `rc`. See [Publish prereleases](/unirelman/guides/prereleases/).
+- **Semantic and calendar versioning**: version each scope with SemVer or CalVer. See [Choose a versioning scheme](/unirelman/guides/versioning-schemes/).
+- **Prereleases**: move a scope through channels such as `alpha`, `beta`, and `rc`. See [Publish prereleases](/unirelman/guides/prereleases/).
 - **Monorepos**: version each scope on its own, or several together. See [Release a monorepo](/unirelman/guides/monorepo/).
 - **Changelogs**: one for the project, or one per scope. See the [Changelog plugin](/unirelman/reference/plugins/changelog/).
-- **npm, Git tags and GitHub releases**: see [Publish to npm](/unirelman/guides/publish-to-npm/) and [Create GitHub releases](/unirelman/guides/github-releases/).
-- **Version references in any file**: see the [Replace plugin](/unirelman/reference/plugins/replace/).
+- **npm, Git tags, and GitHub releases**: publish each version to every destination. See [Publish to npm](/unirelman/guides/publish-to-npm/) and [Create GitHub releases](/unirelman/guides/github-releases/).
+- **Version references in any file**: update the version in any text file. See the [Replace plugin](/unirelman/reference/plugins/replace/).
 - **GitHub Action**: a release pull request, published when you merge it. See [Automate releases with GitHub Actions](/unirelman/tutorials/github-action/).
-- **Dry runs and JSON output**: see [Script releases](/unirelman/guides/scripting/).
-- **Your own plugins**: see [Build your first plugin](/unirelman/tutorials/first-plugin/).
+- **Dry runs and JSON output**: preview releases, and read their results from scripts. See [Script releases](/unirelman/guides/scripting/).
+- **Your own plugins**: add any version source, change source, or destination. See [Build your first plugin](/unirelman/tutorials/first-plugin/).
 
 ## Next steps
 

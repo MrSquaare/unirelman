@@ -95,7 +95,7 @@ import { createCalverPlugin } from "@unirelman/plugin-calver";
 export default defineConfig({
   scopes: {
     "@example/core": "packages/core",
-    "@example/app": "apps/app",
+    "@example/ui": "packages/ui",
   },
   plugins: [
     createChangesetsPlugin(),
@@ -106,7 +106,7 @@ export default defineConfig({
     },
     {
       plugin: createCalverPlugin(),
-      scopes: ["@example/app"],
+      scopes: ["@example/ui"],
     },
     // ...
   ],

@@ -24,7 +24,7 @@ Running `publish` on the first push would publish the versions your project alre
 
 So the GitHub Action publishes once **publishing is enabled**, as recorded by the [publish setting](/unirelman/reference/glossary/#publish-setting) in `.unirelman/github-action/settings.json`:
 
-```json
+```json title=".unirelman/github-action/settings.json"
 { "publishingEnabled": true }
 ```
 

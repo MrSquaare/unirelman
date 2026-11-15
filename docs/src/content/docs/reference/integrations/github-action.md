@@ -1,6 +1,6 @@
 ---
 title: GitHub Action
-description: Inputs, outputs, permissions and behavior of the unirelman GitHub Action.
+description: Inputs, outputs, permissions, and behavior of the unirelman GitHub Action.
 ---
 
 The GitHub Action keeps a [release pull request](/unirelman/reference/glossary/#release-pull-request) up to date with the pending changes, and publishes when you merge it. See [How the GitHub Action works](/unirelman/concepts/github-action/).
