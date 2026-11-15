@@ -32,10 +32,54 @@ describe("parsePrereleaseVersion", () => {
     });
   });
 
+  it("should keep leading hyphens in prerelease channel", () => {
+    expect(parsePrereleaseVersion("1.2.3--beta.2")).toEqual({
+      version: "1.2.3",
+      prerelease: { channel: "-beta", increment: 2 },
+    });
+  });
+
+  it("should keep hyphens before an invalid channel character in version", () => {
+    expect(parsePrereleaseVersion("1.2.3-pre_beta-rc.1")).toEqual({
+      version: "1.2.3-pre_beta",
+      prerelease: { channel: "rc", increment: 1 },
+    });
+  });
+
   it("should keep incomplete prerelease suffix in version", () => {
     expect(parsePrereleaseVersion("1.2.3-beta")).toEqual({
       version: "1.2.3-beta",
       prerelease: undefined,
+    });
+  });
+
+  it("should keep prerelease suffix with an empty channel in version", () => {
+    expect(parsePrereleaseVersion("1.2.3-.1")).toEqual({
+      version: "1.2.3-.1",
+      prerelease: undefined,
+    });
+  });
+
+  it("should keep prerelease suffix without version in version", () => {
+    expect(parsePrereleaseVersion("-beta.1")).toEqual({
+      version: "-beta.1",
+      prerelease: undefined,
+    });
+  });
+
+  it("should keep a long run of hyphens without increment in version", () => {
+    const value = `a-${"---".repeat(100_000)}`;
+
+    expect(parsePrereleaseVersion(value)).toEqual({
+      version: value,
+      prerelease: undefined,
+    });
+  });
+
+  it("should parse a long run of hyphens as prerelease channel", () => {
+    expect(parsePrereleaseVersion(`a-${"---".repeat(100_000)}.1`)).toEqual({
+      version: "a",
+      prerelease: { channel: "---".repeat(100_000), increment: 1 },
     });
   });
 

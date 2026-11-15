@@ -7,25 +7,38 @@ export type ParsedPrereleaseVersion = {
 
 const CHANNEL_PROBE_VERSION = "0.0.0";
 
-const PRERELEASE_VERSION_RE = /^(.+?)(?:-([0-9A-Za-z-]+)\.(\d+))?$/;
+const CHANNEL_CHARACTER_RE = /^[0-9A-Za-z-]$/;
+const INCREMENT_RE = /^\d+$/;
+
+const resolveChannelCharactersStart = (value: string): number => {
+  let start = value.length;
+
+  while (start > 0 && CHANNEL_CHARACTER_RE.test(value.charAt(start - 1))) {
+    start--;
+  }
+
+  return start;
+};
 
 export const parsePrereleaseVersion = (value: string): ParsedPrereleaseVersion => {
-  const match = PRERELEASE_VERSION_RE.exec(value);
+  const incrementSeparator = value.lastIndexOf(".");
+  const increment = value.slice(incrementSeparator + 1);
 
-  if (!match) {
+  if (incrementSeparator === -1 || !INCREMENT_RE.test(increment)) {
     return { version: value, prerelease: undefined };
   }
 
-  const [, version, channel, increment] = match;
+  const head = value.slice(0, incrementSeparator);
+  const channelSeparator = head.indexOf("-", Math.max(resolveChannelCharactersStart(head), 1));
 
-  if (channel === undefined || increment === undefined) {
-    return { version, prerelease: undefined };
+  if (channelSeparator === -1 || channelSeparator === head.length - 1) {
+    return { version: value, prerelease: undefined };
   }
 
   return {
-    version,
+    version: head.slice(0, channelSeparator),
     prerelease: {
-      channel,
+      channel: head.slice(channelSeparator + 1),
       increment: Number.parseInt(increment, 10),
     },
   };
