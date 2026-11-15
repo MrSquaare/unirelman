@@ -1,8 +1,8 @@
-# @unirelman/plugin-semver
+# `@unirelman/plugin-semver`
 
 unirelman plugin for semantic versioning.
 
-## Table of Contents
+## Table of contents
 
 - [About](#about)
 - [Getting started](#getting-started)

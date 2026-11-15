@@ -9,7 +9,7 @@ This page explains how unirelman runs plugins, and the design choices behind it.
 
 ## Phases
 
-A [phase](/unirelman/reference/glossary/#phase) is one step of a pipeline, such as "read the current versions" or "create the releases". Plugins implement the phases they need. Within a phase, plugins run in the order of the configuration, and core combines their results.
+A [phase](/unirelman/reference/glossary/#phase) is one step of a pipeline, such as "read the current versions" or "create the releases." Plugins implement the phases they need. Within a phase, plugins run in the order of the configuration, and core combines their results.
 
 Each phase has one job and one result type. This is what makes plugins composable: the Changesets plugin provides changes for any version source, and the npm plugin provides versions for any change source.
 

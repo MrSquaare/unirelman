@@ -1,8 +1,8 @@
-# @unirelman/core
+# `@unirelman/core`
 
 Release engine of unirelman.
 
-## Table of Contents
+## Table of contents
 
 - [About](#about)
 - [Getting started](#getting-started)

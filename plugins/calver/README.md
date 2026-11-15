@@ -1,8 +1,8 @@
-# @unirelman/plugin-calver
+# `@unirelman/plugin-calver`
 
 unirelman plugin for calendar versioning.
 
-## Table of Contents
+## Table of contents
 
 - [About](#about)
 - [Getting started](#getting-started)

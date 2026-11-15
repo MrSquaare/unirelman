@@ -1,6 +1,6 @@
 ---
 title: Publish prereleases
-description: Move a scope through prerelease channels such as alpha, beta and rc, then release it as stable.
+description: Move a scope through prerelease channels, then release it as stable.
 sidebar:
   order: 3
 ---
@@ -43,7 +43,7 @@ Exit prerelease mode:
 
 <PackageManagers type="exec" pkg="unirelman" args="semver pre --scope my-package --exit" />
 
-The next `version` run releases the stable version, such as `1.1.0`, with or without new changesets.
+The next `version` run releases the stable version, such as `1.1.0`, even without new changesets.
 
 ## Publish prereleases
 

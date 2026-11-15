@@ -20,7 +20,7 @@ If a publish fails, the next push retries it before the version pass.
 
 ## The publish setting
 
-Running `publish` on the first push would publish the versions your project already has: for a new project, a version nobody chose to release; for an existing one, possibly duplicate tags and empty GitHub releases.
+Running `publish` on the first push would publish the versions your project already has: for a new project, a version nobody chose to release; for an existing one, possibly duplicate tags, and empty GitHub releases.
 
 So the GitHub Action publishes once **publishing is enabled**, as recorded by the [publish setting](/unirelman/reference/glossary/#publish-setting) in `.unirelman/github-action/settings.json`:
 
@@ -37,7 +37,7 @@ The setting is an explicit file in the repository: you review it in a pull reque
 
 ## Why the GitHub Action runs your CLI
 
-The GitHub Action runs the CLI installed in your repository (`npx --no-install unirelman`). Your configuration and plugins run with the version of unirelman they were written for, and the GitHub Action handles what's specific to GitHub: branches, pushes and pull requests.
+The GitHub Action runs the CLI installed in your repository (`npx --no-install unirelman`). Your configuration and plugins run with the version of unirelman they were written for, and the GitHub Action handles what's specific to GitHub: branches, pushes, and pull requests.
 
 ## Related
 

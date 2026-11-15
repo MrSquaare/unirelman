@@ -1,8 +1,8 @@
-# @unirelman/plugin-github
+# `@unirelman/plugin-github`
 
 unirelman plugin for GitHub releases.
 
-## Table of Contents
+## Table of contents
 
 - [About](#about)
 - [Getting started](#getting-started)

@@ -54,7 +54,7 @@ Trusted publishing lets GitHub Actions publish with a short-lived identity token
 
 1. On [npmjs.com](https://www.npmjs.com/), open the settings of each package and add a **trusted publisher**:
    - **Organization or user** and **Repository**: your GitHub repository.
-   - **Workflow filename**: the file name of your release workflow, with its extension, such as `release.yml`.
+   - **Workflow filename**: the filename of your release workflow, with its extension, such as `release.yml`.
    - **Allowed actions**: allow `npm publish`, which the plugin runs; new configurations only allow `npm stage publish`.
 
    A new trusted publisher configuration expires after 2 days without a successful publish.
@@ -174,7 +174,7 @@ error: Plugin "npm" failed in the createReleases phase: Failed to publish @examp
 The code comes from npm. Check that:
 
 - The token or the trusted publisher configuration exists and matches the package.
-- With trusted publishing: the workflow has `id-token: write`, its file name matches exactly, and it runs on a GitHub-hosted runner.
+- With trusted publishing: the workflow has `id-token: write`, its filename matches exactly, and it runs on a GitHub-hosted runner.
 - With 2FA required for publishing (`EOTP`): you publish with a granular access token or with trusted publishing.
 
 ## Related

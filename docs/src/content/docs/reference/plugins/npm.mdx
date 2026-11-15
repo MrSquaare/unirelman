@@ -24,30 +24,30 @@ createNpmPlugin({ publish: true });
 
 ## Phases
 
-| Phase                    | Behavior                                                                                                                                                                                                |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `getCurrentVersion`      | Reads `version` from the `package.json` of each scope folder.                                                                                                                                           |
-| `getDependencyChanges`   | Gives a change to the dependents of each scope with a next version, as described in [Internal dependencies](#internal-dependencies).                                                                    |
-| `generateFileOperations` | Writes the next version and the updated [internal dependency](/unirelman/reference/glossary/#internal-dependency) ranges to the `package.json` of each scope, keeping its other fields and their order. |
-| `createReleases`         | Publishes each scope's package, as described in [Publishing](#publishing).                                                                                                                              |
+| Phase                    | Behavior                                                                                                                                                                                                    |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `getCurrentVersion`      | Reads `version` from the `package.json` of each scope folder.                                                                                                                                               |
+| `getDependencyChanges`   | Gives a change to the dependents of each scope with a next version, as described in [Internal dependencies](#internal-dependencies).                                                                        |
+| `generateFileOperations` | Writes the next version and the updated [internal dependency](/unirelman/reference/glossary/#internal-dependency) ranges to the `package.json` of each scope. Its other fields keep their values and order. |
+| `createReleases`         | Publishes each scope's package, as described in [Publishing](#publishing).                                                                                                                                  |
 
 ## Internal dependencies
 
-An [internal dependency](/unirelman/reference/glossary/#internal-dependency) is a dependency on the package of another scope. When `@example/cli` (cli) depends on `@example/core` (core), core is the dependency and cli the dependent. When core gets a SemVer next version, two updates can follow:
+An [internal dependency](/unirelman/reference/glossary/#internal-dependency) is a dependency on the package of another scope. When `@example/cli` depends on `@example/core`, `@example/core` is the dependency and `@example/cli` the dependent. When `@example/core` gets a SemVer next version, two updates can follow:
 
-- **[Dependent update](/unirelman/reference/glossary/#dependent-update):** cli gets a `patch` change, `Updated dependencies: @example/core@2.0.0`, so it gets a next version too. Its own dependents can then be updated in turn.
-- **[Range update](/unirelman/reference/glossary/#range-update):** cli's specifier for core moves to the next version, such as `^1.0.0` → `^1.1.0`.
+- **[Dependent update](/unirelman/reference/glossary/#dependent-update):** `@example/cli` gets a `patch` change, `Updated dependencies: @example/core@2.0.0`, so it gets a next version too. Its own dependents can then be updated in turn.
+- **[Range update](/unirelman/reference/glossary/#range-update):** the specifier of `@example/core` in `@example/cli` moves to the next version, such as `^1.0.0` → `^1.1.0`.
 
-| Condition                                                                                     | Dependent update | Range update |
-| --------------------------------------------------------------------------------------------- | ---------------- | ------------ |
-| Core leaves cli's range                                                                       | ✓                | ✓            |
-| `dependents: "always"`                                                                        | ✓                | —            |
-| cli is updated, by its own changes or by a dependency, and `ranges: "patch"`                  | —                | ✓            |
-| cli is updated, by its own changes or by a dependency, and core gets a minor or major release | —                | ✓            |
+| Condition                                                                                                           | Dependent update | Range update |
+| ------------------------------------------------------------------------------------------------------------------- | ---------------- | ------------ |
+| `@example/core` leaves the range of `@example/cli`                                                                  | ✓                | ✓            |
+| `dependents: "always"`                                                                                              | ✓                | —            |
+| `@example/cli` is updated, by its own changes or by a dependency, and `ranges: "patch"`                             | —                | ✓            |
+| `@example/cli` is updated, by its own changes or by a dependency, and `@example/core` gets a minor or major release | —                | ✓            |
 
-When cli is updated, its `Updated dependencies` change lists every updated dependency outside `devDependencies`, next to its own changes.
+When `@example/cli` is updated, its `Updated dependencies` change lists every updated dependency outside `devDependencies`, next to its own changes.
 
-`devDependencies` never give a dependent update. When core is only in cli's `devDependencies`, cli isn't updated, and core leaves its range (or `dependents` is `"always"`), cli's specifier for core still moves to the next version. cli keeps its version and gets no change.
+`devDependencies` never give a dependent update. When `@example/core` is only in the `devDependencies` of `@example/cli`, `@example/cli` isn't updated, and `@example/core` leaves its range (or `dependents` is `"always"`), the specifier of `@example/core` still moves to the next version. `@example/cli` keeps its version and gets no change.
 
 | Specifier                                         | Range                                | Updated to                        |
 | ------------------------------------------------- | ------------------------------------ | --------------------------------- |
@@ -75,7 +75,7 @@ Packages with `"private": true` get no release. npm's own configuration sets the
 
 ## Package manager
 
-Without the `packageManager` option, the plugin reads the `packageManager` field of the closest `package.json` from the scope folder up to the project root, and uses npm when none has it. Yarn Classic (1.x) is not supported.
+Without the `packageManager` option, the plugin reads the `packageManager` field of the closest `package.json` from the scope folder up to the project root, and uses npm when none has it. With yarn, the plugin requires Yarn 2 or later.
 
 ## Releases
 
@@ -91,7 +91,7 @@ Without the `packageManager` option, the plugin reads the `packageManager` field
 | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
 | `NpmPackageJsonNotFoundError`        | A scope folder has no `package.json`.                                                                                                |
 | `NpmInvalidPackageJsonVersionError`  | A `package.json` has an empty `version`.                                                                                             |
-| `NpmUnsupportedPackageManagerError`  | A `packageManager` field names a package manager other than npm, pnpm, yarn or bun.                                                  |
+| `NpmUnsupportedPackageManagerError`  | A `packageManager` field names a package manager other than npm, pnpm, yarn, or bun.                                                 |
 | `NpmUnsupportedYarnClassicError`     | A `packageManager` field names Yarn Classic (1.x).                                                                                   |
 | `NpmUnresolvedSpecifierError`        | The package manager is npm and a published dependency uses a `workspace:` or `catalog:` specifier.                                   |
 | `NpmRegistryLookupError`             | Checking the registry fails for a reason other than a missing version.                                                               |

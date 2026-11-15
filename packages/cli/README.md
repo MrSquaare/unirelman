@@ -1,8 +1,8 @@
-# @unirelman/cli
+# `@unirelman/cli`
 
 Command line of unirelman.
 
-## Table of Contents
+## Table of contents
 
 - [About](#about)
 - [Getting started](#getting-started)

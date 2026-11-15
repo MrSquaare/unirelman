@@ -1,8 +1,8 @@
-# @unirelman/plugin-npm
+# `@unirelman/plugin-npm`
 
 unirelman plugin for npm.
 
-## Table of Contents
+## Table of contents
 
 - [About](#about)
 - [Getting started](#getting-started)

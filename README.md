@@ -2,7 +2,7 @@
 
 Universal release manager: version, changelog and publish any project, from a single package to a monorepo.
 
-## Table of Contents
+## Table of contents
 
 - [About](#about)
   - [Built with](#built-with)
@@ -16,7 +16,7 @@ Universal release manager: version, changelog and publish any project, from a si
 
 ## About
 
-You describe your changes in small files called changesets. unirelman turns them into the next version of each package, writes the changelog, commits the release, then publishes it: npm packages, Git tags and GitHub releases. Every step is a plugin.
+You describe your changes in small files called changesets. unirelman turns them into the next version of each package, writes the changelog, commits the release, then publishes it: npm packages, Git tags, and GitHub releases. Every step is a plugin.
 
 > [!CAUTION]
 > unirelman is under active development: new versions may introduce breaking changes.
@@ -25,7 +25,7 @@ You describe your changes in small files called changesets. unirelman turns them
 
 - [TypeScript](https://www.typescriptlang.org/)
 - [Node.js](https://nodejs.org/)
-- [zod](https://zod.dev/)
+- [Zod](https://zod.dev/)
 
 ## Getting started
 
@@ -51,7 +51,7 @@ See the available commands:
 npx unirelman --help
 ```
 
-See the [documentation](https://mrsquaare.github.io/unirelman/) for tutorials, how-to guides, reference and explanations.
+See the [documentation](https://mrsquaare.github.io/unirelman/) for tutorials, how-to guides, reference, and explanations.
 
 ## Contributing
 

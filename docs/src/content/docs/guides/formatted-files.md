@@ -13,7 +13,7 @@ unirelman writes files in the default style of common formatters, such as Pretti
 
 | File                                   | Format                                                                       |
 | -------------------------------------- | ---------------------------------------------------------------------------- |
-| `CHANGELOG.md`, changesets             | Markdown with a blank line around headings, lists and front matter.          |
+| `CHANGELOG.md`, changesets             | Markdown with a blank line around headings, lists, and front matter.         |
 | `package.json`, `.unirelman/**/*.json` | JSON indented with two spaces. `package.json` keeps the order of its fields. |
 
 Every file ends with a newline. With default formatter settings, the generated files pass the check as written.

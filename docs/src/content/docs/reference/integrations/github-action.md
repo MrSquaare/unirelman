@@ -15,7 +15,7 @@ The GitHub Action keeps a [release pull request](/unirelman/reference/glossary/#
 - **Node.js and dependencies installed** before the GitHub Action: it runs the CLI installed in your repository.
 - **The Git plugin** in your configuration: it creates the release commit the GitHub Action pushes.
 - **Permissions**: `contents: write` and `pull-requests: write`, plus `id-token: write` for npm trusted publishing.
-- **Repository setting**: **Allow GitHub Actions to create and approve pull requests**.
+- **Repository setting**: the **Allow GitHub Actions to create and approve pull requests** setting.
 
 ## Inputs
 

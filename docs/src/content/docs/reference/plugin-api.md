@@ -205,7 +205,7 @@ All paths are relative to the root of the instance, or absolute.
 | `resolvePath(path): string`               | Absolute path of the file.                                                                    |
 | `exists(path): Promise<boolean>`          | Whether the file exists. Throws on any error other than a missing file.                       |
 | `read(path, fallback?): Promise<string>`  | Content of the file. Throws `CoreFileNotFoundError` when missing, unless `fallback` is given. |
-| `readJSON(path, schema, fallback?)`       | Content parsed as JSON and validated with a zod schema.                                       |
+| `readJSON(path, schema, fallback?)`       | Content parsed as JSON and validated with a Zod schema.                                       |
 | `readAll(): Promise<{ path; content }[]>` | Every file of `list()`, with its content.                                                     |
 | `write(path, content): Promise<void>`     | Writes the file, creating folders as needed.                                                  |
 | `writeJSON(path, value): Promise<void>`   | Writes the value as indented JSON.                                                            |

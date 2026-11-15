@@ -36,7 +36,7 @@ interface VersioningScheme<TVersion extends object> {
 `createVersioningSchemePlugin(scheme, options?)` returns a `CLIPlugin` named after the scheme, with:
 
 - `parseCurrentVersion`: parses current versions and fills `meta[scheme.name]` and `meta.prerelease`.
-- `computeNextVersion`: computes next versions, with the [prerelease rules](/unirelman/reference/plugins/semver/#next-version-rules) and [fixed versioning](/unirelman/reference/glossary/#fixed-versioning).
+- `computeNextVersion`: computes next versions with the [prerelease rules](/unirelman/reference/plugins/semver/#next-version-rules) and [fixed versioning](/unirelman/reference/glossary/#fixed-versioning).
 - The [`pre` command](/unirelman/reference/plugins/semver/#semver-pre).
 
 `options` is `VersioningOptions`: `{ prereleaseChannels?: string[]; fixed?: boolean | Record<string, string[]> }`, the [options of the SemVer plugin](/unirelman/reference/plugins/semver/#options).
@@ -71,8 +71,8 @@ import { parsePrereleaseVersion, type PrereleaseTag } from "@unirelman/helpers/p
 | Export                                                              | Description                                                                                                                                   |
 | ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | `PrereleaseTag`                                                     | `{ channel: string; increment: number }`.                                                                                                     |
-| `PrereleaseState`, `prereleaseStateSchema`                          | The [prerelease state](/unirelman/reference/plugins/semver/#prerelease-state), and its zod schema.                                            |
-| `prereleaseOutputSchema`                                            | The zod schema of the [`semver pre` JSON document](/unirelman/reference/plugins/semver/#semver-pre).                                          |
+| `PrereleaseState`, `prereleaseStateSchema`                          | The [prerelease state](/unirelman/reference/plugins/semver/#prerelease-state), and its Zod schema.                                            |
+| `prereleaseOutputSchema`                                            | The Zod schema of the [`semver pre` JSON document](/unirelman/reference/plugins/semver/#semver-pre).                                          |
 | `PrereleaseOptions`                                                 | `{ prereleaseChannels?: string[] }`.                                                                                                          |
 | `parsePrereleaseVersion(value)`                                     | Splits `1.3.0-beta.2` into `{ version: "1.3.0", prerelease: { channel: "beta", increment: 2 } }`. `prerelease` is `undefined` without suffix. |
 | `formatPrereleaseVersion(version, tag)`                             | Joins a version and a tag: `1.3.0-beta.2`.                                                                                                    |
@@ -93,7 +93,7 @@ import { resolveDefaultGitTag, resolveGitTag, type GitTagFormat } from "@unirelm
 | `resolveGitTag(scope, version, cwd, tagFormat)` | Tag name of a version, with the given format.                                                                  |
 | `isRootScope(scope, cwd)`                       | Whether the scope is the project root.                                                                         |
 
-Plugins that refer to tags take a `tagFormat` option, `resolveDefaultGitTag` by default, and name tags with `resolveGitTag`, as the Git and GitHub plugins do.
+Plugins that refer to tags, such as the Git and GitHub plugins, take a `tagFormat` option, `resolveDefaultGitTag` by default, and name tags with `resolveGitTag`.
 
 ## Related
 

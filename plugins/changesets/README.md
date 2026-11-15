@@ -1,8 +1,8 @@
-# @unirelman/plugin-changesets
+# `@unirelman/plugin-changesets`
 
 unirelman plugin for changesets.
 
-## Table of Contents
+## Table of contents
 
 - [About](#about)
 - [Getting started](#getting-started)
