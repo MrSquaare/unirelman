@@ -28,15 +28,21 @@ describe("runGetChangesPhase", () => {
 
     vi.mocked(context.store.readAll).mockResolvedValueOnce([firstFile, secondFile]);
 
-    await expect(runGetChangesPhase(context, state)).resolves.toEqual({
-      [SCOPE_NAMES.ALPHA]: [
-        { message: "Alpha", level: "patch", meta: { changesets: { path: "first.md" } } },
-        { message: "Beta", level: "minor", meta: { changesets: { path: "second.md" } } },
-      ],
-      [SCOPE_NAMES.BETA]: [
-        { message: "Beta", level: "minor", meta: { changesets: { path: "second.md" } } },
-      ],
-    });
+    await expect(runGetChangesPhase(context, state)).resolves.toEqual(
+      new Map([
+        [
+          SCOPE_NAMES.ALPHA,
+          [
+            { message: "Alpha", level: "patch", meta: { changesets: { path: "first.md" } } },
+            { message: "Beta", level: "minor", meta: { changesets: { path: "second.md" } } },
+          ],
+        ],
+        [
+          SCOPE_NAMES.BETA,
+          [{ message: "Beta", level: "minor", meta: { changesets: { path: "second.md" } } }],
+        ],
+      ]),
+    );
 
     expect(context.store.readAll).toHaveBeenCalledTimes(1);
     expect(context.store.readAll).toHaveBeenNthCalledWith(1);
@@ -59,7 +65,7 @@ describe("runGetChangesPhase", () => {
       { path: "notes.txt", content: "not markdown" },
     ]);
 
-    await expect(runGetChangesPhase(context, state)).resolves.toEqual({});
+    await expect(runGetChangesPhase(context, state)).resolves.toEqual(new Map());
 
     expect(mockedParseChangesetFile).not.toHaveBeenCalled();
   });

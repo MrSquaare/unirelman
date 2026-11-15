@@ -14,7 +14,9 @@ import { parseLevel, parseScopes } from "./fields";
 const WINDOWS_NEWLINE_REGEX = /\r\n/g;
 const CHANGESET_DOCUMENT_REGEX = /^---\n([\s\S]*?)\n---\n?([\s\S]*)$/;
 
-export const parseChangesetFrontmatter = (frontmatterContent: string): Record<string, string> => {
+export const parseChangesetFrontmatter = (
+  frontmatterContent: string,
+): ReadonlyMap<string, string> => {
   const frontmatterEntries = frontmatterContent
     .split("\n")
     .map((line) => line.trim())
@@ -33,7 +35,7 @@ export const parseChangesetFrontmatter = (frontmatterContent: string): Record<st
     })
     .filter(([key]) => key.length > 0);
 
-  return Object.fromEntries(frontmatterEntries);
+  return new Map(frontmatterEntries);
 };
 
 export const parseChangeset = (content: string): ParsedChangeset => {
@@ -46,8 +48,8 @@ export const parseChangeset = (content: string): ParsedChangeset => {
 
   const [, rawFrontmatter, rawBody] = match;
   const frontmatter = thisMod.parseChangesetFrontmatter(rawFrontmatter);
-  const scopes = parseScopes(frontmatter.scopes);
-  const level = parseLevel(frontmatter.level);
+  const scopes = parseScopes(frontmatter.get("scopes"));
+  const level = parseLevel(frontmatter.get("level"));
   const message = rawBody.trim();
 
   if (scopes.length === 0) {

@@ -147,7 +147,7 @@ describe("createCreateCommand", () => {
     expect(mockedParseScopes).toHaveBeenCalledTimes(1);
     expect(mockedParseScopes).toHaveBeenNthCalledWith(1, scopesValue);
     expect(mockedAssertKnownScopes).toHaveBeenCalledTimes(1);
-    expect(mockedAssertKnownScopes).toHaveBeenNthCalledWith(1, scopes, Object.keys(context.scopes));
+    expect(mockedAssertKnownScopes).toHaveBeenNthCalledWith(1, scopes, [...context.scopes.keys()]);
     expect(promptScopesSpy).not.toHaveBeenCalled();
     expect(mockedParseLevel).toHaveBeenCalledTimes(1);
     expect(mockedParseLevel).toHaveBeenNthCalledWith(1, "MiNoR");
@@ -204,9 +204,9 @@ describe("createCreateCommand", () => {
     expect(mockedParseScopes).toHaveBeenCalledTimes(1);
     expect(mockedParseScopes).toHaveBeenNthCalledWith(1, undefined);
     expect(mockedAssertKnownScopes).toHaveBeenCalledTimes(1);
-    expect(mockedAssertKnownScopes).toHaveBeenNthCalledWith(1, [], Object.keys(context.scopes));
+    expect(mockedAssertKnownScopes).toHaveBeenNthCalledWith(1, [], [...context.scopes.keys()]);
     expect(promptScopesSpy).toHaveBeenCalledTimes(1);
-    expect(promptScopesSpy).toHaveBeenNthCalledWith(1, runContext.ui, Object.keys(context.scopes));
+    expect(promptScopesSpy).toHaveBeenNthCalledWith(1, runContext.ui, [...context.scopes.keys()]);
     expect(mockedParseLevel).toHaveBeenCalledTimes(1);
     expect(mockedParseLevel).toHaveBeenNthCalledWith(1, undefined);
     expect(promptLevelSpy).toHaveBeenCalledTimes(1);
