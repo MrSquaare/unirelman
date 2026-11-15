@@ -4,13 +4,12 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   CoreDuplicatePluginRegistrationError,
-  CoreDuplicateScopeNameError,
   CoreDuplicateScopePathError,
-  CoreEmptyConfigPluginScopeNameError,
   CoreEmptyConfigPluginScopesError,
-  CoreEmptyScopeNameError,
   CoreEmptyScopesError,
   CoreInvalidConfigError,
+  CoreInvalidPluginNameError,
+  CoreInvalidScopeNameError,
   CoreReservedScopeNameError,
   CoreScopePathOutsideCwdError,
   CoreUnknownConfigPluginScopeError,
@@ -135,15 +134,21 @@ describe("resolveScopeMap", () => {
     expect(isPathInsideSpy).toHaveBeenNthCalledWith(2, CONFIG_CWD, `${CONFIG_CWD}/packages/beta`);
   });
 
-  it("should trim scope names", () => {
+  it("should resolve config scopes with letters, digits, and the allowed characters", () => {
     const scopes = {
-      [` ${SCOPE_NAMES.ALPHA} `]: CONFIG_SCOPE_PATHS[SCOPE_NAMES.ALPHA],
+      "@example/Core.js_v2-beta-1": "packages/core",
+      Root: ".",
     };
 
     expect(resolveScopeMap(CONFIG_CWD, scopes)).toEqual({
-      [SCOPE_NAMES.ALPHA]: {
-        name: SCOPE_NAMES.ALPHA,
-        path: `${CONFIG_CWD}/packages/alpha`,
+      "@example/Core.js_v2-beta-1": {
+        name: "@example/Core.js_v2-beta-1",
+        path: `${CONFIG_CWD}/packages/core`,
+        meta: {},
+      },
+      Root: {
+        name: "Root",
+        path: CONFIG_CWD,
         meta: {},
       },
     });
@@ -195,12 +200,28 @@ describe("resolveScopeMap", () => {
     expect(() => resolveScopeMap(CONFIG_CWD, {})).toThrow(new CoreEmptyScopesError());
   });
 
-  it("should throw error for empty scope names", () => {
-    const scopes = {
-      " \n\t ": CONFIG_SCOPE_PATHS[SCOPE_NAMES.ALPHA],
-    };
+  it("should throw error for an empty scope name", () => {
+    expect(() => resolveScopeMap(CONFIG_CWD, { "": "./packages/alpha" })).toThrow(
+      new CoreInvalidScopeNameError(""),
+    );
+  });
 
-    expect(() => resolveScopeMap(CONFIG_CWD, scopes)).toThrow(new CoreEmptyScopeNameError());
+  it("should throw error for a scope name with a comma", () => {
+    expect(() => resolveScopeMap(CONFIG_CWD, { "a,b": "./packages/alpha" })).toThrow(
+      new CoreInvalidScopeNameError("a,b"),
+    );
+  });
+
+  it("should throw error for a scope name with whitespace", () => {
+    expect(() => resolveScopeMap(CONFIG_CWD, { " alpha ": "./packages/alpha" })).toThrow(
+      new CoreInvalidScopeNameError(" alpha "),
+    );
+  });
+
+  it("should throw error for a scope name with a tilde", () => {
+    expect(() => resolveScopeMap(CONFIG_CWD, { "a~b": "./packages/alpha" })).toThrow(
+      new CoreInvalidScopeNameError("a~b"),
+    );
   });
 
   it("should throw error for a scope name that is a property of Object.prototype", () => {
@@ -214,23 +235,6 @@ describe("resolveScopeMap", () => {
 
     expect(() => resolveScopeMap(CONFIG_CWD, scopes)).toThrow(
       new CoreReservedScopeNameError("__proto__"),
-    );
-  });
-
-  it("should throw error for a reserved scope name once trimmed", () => {
-    expect(() => resolveScopeMap(CONFIG_CWD, { " toString ": "./packages/alpha" })).toThrow(
-      new CoreReservedScopeNameError("toString"),
-    );
-  });
-
-  it("should throw error for duplicate scope names", () => {
-    const scopes = {
-      [SCOPE_NAMES.ALPHA]: CONFIG_SCOPE_PATHS[SCOPE_NAMES.ALPHA],
-      [` ${SCOPE_NAMES.ALPHA} `]: "./packages/other",
-    };
-
-    expect(() => resolveScopeMap(CONFIG_CWD, scopes)).toThrow(
-      new CoreDuplicateScopeNameError(SCOPE_NAMES.ALPHA),
     );
   });
 
@@ -314,15 +318,10 @@ describe("resolvePluginRegistration", () => {
     });
   });
 
-  it("should trim config plugin scope names", () => {
-    const plugin = createPlugin();
+  it("should resolve plugin with lowercase letters, digits, and hyphens", () => {
+    const plugin = createPlugin({ extends: { name: "plugin-2" } });
 
-    expect(
-      resolvePluginRegistration(
-        { plugin, scopes: [` ${SCOPE_NAMES.ALPHA} `] },
-        new Set([SCOPE_NAMES.ALPHA]),
-      ),
-    ).toEqual({
+    expect(resolvePluginRegistration(plugin, new Set([SCOPE_NAMES.ALPHA]))).toEqual({
       plugin,
       scopes: new Set([SCOPE_NAMES.ALPHA]),
     });
@@ -333,7 +332,7 @@ describe("resolvePluginRegistration", () => {
 
     expect(
       resolvePluginRegistration(
-        { plugin, scopes: [SCOPE_NAMES.ALPHA, ` ${SCOPE_NAMES.ALPHA} `] },
+        { plugin, scopes: [SCOPE_NAMES.ALPHA, SCOPE_NAMES.ALPHA] },
         new Set([SCOPE_NAMES.ALPHA]),
       ),
     ).toEqual({
@@ -342,20 +341,60 @@ describe("resolvePluginRegistration", () => {
     });
   });
 
+  it("should throw when the plugin has an empty plugin name", () => {
+    const plugin = createPlugin({ extends: { name: "" } });
+
+    expect(() => resolvePluginRegistration(plugin, new Set([SCOPE_NAMES.ALPHA]))).toThrow(
+      new CoreInvalidPluginNameError(""),
+    );
+  });
+
+  it("should throw when the plugin has an uppercase plugin name", () => {
+    const plugin = createPlugin({ extends: { name: "Plugin-A" } });
+
+    expect(() => resolvePluginRegistration(plugin, new Set([SCOPE_NAMES.ALPHA]))).toThrow(
+      new CoreInvalidPluginNameError("Plugin-A"),
+    );
+  });
+
+  it("should throw when the plugin has a scoped plugin name", () => {
+    const plugin = createPlugin({ extends: { name: "@scope/name" } });
+
+    expect(() => resolvePluginRegistration(plugin, new Set([SCOPE_NAMES.ALPHA]))).toThrow(
+      new CoreInvalidPluginNameError("@scope/name"),
+    );
+  });
+
+  it("should throw when the plugin has a plugin name with a dot segment", () => {
+    const plugin = createPlugin({ extends: { name: "bar/../foo" } });
+
+    expect(() => resolvePluginRegistration(plugin, new Set([SCOPE_NAMES.ALPHA]))).toThrow(
+      new CoreInvalidPluginNameError("bar/../foo"),
+    );
+  });
+
+  it("should throw when the plugin has a plugin name with an underscore", () => {
+    const plugin = createPlugin({ extends: { name: "plugin_a" } });
+
+    expect(() => resolvePluginRegistration(plugin, new Set([SCOPE_NAMES.ALPHA]))).toThrow(
+      new CoreInvalidPluginNameError("plugin_a"),
+    );
+  });
+
+  it("should throw when the plugin has a plugin name with a dot", () => {
+    const plugin = createPlugin({ extends: { name: "plugin.a" } });
+
+    expect(() => resolvePluginRegistration(plugin, new Set([SCOPE_NAMES.ALPHA]))).toThrow(
+      new CoreInvalidPluginNameError("plugin.a"),
+    );
+  });
+
   it("should throw when config plugin scopes are empty", () => {
     const plugin = createPlugin();
 
     expect(() =>
       resolvePluginRegistration({ plugin, scopes: [] }, new Set([SCOPE_NAMES.ALPHA])),
     ).toThrow(new CoreEmptyConfigPluginScopesError(plugin.name));
-  });
-
-  it("should throw when config plugin scopes have an empty scope name", () => {
-    const plugin = createPlugin();
-
-    expect(() =>
-      resolvePluginRegistration({ plugin, scopes: [" "] }, new Set([SCOPE_NAMES.ALPHA])),
-    ).toThrow(new CoreEmptyConfigPluginScopeNameError(plugin.name));
   });
 
   it("should throw when config plugin scopes have an unknown scope name", () => {

@@ -16,11 +16,16 @@ export class CoreEmptyScopesError extends CoreError {
   }
 }
 
-export class CoreEmptyScopeNameError extends CoreError {
-  constructor() {
-    super("Scope name cannot be empty");
+export class CoreInvalidScopeNameError extends CoreError {
+  readonly scopeName: string;
 
-    this.name = "CoreEmptyScopeNameError";
+  constructor(scopeName: string) {
+    super(
+      `Scope name "${scopeName}" is invalid: it must only contain letters, digits, and the characters @ / . _ -`,
+    );
+
+    this.name = "CoreInvalidScopeNameError";
+    this.scopeName = scopeName;
   }
 }
 
@@ -31,17 +36,6 @@ export class CoreReservedScopeNameError extends CoreError {
     super(`Scope name "${scopeName}" is reserved: it is a property of Object.prototype`);
 
     this.name = "CoreReservedScopeNameError";
-    this.scopeName = scopeName;
-  }
-}
-
-export class CoreDuplicateScopeNameError extends CoreError {
-  readonly scopeName: string;
-
-  constructor(scopeName: string) {
-    super(`Scope name "${scopeName}" is duplicated`);
-
-    this.name = "CoreDuplicateScopeNameError";
     this.scopeName = scopeName;
   }
 }
@@ -79,6 +73,19 @@ export class CoreInvalidConfigError extends CoreError {
   }
 }
 
+export class CoreInvalidPluginNameError extends CoreError {
+  readonly pluginName: string;
+
+  constructor(pluginName: string) {
+    super(
+      `Plugin name "${pluginName}" is invalid: it must only contain lowercase letters, digits, and the character -`,
+    );
+
+    this.name = "CoreInvalidPluginNameError";
+    this.pluginName = pluginName;
+  }
+}
+
 export class CoreEmptyConfigPluginScopesError extends CoreError {
   readonly pluginName: string;
 
@@ -86,17 +93,6 @@ export class CoreEmptyConfigPluginScopesError extends CoreError {
     super(`Plugin "${pluginName}" config scopes must not be empty`);
 
     this.name = "CoreEmptyConfigPluginScopesError";
-    this.pluginName = pluginName;
-  }
-}
-
-export class CoreEmptyConfigPluginScopeNameError extends CoreError {
-  readonly pluginName: string;
-
-  constructor(pluginName: string) {
-    super(`Plugin "${pluginName}" config has an empty scope name`);
-
-    this.name = "CoreEmptyConfigPluginScopeNameError";
     this.pluginName = pluginName;
   }
 }

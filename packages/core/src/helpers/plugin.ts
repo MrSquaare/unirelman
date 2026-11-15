@@ -19,7 +19,7 @@ export const isPlugin = (value: unknown): value is Plugin => {
     return false;
   }
 
-  if (!("name" in value) || typeof value.name !== "string" || value.name.trim().length === 0) {
+  if (!("name" in value) || typeof value.name !== "string") {
     return false;
   }
 

@@ -13,10 +13,18 @@ interface Plugin extends Partial<PhaseMap> {
 }
 ```
 
-| Member          | Description                                                                                                                  |
-| --------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `name`          | Unique, non-empty name. It identifies the plugin in the configuration and the logs, and names its store folder and commands. |
-| Phase functions | Optional. One function per phase the plugin takes part in.                                                                   |
+| Member          | Description                                                                                                                                                  |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `name`          | Name, following the [plugin name](#plugin-names) rules. It identifies the plugin in the configuration and the logs, and names its store folder and commands. |
+| Phase functions | Optional. One function per phase the plugin takes part in.                                                                                                   |
+
+### Plugin names
+
+A plugin name:
+
+- Contains only lowercase letters, digits, and the character `-`, such as `version-file`.
+- Is not `version` or `publish` when the plugin is a [CLI plugin](#cli-plugins).
+- Is unique in the configuration.
 
 ## Phases
 
@@ -241,8 +249,6 @@ interface CLIPlugin extends Plugin {
 | -------------------- | -------------------------------------------------------------------------- |
 | `commandDescription` | Description of `unirelman <plugin name>` in the help.                      |
 | `commands`           | Returns the commands under `unirelman <plugin name>`, keyed by their name. |
-
-The names `version` and `publish` are reserved: a CLI plugin with one of them fails with `CLIReservedCommandNameError`.
 
 ### `defineCommand`
 

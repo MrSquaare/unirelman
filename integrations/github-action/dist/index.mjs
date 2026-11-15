@@ -26131,7 +26131,7 @@ const PHASE_NAMES = [
 ];
 const isPlugin = (value) => {
 	if (typeof value !== "object" || value === null) return false;
-	if (!("name" in value) || typeof value.name !== "string" || value.name.trim().length === 0) return false;
+	if (!("name" in value) || typeof value.name !== "string") return false;
 	return PHASE_NAMES.every((phaseName) => {
 		const phase = Reflect.get(value, phaseName);
 		return phase === void 0 || typeof phase === "function";

@@ -23,6 +23,10 @@ describe("isPlugin", () => {
     expect(isPlugin({ name: "plugin-a" })).toEqual(true);
   });
 
+  it("should return true for plugin with a name of any format", () => {
+    expect(isPlugin({ name: "Plugin A" })).toEqual(true);
+  });
+
   it("should return false for non-object value", () => {
     expect(isPlugin("plugin-a")).toEqual(false);
   });
@@ -37,10 +41,6 @@ describe("isPlugin", () => {
 
   it("should return false when name is not a string", () => {
     expect(isPlugin({ name: 1 })).toEqual(false);
-  });
-
-  it("should return false when name is blank", () => {
-    expect(isPlugin({ name: "  " })).toEqual(false);
   });
 
   it("should return false when a phase is not a function", () => {
