@@ -32,33 +32,33 @@ describe("resolveGitTagEntries", () => {
   it("should resolve publish entries with appropriate tags", () => {
     const scopes = createScopeMap();
     const versions = createScopeVersionMap();
-    const tagA = `${SCOPE_NAMES.ALPHA}@${versions[SCOPE_NAMES.ALPHA].version}`;
-    const tagB = `${SCOPE_NAMES.BETA}@${versions[SCOPE_NAMES.BETA].version}`;
+    const tagA = `${SCOPE_NAMES.ALPHA}@${VERSIONS.DEFAULT}`;
+    const tagB = `${SCOPE_NAMES.BETA}@${VERSIONS.MAJOR}`;
 
     expect(resolveGitTagEntries(scopes, versions, CONFIG_CWD, resolveDefaultGitTag)).toEqual([
       {
         scopeName: SCOPE_NAMES.ALPHA,
-        version: versions[SCOPE_NAMES.ALPHA].version,
+        version: VERSIONS.DEFAULT,
         tag: tagA,
       },
       {
         scopeName: SCOPE_NAMES.BETA,
-        version: versions[SCOPE_NAMES.BETA].version,
+        version: VERSIONS.MAJOR,
         tag: tagB,
       },
     ]);
     expect(mockedResolveGitTag).toHaveBeenCalledTimes(2);
     expect(mockedResolveGitTag).toHaveBeenNthCalledWith(
       1,
-      scopes[SCOPE_NAMES.ALPHA],
-      versions[SCOPE_NAMES.ALPHA].version,
+      scopes.get(SCOPE_NAMES.ALPHA),
+      VERSIONS.DEFAULT,
       CONFIG_CWD,
       resolveDefaultGitTag,
     );
     expect(mockedResolveGitTag).toHaveBeenNthCalledWith(
       2,
-      scopes[SCOPE_NAMES.BETA],
-      versions[SCOPE_NAMES.BETA].version,
+      scopes.get(SCOPE_NAMES.BETA),
+      VERSIONS.MAJOR,
       CONFIG_CWD,
       resolveDefaultGitTag,
     );
@@ -66,25 +66,23 @@ describe("resolveGitTagEntries", () => {
 
   it("should skip entry when scope is missing in scopes map", () => {
     const scopes = createScopeMap({
-      override: {
-        [SCOPE_NAMES.ALPHA]: createScope(),
-      },
+      override: new Map([[SCOPE_NAMES.ALPHA, createScope()]]),
     });
     const versions = createScopeVersionMap();
-    const tagA = `${SCOPE_NAMES.ALPHA}@${versions[SCOPE_NAMES.ALPHA].version}`;
+    const tagA = `${SCOPE_NAMES.ALPHA}@${VERSIONS.DEFAULT}`;
 
     expect(resolveGitTagEntries(scopes, versions, CONFIG_CWD, resolveDefaultGitTag)).toEqual([
       {
         scopeName: SCOPE_NAMES.ALPHA,
-        version: versions[SCOPE_NAMES.ALPHA].version,
+        version: VERSIONS.DEFAULT,
         tag: tagA,
       },
     ]);
     expect(mockedResolveGitTag).toHaveBeenCalledTimes(1);
     expect(mockedResolveGitTag).toHaveBeenNthCalledWith(
       1,
-      scopes[SCOPE_NAMES.ALPHA],
-      versions[SCOPE_NAMES.ALPHA].version,
+      scopes.get(SCOPE_NAMES.ALPHA),
+      VERSIONS.DEFAULT,
       CONFIG_CWD,
       resolveDefaultGitTag,
     );
@@ -93,24 +91,22 @@ describe("resolveGitTagEntries", () => {
   it("should skip entry when version is missing in versions map", () => {
     const scopes = createScopeMap();
     const versions = createScopeVersionMap({
-      override: {
-        [SCOPE_NAMES.ALPHA]: createVersion(),
-      },
+      override: new Map([[SCOPE_NAMES.ALPHA, createVersion()]]),
     });
-    const tagA = `${SCOPE_NAMES.ALPHA}@${versions[SCOPE_NAMES.ALPHA].version}`;
+    const tagA = `${SCOPE_NAMES.ALPHA}@${VERSIONS.DEFAULT}`;
 
     expect(resolveGitTagEntries(scopes, versions, CONFIG_CWD, resolveDefaultGitTag)).toEqual([
       {
         scopeName: SCOPE_NAMES.ALPHA,
-        version: versions[SCOPE_NAMES.ALPHA].version,
+        version: VERSIONS.DEFAULT,
         tag: tagA,
       },
     ]);
     expect(mockedResolveGitTag).toHaveBeenCalledTimes(1);
     expect(mockedResolveGitTag).toHaveBeenNthCalledWith(
       1,
-      scopes[SCOPE_NAMES.ALPHA],
-      versions[SCOPE_NAMES.ALPHA].version,
+      scopes.get(SCOPE_NAMES.ALPHA),
+      VERSIONS.DEFAULT,
       CONFIG_CWD,
       resolveDefaultGitTag,
     );
@@ -206,9 +202,11 @@ describe("createCreateReleasesPhase", () => {
     hasGitTagSpy.mockResolvedValueOnce(false);
     runGitTagSpy.mockResolvedValueOnce(undefined);
 
-    await expect(createCreateReleasesPhase(options)(context, state)).resolves.toEqual({
-      [entry.scopeName]: [{ type: "git-tag", name: entry.tag, status: "created", meta: {} }],
-    });
+    await expect(createCreateReleasesPhase(options)(context, state)).resolves.toEqual(
+      new Map([
+        [entry.scopeName, [{ type: "git-tag", name: entry.tag, status: "created", meta: {} }]],
+      ]),
+    );
     expect(resolveGitTagEntriesSpy).toHaveBeenCalledTimes(1);
     expect(resolveGitTagEntriesSpy).toHaveBeenNthCalledWith(
       1,
@@ -234,9 +232,11 @@ describe("createCreateReleasesPhase", () => {
     resolveGitTagEntriesSpy.mockReturnValueOnce([entry]);
     hasGitTagSpy.mockResolvedValueOnce(false);
 
-    await expect(createCreateReleasesPhase(options)(context, state)).resolves.toEqual({
-      [entry.scopeName]: [{ type: "git-tag", name: entry.tag, status: "created", meta: {} }],
-    });
+    await expect(createCreateReleasesPhase(options)(context, state)).resolves.toEqual(
+      new Map([
+        [entry.scopeName, [{ type: "git-tag", name: entry.tag, status: "created", meta: {} }]],
+      ]),
+    );
     expect(resolveGitTagEntriesSpy).toHaveBeenCalledTimes(1);
     expect(resolveGitTagEntriesSpy).toHaveBeenNthCalledWith(
       1,
@@ -259,9 +259,11 @@ describe("createCreateReleasesPhase", () => {
     resolveGitTagEntriesSpy.mockReturnValueOnce([entry]);
     hasGitTagSpy.mockResolvedValueOnce(true);
 
-    await expect(createCreateReleasesPhase(options)(context, state)).resolves.toEqual({
-      [entry.scopeName]: [{ type: "git-tag", name: entry.tag, status: "existing", meta: {} }],
-    });
+    await expect(createCreateReleasesPhase(options)(context, state)).resolves.toEqual(
+      new Map([
+        [entry.scopeName, [{ type: "git-tag", name: entry.tag, status: "existing", meta: {} }]],
+      ]),
+    );
     expect(hasGitTagSpy).toHaveBeenCalledTimes(1);
     expect(hasGitTagSpy).toHaveBeenNthCalledWith(1, context.cwd, entry.tag);
     expect(runGitTagSpy).not.toHaveBeenCalled();

@@ -1,7 +1,7 @@
 import type { GitTagFormat } from "@unirelman/helpers/git";
 
 export type GitCommitMessageInput = {
-  readonly nextVersions: Readonly<Record<string, string>>;
+  readonly nextVersions: ReadonlyMap<string, string>;
 };
 
 export type GitCommitMessage = string | ((input: GitCommitMessageInput) => string);

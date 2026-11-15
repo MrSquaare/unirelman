@@ -32,16 +32,22 @@ describe("resolveGitAddPaths", () => {
 
   it("should return deduped paths from file operations in insertion order", () => {
     const fileOperations = createScopeFileOperationsMap({
-      override: {
-        [SCOPE_NAMES.ALPHA]: [
-          createFileWrite({ extends: { path: "CHANGELOG.md" } }),
-          createFileWrite({ extends: { path: "packages/a/package.json" } }),
+      override: new Map([
+        [
+          SCOPE_NAMES.ALPHA,
+          [
+            createFileWrite({ extends: { path: "CHANGELOG.md" } }),
+            createFileWrite({ extends: { path: "packages/a/package.json" } }),
+          ],
         ],
-        [SCOPE_NAMES.BETA]: [
-          createFileWrite({ extends: { path: "CHANGELOG.md" } }),
-          createFileWrite({ extends: { path: "packages/b/package.json" } }),
+        [
+          SCOPE_NAMES.BETA,
+          [
+            createFileWrite({ extends: { path: "CHANGELOG.md" } }),
+            createFileWrite({ extends: { path: "packages/b/package.json" } }),
+          ],
         ],
-      },
+      ]),
     });
 
     expect(resolveGitAddPaths(fileOperations)).toEqual([
@@ -66,16 +72,19 @@ describe("resolveGitCommitMessage", () => {
   it("should format the commit message from the next versions when it is a function", () => {
     const commitMessage = vi.fn().mockReturnValueOnce("chore: release");
     const nextVersions = createScopeVersionMap({
-      override: {
-        [SCOPE_NAMES.ALPHA]: createVersion({ extends: { version: "1.1.0" } }),
-        [SCOPE_NAMES.BETA]: createVersion({ extends: { version: "2.0.0" } }),
-      },
+      override: new Map([
+        [SCOPE_NAMES.ALPHA, createVersion({ extends: { version: "1.1.0" } })],
+        [SCOPE_NAMES.BETA, createVersion({ extends: { version: "2.0.0" } })],
+      ]),
     });
 
     expect(resolveGitCommitMessage(commitMessage, nextVersions)).toEqual("chore: release");
     expect(commitMessage).toHaveBeenCalledTimes(1);
     expect(commitMessage).toHaveBeenNthCalledWith(1, {
-      nextVersions: { [SCOPE_NAMES.ALPHA]: "1.1.0", [SCOPE_NAMES.BETA]: "2.0.0" },
+      nextVersions: new Map([
+        [SCOPE_NAMES.ALPHA, "1.1.0"],
+        [SCOPE_NAMES.BETA, "2.0.0"],
+      ]),
     });
   });
 });
@@ -404,15 +413,18 @@ describe("createPreparePhase", () => {
 
   it("should skip commit when filterGitAddPaths returns empty array", async () => {
     const fileOperations = createScopeFileOperationsMap({
-      override: {
-        [SCOPE_NAMES.ALPHA]: [
-          createFileDelete({
-            extends: {
-              path: "untracked-deleted.md",
-            },
-          }),
+      override: new Map([
+        [
+          SCOPE_NAMES.ALPHA,
+          [
+            createFileDelete({
+              extends: {
+                path: "untracked-deleted.md",
+              },
+            }),
+          ],
         ],
-      },
+      ]),
     });
     const context = createPhaseContext();
     const state = createPrepareState({ fileOperations });

@@ -12,8 +12,8 @@ const GIT_LITERAL_PATHSPECS_OPTION = "--literal-pathspecs";
 export const resolveGitAddPaths = (fileOperations: ScopeFileOperationsMap): string[] => {
   const paths = new Set<string>();
 
-  for (const scopeName in fileOperations) {
-    for (const fileOperation of fileOperations[scopeName]) {
+  for (const scopeFileOperations of fileOperations.values()) {
+    for (const fileOperation of scopeFileOperations) {
       paths.add(fileOperation.path);
     }
   }
@@ -30,11 +30,8 @@ export const resolveGitCommitMessage = (
   }
 
   return commitMessage({
-    nextVersions: Object.fromEntries(
-      Object.entries(nextVersions).map(([scopeName, nextVersion]) => [
-        scopeName,
-        nextVersion.version,
-      ]),
+    nextVersions: new Map(
+      [...nextVersions].map(([scopeName, nextVersion]) => [scopeName, nextVersion.version]),
     ),
   });
 };
