@@ -4,16 +4,15 @@ import {
   CoreConflictingFileOperationError,
   CoreDuplicatePluginRegistrationError,
   CoreEmptyFileOperationPathError,
-  CoreDuplicateScopeNameError,
   CoreDuplicateScopePathError,
-  CoreEmptyConfigPluginScopeNameError,
   CoreEmptyConfigPluginScopesError,
-  CoreEmptyScopeNameError,
   CoreReservedScopeNameError,
   CoreEmptyScopesError,
   CoreError,
   CoreFileNotFoundError,
   CoreInvalidConfigError,
+  CoreInvalidPluginNameError,
+  CoreInvalidScopeNameError,
   CoreMissingPhaseProviderError,
   CoreConflictingPhaseProvidersError,
   CoreUnstableNextVersionError,
@@ -62,17 +61,20 @@ describe("CoreEmptyScopesError", () => {
   });
 });
 
-describe("CoreEmptyScopeNameError", () => {
+describe("CoreInvalidScopeNameError", () => {
   afterEach(() => {
     vi.clearAllMocks();
   });
 
   describe("constructor", () => {
-    it("should initialize CoreEmptyScopeNameError with expected name and message", () => {
-      const error = new CoreEmptyScopeNameError();
+    it("should initialize CoreInvalidScopeNameError with name, scopeName property, and message", () => {
+      const error = new CoreInvalidScopeNameError("a,b");
 
-      expect(error.name).toEqual("CoreEmptyScopeNameError");
-      expect(error.message).toEqual("Scope name cannot be empty");
+      expect(error.name).toEqual("CoreInvalidScopeNameError");
+      expect(error.scopeName).toEqual("a,b");
+      expect(error.message).toEqual(
+        'Scope name "a,b" is invalid: it must only contain letters, digits, and the characters @ / . _ -',
+      );
     });
   });
 });
@@ -91,23 +93,6 @@ describe("CoreReservedScopeNameError", () => {
       expect(error.message).toEqual(
         'Scope name "constructor" is reserved: it is a property of Object.prototype',
       );
-    });
-  });
-});
-
-describe("CoreDuplicateScopeNameError", () => {
-  afterEach(() => {
-    vi.clearAllMocks();
-  });
-
-  describe("constructor", () => {
-    it("should initialize CoreDuplicateScopeNameError with name, scopeName property, and message", () => {
-      const scopeName = SCOPE_NAMES.ALPHA;
-      const error = new CoreDuplicateScopeNameError(scopeName);
-
-      expect(error.name).toEqual("CoreDuplicateScopeNameError");
-      expect(error.scopeName).toEqual(scopeName);
-      expect(error.message).toEqual(`Scope name "${scopeName}" is duplicated`);
     });
   });
 });
@@ -164,6 +149,24 @@ describe("CoreInvalidConfigError", () => {
   });
 });
 
+describe("CoreInvalidPluginNameError", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe("constructor", () => {
+    it("should initialize CoreInvalidPluginNameError with name, pluginName property, and message", () => {
+      const error = new CoreInvalidPluginNameError("bar/../foo");
+
+      expect(error.name).toEqual("CoreInvalidPluginNameError");
+      expect(error.pluginName).toEqual("bar/../foo");
+      expect(error.message).toEqual(
+        'Plugin name "bar/../foo" is invalid: it must only contain lowercase letters, digits, and the character -',
+      );
+    });
+  });
+});
+
 describe("CoreEmptyConfigPluginScopesError", () => {
   afterEach(() => {
     vi.clearAllMocks();
@@ -177,23 +180,6 @@ describe("CoreEmptyConfigPluginScopesError", () => {
       expect(error.name).toEqual("CoreEmptyConfigPluginScopesError");
       expect(error.pluginName).toEqual(pluginName);
       expect(error.message).toEqual(`Plugin "${pluginName}" config scopes must not be empty`);
-    });
-  });
-});
-
-describe("CoreEmptyConfigPluginScopeNameError", () => {
-  afterEach(() => {
-    vi.clearAllMocks();
-  });
-
-  describe("constructor", () => {
-    it("should initialize CoreEmptyConfigPluginScopeNameError with name, pluginName property, and message", () => {
-      const pluginName = PLUGIN_NAMES.A;
-      const error = new CoreEmptyConfigPluginScopeNameError(pluginName);
-
-      expect(error.name).toEqual("CoreEmptyConfigPluginScopeNameError");
-      expect(error.pluginName).toEqual(pluginName);
-      expect(error.message).toEqual(`Plugin "${pluginName}" config has an empty scope name`);
     });
   });
 });

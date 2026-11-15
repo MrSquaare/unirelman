@@ -7,13 +7,12 @@ import type { ScopeMap } from "../types/scope";
 
 import {
   CoreDuplicatePluginRegistrationError,
-  CoreDuplicateScopeNameError,
   CoreDuplicateScopePathError,
-  CoreEmptyConfigPluginScopeNameError,
   CoreEmptyConfigPluginScopesError,
-  CoreEmptyScopeNameError,
   CoreEmptyScopesError,
   CoreInvalidConfigError,
+  CoreInvalidPluginNameError,
+  CoreInvalidScopeNameError,
   CoreReservedScopeNameError,
   CoreScopePathOutsideCwdError,
   CoreUnknownConfigPluginScopeError,
@@ -21,6 +20,9 @@ import {
 import { configSchema } from "../types/config";
 import * as thisMod from "./config";
 import { assertSinglePhaseProviders } from "./phase";
+
+const SCOPE_NAME_PATTERN = /^[A-Za-z0-9@/._-]+$/;
+const PLUGIN_NAME_PATTERN = /^[a-z0-9-]+$/;
 
 export const parseConfig = (input: unknown): Config => {
   const result = configSchema.safeParse(input);
@@ -43,22 +45,15 @@ export const resolveScopeMap = (cwd: string, scopes: ConfigScopes): ScopeMap => 
     throw new CoreEmptyScopesError();
   }
 
-  const resolvedNames = new Set<string>();
   const resolvedPaths = new Set<string>();
 
-  return Object.entries(scopes).reduce<ScopeMap>((acc, [rawName, rawPath]) => {
-    const name = rawName.trim();
-
-    if (!name) {
-      throw new CoreEmptyScopeNameError();
+  return Object.entries(scopes).reduce<ScopeMap>((acc, [name, rawPath]) => {
+    if (!SCOPE_NAME_PATTERN.test(name)) {
+      throw new CoreInvalidScopeNameError(name);
     }
 
     if (Object.hasOwn(Object.prototype, name)) {
       throw new CoreReservedScopeNameError(name);
-    }
-
-    if (resolvedNames.has(name)) {
-      throw new CoreDuplicateScopeNameError(name);
     }
 
     const path = resolve(cwd, rawPath);
@@ -71,7 +66,6 @@ export const resolveScopeMap = (cwd: string, scopes: ConfigScopes): ScopeMap => 
       throw new CoreDuplicateScopePathError(path);
     }
 
-    resolvedNames.add(name);
     resolvedPaths.add(path);
 
     acc[name] = {
@@ -90,6 +84,10 @@ export const resolvePluginRegistration = (
 ): PluginRegistration => {
   const { plugin, scopes } = "plugin" in entry ? entry : { plugin: entry, scopes: undefined };
 
+  if (!PLUGIN_NAME_PATTERN.test(plugin.name)) {
+    throw new CoreInvalidPluginNameError(plugin.name);
+  }
+
   if (scopes === undefined) {
     return {
       plugin,
@@ -103,13 +101,7 @@ export const resolvePluginRegistration = (
 
   const resolvedScopeNames = new Set<string>();
 
-  for (const rawScopeName of scopes) {
-    const scopeName = rawScopeName.trim();
-
-    if (!scopeName) {
-      throw new CoreEmptyConfigPluginScopeNameError(plugin.name);
-    }
-
+  for (const scopeName of scopes) {
     if (!scopeNames.has(scopeName)) {
       throw new CoreUnknownConfigPluginScopeError(plugin.name, scopeName, [...scopeNames]);
     }

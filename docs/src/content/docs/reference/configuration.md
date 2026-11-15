@@ -39,7 +39,14 @@ scopes: {
 },
 ```
 
-Scope names are trimmed. Each name and each path is unique, each path is inside the project root, and no name is a property of `Object.prototype`, such as `constructor`.
+Each scope path is unique and inside the project root.
+
+### Scope names
+
+A scope name:
+
+- Contains only letters, digits, and the characters `@`, `/`, `.`, `_`, and `-`, such as `@example/core`.
+- Is not a property of `Object.prototype`, such as `constructor`.
 
 ## `plugins`
 
@@ -62,27 +69,24 @@ The [plugin registrations](/unirelman/reference/glossary/#plugin-registration), 
   },
   ```
 
-Each plugin is registered once, identified by its name.
-
 ## Errors
 
 The CLI validates the configuration when it starts.
 
-| Error                                  | Cause                                                                                               |
-| -------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| `CoreInvalidConfigError`               | An unknown key, a wrong type, or a plugin entry that is not a plugin.                               |
-| `CoreEmptyScopesError`                 | `scopes` is empty.                                                                                  |
-| `CoreEmptyScopeNameError`              | A scope name is empty once trimmed.                                                                 |
-| `CoreReservedScopeNameError`           | A scope name is a property of `Object.prototype`, such as `constructor` or `__proto__`.             |
-| `CoreDuplicateScopeNameError`          | Two scope names are equal once trimmed.                                                             |
-| `CoreScopePathOutsideCwdError`         | A scope path is outside the project root.                                                           |
-| `CoreDuplicateScopePathError`          | Two scopes have the same path.                                                                      |
-| `CoreEmptyConfigPluginScopesError`     | A registration has an empty `scopes` list.                                                          |
-| `CoreEmptyConfigPluginScopeNameError`  | A registration lists an empty scope name.                                                           |
-| `CoreUnknownConfigPluginScopeError`    | A registration lists an undeclared scope.                                                           |
-| `CoreDuplicatePluginRegistrationError` | Two registrations have plugins with the same name.                                                  |
-| `CLIReservedCommandNameError`          | A plugin with CLI commands is named `version` or `publish`.                                         |
-| `CoreConflictingPhaseProvidersError`   | Two plugins provide the same one-plugin-per-scope phase, such as `computeNextVersion`, for a scope. |
+| Error                                  | Cause                                                                                                         |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `CoreInvalidConfigError`               | An unknown key, a wrong type, or a plugin entry that is not a plugin.                                         |
+| `CoreEmptyScopesError`                 | `scopes` is empty.                                                                                            |
+| `CoreInvalidScopeNameError`            | A scope name has a character outside the [scope name](#scope-names) rules.                                    |
+| `CoreReservedScopeNameError`           | A scope name is a property of `Object.prototype`, such as `constructor` or `__proto__`.                       |
+| `CoreScopePathOutsideCwdError`         | A scope path is outside the project root.                                                                     |
+| `CoreDuplicateScopePathError`          | Two scopes have the same path.                                                                                |
+| `CoreInvalidPluginNameError`           | A plugin name has a character outside the [plugin name](/unirelman/reference/plugin-api/#plugin-names) rules. |
+| `CoreEmptyConfigPluginScopesError`     | A registration has an empty `scopes` list.                                                                    |
+| `CoreUnknownConfigPluginScopeError`    | A registration lists an undeclared scope.                                                                     |
+| `CoreDuplicatePluginRegistrationError` | Two registrations have plugins with the same name.                                                            |
+| `CLIReservedCommandNameError`          | A plugin with CLI commands is named `version` or `publish`.                                                   |
+| `CoreConflictingPhaseProvidersError`   | Two plugins provide the same one-plugin-per-scope phase, such as `computeNextVersion`, for a scope.           |
 
 Errors of the pipelines are listed in [Plugin API](/unirelman/reference/plugin-api/#errors).
 
