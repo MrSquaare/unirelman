@@ -47,7 +47,7 @@ jobs:
         run: pnpm turbo run build --filter='./packages/*' --filter='./plugins/*'
 
       - name: Release
-        uses: ./integrations/github-action
+        uses: ./
         with:
           working-directory: ${{ matrix.working-directory }}
           branch: ${{ matrix.branch }}

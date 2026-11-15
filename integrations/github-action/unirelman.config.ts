@@ -8,7 +8,7 @@ import { createReplacePlugin, type ReplaceFile } from "@unirelman/plugin-replace
 import { createSemverPlugin } from "@unirelman/plugin-semver";
 
 const ACTION_SCOPE_NAME = "@unirelman/github-action";
-const ACTION_REFERENCE = /github-action@v\d+\.\d+\.\d+(?:-[a-z]+\.\d+)?/;
+const ACTION_REFERENCE = /MrSquaare\/unirelman@v\d+\.\d+\.\d+(?:-[a-z]+\.\d+)?/;
 const ACTION_REFERENCE_FILES = [
   "README.md",
   "../../docs/src/content/docs/guides/publish-to-npm.mdx",
@@ -21,7 +21,7 @@ const actionReferenceFiles = ACTION_REFERENCE_FILES.map((path): ReplaceFile => (
   path,
   scope: ACTION_SCOPE_NAME,
   search: ACTION_REFERENCE,
-  replace: ({ nextVersion }) => `github-action@v${nextVersion}`,
+  replace: ({ nextVersion }) => `MrSquaare/unirelman@v${nextVersion}`,
 }));
 
 export default defineConfig({

@@ -26,4 +26,4 @@ outputs:
     description: Releases reported by unirelman publish, as JSON; not set while publishing is disabled (.unirelman/github-action/settings.json)
 runs:
   using: node24
-  main: dist/index.mjs
+  main: integrations/github-action/dist/index.mjs
