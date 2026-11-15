@@ -3,7 +3,7 @@ import * as z from "zod";
 
 import type { Config, ConfigScopes, ConfigPlugin, ResolvedConfig } from "../types/config";
 import type { PluginRegistration } from "../types/plugin";
-import type { ScopeMap } from "../types/scope";
+import type { Scope, ScopeMap } from "../types/scope";
 
 import {
   CoreDuplicatePluginRegistrationError,
@@ -13,7 +13,6 @@ import {
   CoreInvalidConfigError,
   CoreInvalidPluginNameError,
   CoreInvalidScopeNameError,
-  CoreReservedScopeNameError,
   CoreScopePathOutsideCwdError,
   CoreUnknownConfigPluginScopeError,
 } from "../errors";
@@ -47,13 +46,9 @@ export const resolveScopeMap = (cwd: string, scopes: ConfigScopes): ScopeMap => 
 
   const resolvedPaths = new Set<string>();
 
-  return Object.entries(scopes).reduce<ScopeMap>((acc, [name, rawPath]) => {
+  return Object.entries(scopes).reduce<Map<string, Scope>>((acc, [name, rawPath]) => {
     if (!SCOPE_NAME_PATTERN.test(name)) {
       throw new CoreInvalidScopeNameError(name);
-    }
-
-    if (Object.hasOwn(Object.prototype, name)) {
-      throw new CoreReservedScopeNameError(name);
     }
 
     const path = resolve(cwd, rawPath);
@@ -68,14 +63,14 @@ export const resolveScopeMap = (cwd: string, scopes: ConfigScopes): ScopeMap => 
 
     resolvedPaths.add(path);
 
-    acc[name] = {
+    acc.set(name, {
       name,
       path,
       meta: {},
-    };
+    });
 
     return acc;
-  }, {});
+  }, new Map());
 };
 
 export const resolvePluginRegistration = (
@@ -119,7 +114,7 @@ export const resolvePluginRegistrations = (
   plugins: Config["plugins"],
   resolvedScopes: ScopeMap,
 ): readonly PluginRegistration[] => {
-  const scopeNames = new Set(Object.keys(resolvedScopes));
+  const scopeNames = new Set(resolvedScopes.keys());
   const pluginNames = new Set<string>();
 
   return plugins.map((entry) => {

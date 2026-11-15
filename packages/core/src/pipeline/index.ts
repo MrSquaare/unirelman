@@ -1,4 +1,4 @@
-import { mergeArrayRecords, runWithCleanup, shallowMerge } from "@unirelman/utils";
+import { mergeArrayMaps, mergeMaps, runWithCleanup } from "@unirelman/utils";
 import { relative } from "node:path";
 
 import type { ResolvedConfig } from "../types/config";
@@ -19,7 +19,7 @@ import type {
   ScopeVersionMap,
   TeardownState,
 } from "../types/phases";
-import type { PluginContext } from "../types/plugin";
+import type { Plugin, PluginContext } from "../types/plugin";
 
 import { CorePhaseError, CoreTeardownError } from "../errors";
 import { FS } from "../fs";
@@ -53,6 +53,11 @@ type PipelineRun = {
 
 type PhaseRun<TName extends PhaseName> = Omit<PhaseFunctionContext<TName>, keyof PluginContext>;
 
+type PluginRun = {
+  readonly plugin: Plugin;
+  readonly context: PluginContext;
+};
+
 type PhaseResultMerger<TName extends PhaseName> = {
   readonly createEmpty: () => PhaseFunctionResult<TName>;
   readonly merge: (
@@ -63,15 +68,15 @@ type PhaseResultMerger<TName extends PhaseName> = {
 
 const PHASE_RESULT_MERGERS: { readonly [TName in PhaseName]: PhaseResultMerger<TName> } = {
   initialize: { createEmpty: () => undefined, merge: () => undefined },
-  getCurrentVersion: { createEmpty: () => ({}), merge: shallowMerge },
-  parseCurrentVersion: { createEmpty: () => ({}), merge: shallowMerge },
-  getChanges: { createEmpty: () => ({}), merge: mergeArrayRecords },
-  computeNextVersion: { createEmpty: () => ({}), merge: shallowMerge },
-  getDependencyChanges: { createEmpty: () => ({}), merge: mergeArrayRecords },
-  generateFileOperations: { createEmpty: () => ({}), merge: mergeArrayRecords },
+  getCurrentVersion: { createEmpty: () => new Map(), merge: mergeMaps },
+  parseCurrentVersion: { createEmpty: () => new Map(), merge: mergeMaps },
+  getChanges: { createEmpty: () => new Map(), merge: mergeArrayMaps },
+  computeNextVersion: { createEmpty: () => new Map(), merge: mergeMaps },
+  getDependencyChanges: { createEmpty: () => new Map(), merge: mergeArrayMaps },
+  generateFileOperations: { createEmpty: () => new Map(), merge: mergeArrayMaps },
   prepare: { createEmpty: () => undefined, merge: () => undefined },
-  getReleaseNotes: { createEmpty: () => ({}), merge: shallowMerge },
-  createReleases: { createEmpty: () => ({}), merge: mergeArrayRecords },
+  getReleaseNotes: { createEmpty: () => new Map(), merge: mergeMaps },
+  createReleases: { createEmpty: () => new Map(), merge: mergeArrayMaps },
   finalize: { createEmpty: () => undefined, merge: () => undefined },
   teardown: { createEmpty: () => undefined, merge: () => undefined },
 };
@@ -79,20 +84,21 @@ const PHASE_RESULT_MERGERS: { readonly [TName in PhaseName]: PhaseResultMerger<T
 export class Pipeline {
   private readonly logger: Logger;
   private readonly fs: FS;
-  private readonly pluginContexts: Record<string, PluginContext> = {};
+  private readonly pluginRuns: readonly PluginRun[];
 
   constructor(private readonly options: PipelineOptions) {
     this.logger = options.createLogger("pipeline");
     this.fs = new FS(options.cwd);
 
-    for (const pluginRegistration of options.config.plugins) {
-      this.pluginContexts[pluginRegistration.plugin.name] = createPluginContext({
+    this.pluginRuns = options.config.plugins.map((pluginRegistration) => ({
+      plugin: pluginRegistration.plugin,
+      context: createPluginContext({
         pluginRegistration,
         cwd: options.cwd,
-        scopes: this.options.config.scopes,
+        scopes: options.config.scopes,
         createLogger: options.createLogger,
-      });
-    }
+      }),
+    }));
   }
 
   async run(pipeline: PipelineName, runOptions: PipelineRunOptions = {}): Promise<PipelineResult> {
@@ -192,7 +198,7 @@ export class Pipeline {
       return { currentVersions, changes: initialChanges, nextVersions };
     }
 
-    const changes = mergeArrayRecords(initialChanges, dependencyChanges);
+    const changes = mergeArrayMaps(initialChanges, dependencyChanges);
     const dependentNextVersions = await this.executeComputeNextVersionPhase(
       run,
       currentVersions,
@@ -273,15 +279,14 @@ export class Pipeline {
 
     this.logger.debug(`Starting ${name} phase`);
 
-    for (const { plugin } of this.options.config.plugins) {
+    for (const { plugin, context: pluginContext } of this.pluginRuns) {
       const phaseFunction = plugin[name] as PhaseFunction<TName> | undefined;
 
       if (typeof phaseFunction !== "function") {
         continue;
       }
 
-      const pluginContext = this.pluginContexts[plugin.name];
-      const filteredScopeNames = new Set(Object.keys(pluginContext.scopes));
+      const filteredScopeNames = new Set(pluginContext.scopes.keys());
 
       if (filteredScopeNames.size === 0) {
         this.logger.debug(

@@ -68,15 +68,15 @@ A group is a name and a list of scopes.
 import { parsePrereleaseVersion, type PrereleaseTag } from "@unirelman/helpers/prerelease";
 ```
 
-| Export                                                              | Description                                                                                                                                   |
-| ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `PrereleaseTag`                                                     | `{ channel: string; increment: number }`.                                                                                                     |
-| `PrereleaseState`, `prereleaseStateSchema`                          | The [prerelease state](/unirelman/reference/plugins/semver/#prerelease-state), and its Zod schema.                                            |
-| `prereleaseOutputSchema`                                            | The Zod schema of the [`semver pre` JSON document](/unirelman/reference/plugins/semver/#semver-pre).                                          |
-| `PrereleaseOptions`                                                 | `{ prereleaseChannels?: string[] }`.                                                                                                          |
-| `parsePrereleaseVersion(value)`                                     | Splits `1.3.0-beta.2` into `{ version: "1.3.0", prerelease: { channel: "beta", increment: 2 } }`. `prerelease` is `undefined` without suffix. |
-| `formatPrereleaseVersion(version, tag)`                             | Joins a version and a tag: `1.3.0-beta.2`.                                                                                                    |
-| `readPrereleaseState(store)` / `writePrereleaseState(store, state)` | Read and write the prerelease state in `prerelease.json` of a plugin store.                                                                   |
+| Export                                                              | Description                                                                                                                                                                     |
+| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PrereleaseTag`                                                     | `{ channel: string; increment: number }`.                                                                                                                                       |
+| `PrereleaseState`, `prereleaseStateSchema`                          | The [prerelease state](/unirelman/reference/plugins/semver/#prerelease-state), a `ReadonlyMap` of each scope name to `{ channel }`, and the Zod schema that reads it from JSON. |
+| `prereleaseOutputSchema`                                            | The Zod schema of the [`semver pre` JSON document](/unirelman/reference/plugins/semver/#semver-pre).                                                                            |
+| `PrereleaseOptions`                                                 | `{ prereleaseChannels?: string[] }`.                                                                                                                                            |
+| `parsePrereleaseVersion(value)`                                     | Splits `1.3.0-beta.2` into `{ version: "1.3.0", prerelease: { channel: "beta", increment: 2 } }`. `prerelease` is `undefined` without suffix.                                   |
+| `formatPrereleaseVersion(version, tag)`                             | Joins a version and a tag: `1.3.0-beta.2`.                                                                                                                                      |
+| `readPrereleaseState(store)` / `writePrereleaseState(store, state)` | Read and write the prerelease state in `prerelease.json` of a plugin store.                                                                                                     |
 
 Importing this entry point also declares `VersionMeta.prerelease`, the prerelease tag of a version in any versioning scheme. The npm and GitHub plugins read it to handle prereleases.
 

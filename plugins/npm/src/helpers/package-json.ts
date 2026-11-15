@@ -4,7 +4,7 @@ import type * as z from "zod";
 import { CoreFileNotFoundError } from "@unirelman/core";
 import { resolve } from "node:path";
 
-import type { PackageJson, ScopePackageJsonMap } from "../types";
+import type { PackageJson, ScopePackageJson, ScopePackageJsonMap } from "../types";
 
 import { NPM_PACKAGE_JSON_FILE_NAME } from "../constants";
 import { NpmInvalidPackageJsonVersionError, NpmPackageJsonNotFoundError } from "../errors";
@@ -33,18 +33,20 @@ export const readScopePackageJsons = async (
   scopes: ScopeMap,
 ): Promise<ScopePackageJsonMap> => {
   const entries = await Promise.all(
-    Object.entries(scopes).map(async ([scopeName, scope]) => [
-      scopeName,
-      await thisMod.readScopePackageJson(
+    [...scopes].map(async ([scopeName, scope]): Promise<[string, ScopePackageJson]> => {
+      const path = resolve(scope.path, NPM_PACKAGE_JSON_FILE_NAME);
+      const packageJson = await thisMod.readScopePackageJson(
         fs,
         scopeName,
-        resolve(scope.path, NPM_PACKAGE_JSON_FILE_NAME),
+        path,
         dependencyPackageJsonSchema,
-      ),
-    ]),
+      );
+
+      return [scopeName, { path, packageJson }];
+    }),
   );
 
-  return Object.fromEntries(entries);
+  return new Map(entries);
 };
 
 export const resolvePackageJsonVersion = (scopeName: string, packageJson: PackageJson): string => {
@@ -61,6 +63,6 @@ export const resolveScopeNamesByPackageName = (
   packageJsons: ScopePackageJsonMap,
 ): ReadonlyMap<string, string> => {
   return new Map(
-    Object.entries(packageJsons).map(([scopeName, packageJson]) => [packageJson.name, scopeName]),
+    [...packageJsons].map(([scopeName, { packageJson }]) => [packageJson.name, scopeName]),
   );
 };

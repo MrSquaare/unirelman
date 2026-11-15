@@ -1,4 +1,11 @@
-import type { Change, Plugin, ScopeVersionMap, ScopeVersionMetaMap } from "@unirelman/core";
+import type {
+  Change,
+  Plugin,
+  ScopeVersionMap,
+  ScopeVersionMetaMap,
+  Version,
+  VersionMeta,
+} from "@unirelman/core";
 
 import { isNonEmptyArray } from "@unirelman/utils";
 
@@ -37,16 +44,10 @@ export const createParseCurrentVersionPhase = <TVersion extends object>(
   scheme: VersioningScheme<TVersion>,
 ): NonNullable<Plugin["parseCurrentVersion"]> => {
   return async (context, state): Promise<ScopeVersionMetaMap> => {
-    const versionMetas: ScopeVersionMetaMap = {};
+    const versionMetas = new Map<string, VersionMeta>();
 
-    for (const scopeName in context.scopes) {
-      const currentVersion = state.currentVersions[scopeName]?.version;
-
-      if (!currentVersion) {
-        continue;
-      }
-
-      versionMetas[scopeName] = resolveVersionMeta(scheme, parseVersion(scheme, currentVersion));
+    for (const [scopeName, { version: currentVersion }] of state.currentVersions) {
+      versionMetas.set(scopeName, resolveVersionMeta(scheme, parseVersion(scheme, currentVersion)));
     }
 
     return versionMetas;
@@ -106,10 +107,10 @@ export const resolveSharedCurrentVersion = (
   scopes: readonly string[],
   currentVersions: ScopeVersionMap,
 ): string | undefined => {
-  const versions = Object.fromEntries(
-    scopes.map((scopeName) => [scopeName, currentVersions[scopeName]?.version]),
+  const versions = new Map(
+    scopes.map((scopeName) => [scopeName, currentVersions.get(scopeName)?.version]),
   );
-  const distinctVersions = new Set(Object.values(versions));
+  const distinctVersions = new Set(versions.values());
 
   if (distinctVersions.size > 1) {
     throw new VersioningFixedVersionMismatchError(versions);
@@ -126,14 +127,14 @@ export const createComputeNextVersionPhase = <TVersion extends object>(
 ): NonNullable<Plugin["computeNextVersion"]> => {
   return async (context, state): Promise<ScopeVersionMap> => {
     const prereleaseState = await readPrereleaseState(context.store);
-    const scopeNames = Object.keys(context.scopes);
+    const scopeNames = [...context.scopes.keys()];
     const groups = resolveGroups(options.fixed, scopeNames);
     const targets = resolveGroupTargets(groups, resolveIndependentScopes(groups, scopeNames));
-    const nextVersions: ScopeVersionMap = {};
+    const nextVersions = new Map<string, Version>();
 
     for (const target of targets) {
       const targetLabel = resolveGroupTargetLabel(target);
-      const changes = target.scopes.flatMap((scopeName) => state.changes[scopeName] ?? []);
+      const changes = target.scopes.flatMap((scopeName) => state.changes.get(scopeName) ?? []);
       const currentVersion = thisMod.resolveSharedCurrentVersion(
         target.scopes,
         state.currentVersions,
@@ -172,7 +173,7 @@ export const createComputeNextVersionPhase = <TVersion extends object>(
       );
 
       for (const scopeName of target.scopes) {
-        nextVersions[scopeName] = nextVersion.version;
+        nextVersions.set(scopeName, nextVersion.version);
       }
     }
 

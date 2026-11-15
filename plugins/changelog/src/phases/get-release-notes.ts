@@ -53,33 +53,31 @@ export const createGetReleaseNotesPhase = (
   options: ResolvedChangelogPluginOptions,
 ): NonNullable<Plugin["getReleaseNotes"]> => {
   return async (context, state): Promise<ScopeReleaseNotesMap> => {
-    const contents: Record<string, string> = {};
-    const releaseNotes: ScopeReleaseNotesMap = {};
+    const contents = new Map<string, string>();
+    const releaseNotes = new Map<string, string>();
 
-    for (const scopeName in state.currentVersions) {
-      const scope = context.scopes[scopeName];
-      const version = state.currentVersions[scopeName]?.version;
+    for (const [scopeName, scope] of context.scopes) {
+      const currentVersion = state.currentVersions.get(scopeName);
 
-      if (!scope || !version) {
+      if (currentVersion === undefined) {
         continue;
       }
 
       const filePath = resolveChangelogPath(context.cwd, scope.path, options.mode);
+      const content = contents.get(filePath) ?? (await context.fs.read(filePath, ""));
 
-      if (!(filePath in contents)) {
-        contents[filePath] = await context.fs.read(filePath, "");
-      }
+      contents.set(filePath, content);
 
       const section = thisMod.resolveChangelogSection(
-        contents[filePath],
-        resolveChangelogSectionHeading(options.sectionHeader, scopeName, version),
+        content,
+        resolveChangelogSectionHeading(options.sectionHeader, scopeName, currentVersion.version),
       );
 
       if (section === undefined) {
         continue;
       }
 
-      releaseNotes[scopeName] = section;
+      releaseNotes.set(scopeName, section);
     }
 
     return releaseNotes;

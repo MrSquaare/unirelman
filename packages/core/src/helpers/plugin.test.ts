@@ -1,5 +1,5 @@
 import { MockedFS } from "../fs/index.mock";
-import { mockedFilterScopeMap } from "../helpers/scope.mock";
+import { mockedFilterScopeResultMap } from "../helpers/scope.mock";
 import { MockedStore } from "../store/index.mock";
 
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -72,14 +72,18 @@ describe("createPluginContext", () => {
       }),
     ).toEqual({
       cwd: CONFIG_CWD,
-      scopes: { [SCOPE_NAMES.ALPHA]: scopeMap[SCOPE_NAMES.ALPHA] },
+      scopes: new Map([[SCOPE_NAMES.ALPHA, scopeMap.get(SCOPE_NAMES.ALPHA)]]),
       logger,
       fs: MockedFS.mock.instances[0],
       store: MockedStore.mock.instances[0],
     });
 
-    expect(mockedFilterScopeMap).toHaveBeenCalledTimes(1);
-    expect(mockedFilterScopeMap).toHaveBeenNthCalledWith(1, scopeMap, pluginRegistration.scopes);
+    expect(mockedFilterScopeResultMap).toHaveBeenCalledTimes(1);
+    expect(mockedFilterScopeResultMap).toHaveBeenNthCalledWith(
+      1,
+      scopeMap,
+      pluginRegistration.scopes,
+    );
     expect(MockedFS).toHaveBeenCalledTimes(1);
     expect(MockedFS).toHaveBeenNthCalledWith(1, CONFIG_CWD);
     expect(mockCreateLogger).toHaveBeenCalledTimes(1);
@@ -111,8 +115,12 @@ describe("createPluginContext", () => {
       store: MockedStore.mock.instances[0],
     });
 
-    expect(mockedFilterScopeMap).toHaveBeenCalledTimes(1);
-    expect(mockedFilterScopeMap).toHaveBeenNthCalledWith(1, scopeMap, pluginRegistration.scopes);
+    expect(mockedFilterScopeResultMap).toHaveBeenCalledTimes(1);
+    expect(mockedFilterScopeResultMap).toHaveBeenNthCalledWith(
+      1,
+      scopeMap,
+      pluginRegistration.scopes,
+    );
     expect(MockedFS).toHaveBeenCalledTimes(1);
     expect(MockedFS).toHaveBeenNthCalledWith(1, CONFIG_CWD);
     expect(mockCreateLogger).toHaveBeenCalledTimes(1);

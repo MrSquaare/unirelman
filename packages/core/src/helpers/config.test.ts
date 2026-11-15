@@ -10,7 +10,6 @@ import {
   CoreInvalidConfigError,
   CoreInvalidPluginNameError,
   CoreInvalidScopeNameError,
-  CoreReservedScopeNameError,
   CoreScopePathOutsideCwdError,
   CoreUnknownConfigPluginScopeError,
 } from "../errors";
@@ -116,18 +115,26 @@ describe("resolveScopeMap", () => {
   it("should resolve config scopes with relative paths", () => {
     const scopes = createConfigScopes();
 
-    expect(resolveScopeMap(CONFIG_CWD, scopes)).toEqual({
-      [SCOPE_NAMES.ALPHA]: {
-        name: SCOPE_NAMES.ALPHA,
-        path: `${CONFIG_CWD}/packages/alpha`,
-        meta: {},
-      },
-      [SCOPE_NAMES.BETA]: {
-        name: SCOPE_NAMES.BETA,
-        path: `${CONFIG_CWD}/packages/beta`,
-        meta: {},
-      },
-    });
+    expect(resolveScopeMap(CONFIG_CWD, scopes)).toEqual(
+      new Map([
+        [
+          SCOPE_NAMES.ALPHA,
+          {
+            name: SCOPE_NAMES.ALPHA,
+            path: `${CONFIG_CWD}/packages/alpha`,
+            meta: {},
+          },
+        ],
+        [
+          SCOPE_NAMES.BETA,
+          {
+            name: SCOPE_NAMES.BETA,
+            path: `${CONFIG_CWD}/packages/beta`,
+            meta: {},
+          },
+        ],
+      ]),
+    );
 
     expect(isPathInsideSpy).toHaveBeenCalledTimes(2);
     expect(isPathInsideSpy).toHaveBeenNthCalledWith(1, CONFIG_CWD, `${CONFIG_CWD}/packages/alpha`);
@@ -140,32 +147,32 @@ describe("resolveScopeMap", () => {
       Root: ".",
     };
 
-    expect(resolveScopeMap(CONFIG_CWD, scopes)).toEqual({
-      "@example/Core.js_v2-beta-1": {
-        name: "@example/Core.js_v2-beta-1",
-        path: `${CONFIG_CWD}/packages/core`,
-        meta: {},
-      },
-      Root: {
-        name: "Root",
-        path: CONFIG_CWD,
-        meta: {},
-      },
-    });
+    expect(resolveScopeMap(CONFIG_CWD, scopes)).toEqual(
+      new Map([
+        [
+          "@example/Core.js_v2-beta-1",
+          { name: "@example/Core.js_v2-beta-1", path: `${CONFIG_CWD}/packages/core`, meta: {} },
+        ],
+        ["Root", { name: "Root", path: CONFIG_CWD, meta: {} }],
+      ]),
+    );
   });
 
   it("should resolve config scopes when path is relative without leading dot", () => {
-    const scopes = {
-      [SCOPE_NAMES.ALPHA]: "packages/alpha",
-    };
+    const scopes = { [SCOPE_NAMES.ALPHA]: "packages/alpha" };
 
-    expect(resolveScopeMap(CONFIG_CWD, scopes)).toEqual({
-      [SCOPE_NAMES.ALPHA]: {
-        name: SCOPE_NAMES.ALPHA,
-        path: `${CONFIG_CWD}/packages/alpha`,
-        meta: {},
-      },
-    });
+    expect(resolveScopeMap(CONFIG_CWD, scopes)).toEqual(
+      new Map([
+        [
+          SCOPE_NAMES.ALPHA,
+          {
+            name: SCOPE_NAMES.ALPHA,
+            path: `${CONFIG_CWD}/packages/alpha`,
+            meta: {},
+          },
+        ],
+      ]),
+    );
   });
 
   it("should resolve config scopes when path is dot for root directory", () => {
@@ -173,27 +180,44 @@ describe("resolveScopeMap", () => {
       root: ".",
     };
 
-    expect(resolveScopeMap(CONFIG_CWD, scopes)).toEqual({
-      root: {
-        name: "root",
-        path: CONFIG_CWD,
-        meta: {},
-      },
-    });
+    expect(resolveScopeMap(CONFIG_CWD, scopes)).toEqual(
+      new Map([["root", { name: "root", path: CONFIG_CWD, meta: {} }]]),
+    );
   });
 
   it("should resolve config scopes when path is already absolute", () => {
-    const scopes = {
-      [SCOPE_NAMES.ALPHA]: `${CONFIG_CWD}/packages/alpha`,
-    };
+    const scopes = { [SCOPE_NAMES.ALPHA]: `${CONFIG_CWD}/packages/alpha` };
 
-    expect(resolveScopeMap(CONFIG_CWD, scopes)).toEqual({
-      [SCOPE_NAMES.ALPHA]: {
-        name: SCOPE_NAMES.ALPHA,
-        path: `${CONFIG_CWD}/packages/alpha`,
-        meta: {},
-      },
-    });
+    expect(resolveScopeMap(CONFIG_CWD, scopes)).toEqual(
+      new Map([
+        [
+          SCOPE_NAMES.ALPHA,
+          {
+            name: SCOPE_NAMES.ALPHA,
+            path: `${CONFIG_CWD}/packages/alpha`,
+            meta: {},
+          },
+        ],
+      ]),
+    );
+  });
+
+  it("should resolve a scope named after a property of Object.prototype", () => {
+    expect(resolveScopeMap(CONFIG_CWD, { constructor: "./packages/alpha" })).toEqual(
+      new Map([
+        ["constructor", { name: "constructor", path: `${CONFIG_CWD}/packages/alpha`, meta: {} }],
+      ]),
+    );
+  });
+
+  it("should resolve an own __proto__ scope name", () => {
+    const scopes: Record<string, string> = JSON.parse('{"__proto__": "./packages/alpha"}');
+
+    expect(resolveScopeMap(CONFIG_CWD, scopes)).toEqual(
+      new Map([
+        ["__proto__", { name: "__proto__", path: `${CONFIG_CWD}/packages/alpha`, meta: {} }],
+      ]),
+    );
   });
 
   it("should throw error when scopes are empty", () => {
@@ -221,20 +245,6 @@ describe("resolveScopeMap", () => {
   it("should throw error for a scope name with a tilde", () => {
     expect(() => resolveScopeMap(CONFIG_CWD, { "a~b": "./packages/alpha" })).toThrow(
       new CoreInvalidScopeNameError("a~b"),
-    );
-  });
-
-  it("should throw error for a scope name that is a property of Object.prototype", () => {
-    expect(() => resolveScopeMap(CONFIG_CWD, { constructor: "./packages/alpha" })).toThrow(
-      new CoreReservedScopeNameError("constructor"),
-    );
-  });
-
-  it("should throw error for an own __proto__ scope name", () => {
-    const scopes: Record<string, string> = JSON.parse('{"__proto__": "./packages/alpha"}');
-
-    expect(() => resolveScopeMap(CONFIG_CWD, scopes)).toThrow(
-      new CoreReservedScopeNameError("__proto__"),
     );
   });
 
@@ -424,13 +434,16 @@ describe("resolvePluginRegistrations", () => {
   it("should resolve each plugin entry", () => {
     const pluginA = createPlugin();
     const pluginB = createPlugin({ extends: { name: PLUGIN_NAMES.B } });
-    const resolvedScopes = {
-      [SCOPE_NAMES.ALPHA]: {
-        name: SCOPE_NAMES.ALPHA,
-        path: `${CONFIG_CWD}/packages/alpha`,
-        meta: {},
-      },
-    };
+    const resolvedScopes = new Map([
+      [
+        SCOPE_NAMES.ALPHA,
+        {
+          name: SCOPE_NAMES.ALPHA,
+          path: `${CONFIG_CWD}/packages/alpha`,
+          meta: {},
+        },
+      ],
+    ]);
     const pluginAResolvedEntry = {
       plugin: pluginA,
       scopes: new Set([SCOPE_NAMES.ALPHA]),
@@ -462,19 +475,22 @@ describe("resolvePluginRegistrations", () => {
   });
 
   it("should return empty array when plugins are empty", () => {
-    expect(resolvePluginRegistrations([], {})).toEqual([]);
+    expect(resolvePluginRegistrations([], new Map())).toEqual([]);
     expect(resolvePluginRegistrationSpy).not.toHaveBeenCalled();
   });
 
   it("should throw when a plugin is registered more than once", () => {
     const plugin = createPlugin();
-    const resolvedScopes = {
-      [SCOPE_NAMES.ALPHA]: {
-        name: SCOPE_NAMES.ALPHA,
-        path: `${CONFIG_CWD}/packages/alpha`,
-        meta: {},
-      },
-    };
+    const resolvedScopes = new Map([
+      [
+        SCOPE_NAMES.ALPHA,
+        {
+          name: SCOPE_NAMES.ALPHA,
+          path: `${CONFIG_CWD}/packages/alpha`,
+          meta: {},
+        },
+      ],
+    ]);
 
     expect(() =>
       resolvePluginRegistrations([plugin, { plugin, scopes: [SCOPE_NAMES.ALPHA] }], resolvedScopes),

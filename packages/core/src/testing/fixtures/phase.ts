@@ -1,4 +1,4 @@
-import { defineObjectGenerator } from "@unirelman/testing/utils/factory";
+import { defineMapGenerator, defineObjectGenerator } from "@unirelman/testing/utils/factory";
 
 import {
   type Change,
@@ -12,13 +12,9 @@ import {
   type CreateReleasesState,
   type FinalizeState,
   type Release,
-  type ScopeReleaseNotesMap,
-  type ScopeReleasesMap,
-  type ScopeChangesMap,
-  type ScopeFileOperationsMap,
-  type ScopeVersionMap,
   type Version,
   type FileWrite,
+  type FileOperation,
 } from "../../types/phases";
 import { MockFS } from "../mocks/fs";
 import { MockLogger } from "../mocks/logger";
@@ -59,45 +55,67 @@ export const createRelease = defineObjectGenerator<Release>(() => ({
   meta: {},
 }));
 
-export const createScopeVersionMap = defineObjectGenerator<ScopeVersionMap>(() => ({
-  [SCOPE_NAMES.ALPHA]: createVersion(),
-  [SCOPE_NAMES.BETA]: createVersion({ extends: { version: VERSIONS.MAJOR } }),
-}));
+export const createScopeVersionMap = defineMapGenerator<string, Version>(
+  () =>
+    new Map<string, Version>([
+      [SCOPE_NAMES.ALPHA, createVersion()],
+      [SCOPE_NAMES.BETA, createVersion({ extends: { version: VERSIONS.MAJOR } })],
+    ]),
+);
 
-export const createScopeChangesMap = defineObjectGenerator<ScopeChangesMap>(() => ({
-  [SCOPE_NAMES.ALPHA]: [
-    createChange({ extends: { message: "drop Node 18 support", level: "major" } }),
-    createChange({ extends: { message: "add release notes command", level: "minor" } }),
-    createChange({ extends: { message: "fix changelog heading typo", level: "patch" } }),
-  ],
-  [SCOPE_NAMES.BETA]: [
-    createChange({ extends: { message: "add changelog phase wiring", level: "minor" } }),
-  ],
-}));
+export const createScopeChangesMap = defineMapGenerator<string, Change[]>(
+  () =>
+    new Map<string, Change[]>([
+      [
+        SCOPE_NAMES.ALPHA,
+        [
+          createChange({ extends: { message: "drop Node 18 support", level: "major" } }),
+          createChange({ extends: { message: "add release notes command", level: "minor" } }),
+          createChange({ extends: { message: "fix changelog heading typo", level: "patch" } }),
+        ],
+      ],
+      [
+        SCOPE_NAMES.BETA,
+        [createChange({ extends: { message: "add changelog phase wiring", level: "minor" } })],
+      ],
+    ]),
+);
 
-export const createScopeFileOperationsMap = defineObjectGenerator<ScopeFileOperationsMap>(() => ({
-  [SCOPE_NAMES.ALPHA]: [
-    createFileWrite({
-      extends: {
-        type: "changelog",
-        path: `${SCOPE_PATHS[SCOPE_NAMES.ALPHA]}/CHANGELOG.md`,
-      },
-    }),
-  ],
-  [SCOPE_NAMES.BETA]: [
-    createFileWrite({
-      extends: {
-        type: "changelog",
-        path: `${SCOPE_PATHS[SCOPE_NAMES.BETA]}/CHANGELOG.md`,
-      },
-    }),
-  ],
-}));
+export const createScopeFileOperationsMap = defineMapGenerator<string, FileOperation[]>(
+  () =>
+    new Map<string, FileOperation[]>([
+      [
+        SCOPE_NAMES.ALPHA,
+        [
+          createFileWrite({
+            extends: {
+              type: "changelog",
+              path: `${SCOPE_PATHS[SCOPE_NAMES.ALPHA]}/CHANGELOG.md`,
+            },
+          }),
+        ],
+      ],
+      [
+        SCOPE_NAMES.BETA,
+        [
+          createFileWrite({
+            extends: {
+              type: "changelog",
+              path: `${SCOPE_PATHS[SCOPE_NAMES.BETA]}/CHANGELOG.md`,
+            },
+          }),
+        ],
+      ],
+    ]),
+);
 
-export const createScopeReleaseNotesMap = defineObjectGenerator<ScopeReleaseNotesMap>(() => ({
-  [SCOPE_NAMES.ALPHA]: "### Patch changes\n- fix changelog heading typo",
-  [SCOPE_NAMES.BETA]: "### Minor changes\n- add changelog phase wiring",
-}));
+export const createScopeReleaseNotesMap = defineMapGenerator<string, string>(
+  () =>
+    new Map<string, string>([
+      [SCOPE_NAMES.ALPHA, "### Patch changes\n- fix changelog heading typo"],
+      [SCOPE_NAMES.BETA, "### Minor changes\n- add changelog phase wiring"],
+    ]),
+);
 
 export const createPhaseContext = defineObjectGenerator<PhaseContext>(() => ({
   cwd: CONFIG_CWD,
@@ -146,12 +164,16 @@ export const createCreateReleasesState = defineObjectGenerator<CreateReleasesSta
   releaseNotes: createScopeReleaseNotesMap(),
 }));
 
-export const createScopeReleasesMap = defineObjectGenerator<ScopeReleasesMap>(() => ({
-  [SCOPE_NAMES.ALPHA]: [createRelease()],
-  [SCOPE_NAMES.BETA]: [
-    createRelease({ extends: { name: `${SCOPE_NAMES.BETA}@${VERSIONS.MAJOR}` } }),
-  ],
-}));
+export const createScopeReleasesMap = defineMapGenerator<string, Release[]>(
+  () =>
+    new Map<string, Release[]>([
+      [SCOPE_NAMES.ALPHA, [createRelease()]],
+      [
+        SCOPE_NAMES.BETA,
+        [createRelease({ extends: { name: `${SCOPE_NAMES.BETA}@${VERSIONS.MAJOR}` } })],
+      ],
+    ]),
+);
 
 export const createFinalizeState = defineObjectGenerator<FinalizeState>(() => ({
   currentVersions: createScopeVersionMap(),

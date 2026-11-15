@@ -1,4 +1,4 @@
-import type { Plugin, ScopeFileOperationsMap } from "@unirelman/core";
+import type { FileOperation, Plugin, ScopeFileOperationsMap } from "@unirelman/core";
 
 import type {
   ReplaceInput,
@@ -54,14 +54,14 @@ export const resolveReplacedContent = (
 export const resolveReplaceFileOperations = (
   replacedFiles: ReadonlyMap<string, ReplacedFile>,
 ): ScopeFileOperationsMap => {
-  const fileOperations: ScopeFileOperationsMap = {};
+  const fileOperations = new Map<string, FileOperation[]>();
 
   for (const [path, replacedFile] of replacedFiles) {
     for (const scopeName of replacedFile.scopeNames) {
-      fileOperations[scopeName] = [
-        ...(fileOperations[scopeName] ?? []),
+      fileOperations.set(scopeName, [
+        ...(fileOperations.get(scopeName) ?? []),
         { type: REPLACE_FILE_TYPE, path, action: "write", content: replacedFile.content, meta: {} },
-      ];
+      ]);
     }
   }
 
@@ -75,11 +75,11 @@ export const createGenerateFileOperationsPhase = (
     const replacedFiles = new Map<string, ReplacedFile>();
 
     for (const file of options.files) {
-      if (!Object.hasOwn(context.scopes, file.scope)) {
+      if (!context.scopes.has(file.scope)) {
         throw new ReplaceUnknownScopeError(file.path, file.scope);
       }
 
-      const nextVersion = state.nextVersions[file.scope];
+      const nextVersion = state.nextVersions.get(file.scope);
 
       if (nextVersion === undefined) {
         continue;
@@ -89,7 +89,7 @@ export const createGenerateFileOperationsPhase = (
       const content = replacedFile?.content ?? (await context.fs.read(file.path));
       const replacedContent = thisMod.resolveReplacedContent(content, file, {
         scopeName: file.scope,
-        currentVersion: state.currentVersions[file.scope]?.version,
+        currentVersion: state.currentVersions.get(file.scope)?.version,
         nextVersion: nextVersion.version,
       });
 

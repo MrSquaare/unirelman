@@ -58,16 +58,19 @@ describe("assertChangedScopeProviders", () => {
     ];
 
     expect(
-      assertChangedScopeProviders(pluginRegistrations, { [SCOPE_NAMES.ALPHA]: [createChange()] }),
+      assertChangedScopeProviders(
+        pluginRegistrations,
+        new Map([[SCOPE_NAMES.ALPHA, [createChange()]]]),
+      ),
     ).toEqual(undefined);
   });
 
   it("should skip scopes without changes", () => {
     const pluginRegistrations = [createPluginRegistration()];
 
-    expect(assertChangedScopeProviders(pluginRegistrations, { [SCOPE_NAMES.ALPHA]: [] })).toEqual(
-      undefined,
-    );
+    expect(
+      assertChangedScopeProviders(pluginRegistrations, new Map([[SCOPE_NAMES.ALPHA, []]])),
+    ).toEqual(undefined);
   });
 
   it("should throw when no plugin provides getCurrentVersion for a scope with changes", () => {
@@ -81,7 +84,10 @@ describe("assertChangedScopeProviders", () => {
     ];
 
     expect(() =>
-      assertChangedScopeProviders(pluginRegistrations, { [SCOPE_NAMES.ALPHA]: [createChange()] }),
+      assertChangedScopeProviders(
+        pluginRegistrations,
+        new Map([[SCOPE_NAMES.ALPHA, [createChange()]]]),
+      ),
     ).toThrow(new CoreMissingPhaseProviderError("getCurrentVersion", SCOPE_NAMES.ALPHA));
   });
 
@@ -96,7 +102,10 @@ describe("assertChangedScopeProviders", () => {
     ];
 
     expect(() =>
-      assertChangedScopeProviders(pluginRegistrations, { [SCOPE_NAMES.ALPHA]: [createChange()] }),
+      assertChangedScopeProviders(
+        pluginRegistrations,
+        new Map([[SCOPE_NAMES.ALPHA, [createChange()]]]),
+      ),
     ).toThrow(new CoreMissingPhaseProviderError("computeNextVersion", SCOPE_NAMES.ALPHA));
   });
 
@@ -113,7 +122,10 @@ describe("assertChangedScopeProviders", () => {
     ];
 
     expect(() =>
-      assertChangedScopeProviders(pluginRegistrations, { [SCOPE_NAMES.BETA]: [createChange()] }),
+      assertChangedScopeProviders(
+        pluginRegistrations,
+        new Map([[SCOPE_NAMES.BETA, [createChange()]]]),
+      ),
     ).toThrow(new CoreMissingPhaseProviderError("getCurrentVersion", SCOPE_NAMES.BETA));
   });
 });
@@ -192,11 +204,11 @@ describe("hasChanges", () => {
   });
 
   it("should return true when a scope has changes", () => {
-    expect(hasChanges({ [SCOPE_NAMES.ALPHA]: [createChange()] })).toEqual(true);
+    expect(hasChanges(new Map([[SCOPE_NAMES.ALPHA, [createChange()]]]))).toEqual(true);
   });
 
   it("should return false when no scope has changes", () => {
-    expect(hasChanges({ [SCOPE_NAMES.ALPHA]: [] })).toEqual(false);
+    expect(hasChanges(new Map([[SCOPE_NAMES.ALPHA, []]]))).toEqual(false);
   });
 });
 
@@ -208,11 +220,11 @@ describe("assertStableNextVersions", () => {
   it("should pass when every previous next version is kept", () => {
     expect(
       assertStableNextVersions(
-        { [SCOPE_NAMES.ALPHA]: createVersion({ extends: { version: "1.0.1" } }) },
-        {
-          [SCOPE_NAMES.ALPHA]: createVersion({ extends: { version: "1.0.1" } }),
-          [SCOPE_NAMES.BETA]: createVersion({ extends: { version: "2.0.1" } }),
-        },
+        new Map([[SCOPE_NAMES.ALPHA, createVersion({ extends: { version: "1.0.1" } })]]),
+        new Map([
+          [SCOPE_NAMES.ALPHA, createVersion({ extends: { version: "1.0.1" } })],
+          [SCOPE_NAMES.BETA, createVersion({ extends: { version: "2.0.1" } })],
+        ]),
       ),
     ).toEqual(undefined);
   });
@@ -220,8 +232,8 @@ describe("assertStableNextVersions", () => {
   it("should throw when a previous next version changes", () => {
     expect(() =>
       assertStableNextVersions(
-        { [SCOPE_NAMES.ALPHA]: createVersion({ extends: { version: "1.0.1" } }) },
-        { [SCOPE_NAMES.ALPHA]: createVersion({ extends: { version: "1.1.0" } }) },
+        new Map([[SCOPE_NAMES.ALPHA, createVersion({ extends: { version: "1.0.1" } })]]),
+        new Map([[SCOPE_NAMES.ALPHA, createVersion({ extends: { version: "1.1.0" } })]]),
       ),
     ).toThrow(new CoreUnstableNextVersionError(SCOPE_NAMES.ALPHA, "1.0.1"));
   });
@@ -229,8 +241,8 @@ describe("assertStableNextVersions", () => {
   it("should throw when a previous next version is missing", () => {
     expect(() =>
       assertStableNextVersions(
-        { [SCOPE_NAMES.ALPHA]: createVersion({ extends: { version: "1.0.1" } }) },
-        {},
+        new Map([[SCOPE_NAMES.ALPHA, createVersion({ extends: { version: "1.0.1" } })]]),
+        new Map(),
       ),
     ).toThrow(new CoreUnstableNextVersionError(SCOPE_NAMES.ALPHA, "1.0.1"));
   });
@@ -244,8 +256,11 @@ describe("hasNewScopes", () => {
   it("should return true when a scope gets a next version", () => {
     expect(
       hasNewScopes(
-        { [SCOPE_NAMES.ALPHA]: createVersion() },
-        { [SCOPE_NAMES.ALPHA]: createVersion(), [SCOPE_NAMES.BETA]: createVersion() },
+        new Map([[SCOPE_NAMES.ALPHA, createVersion()]]),
+        new Map([
+          [SCOPE_NAMES.ALPHA, createVersion()],
+          [SCOPE_NAMES.BETA, createVersion()],
+        ]),
       ),
     ).toEqual(true);
   });
@@ -253,8 +268,8 @@ describe("hasNewScopes", () => {
   it("should return false when the scopes are the same", () => {
     expect(
       hasNewScopes(
-        { [SCOPE_NAMES.ALPHA]: createVersion() },
-        { [SCOPE_NAMES.ALPHA]: createVersion() },
+        new Map([[SCOPE_NAMES.ALPHA, createVersion()]]),
+        new Map([[SCOPE_NAMES.ALPHA, createVersion()]]),
       ),
     ).toEqual(false);
   });
@@ -273,20 +288,30 @@ describe("resolveCurrentVersions", () => {
 
     expect(
       resolveCurrentVersions(
-        { [SCOPE_NAMES.ALPHA]: alphaVersion, [SCOPE_NAMES.BETA]: betaVersion },
-        { [SCOPE_NAMES.ALPHA]: { prerelease: { channel: "alpha", increment: 0 } } as VersionMeta },
+        new Map([
+          [SCOPE_NAMES.ALPHA, alphaVersion],
+          [SCOPE_NAMES.BETA, betaVersion],
+        ]),
+        new Map([
+          [SCOPE_NAMES.ALPHA, { prerelease: { channel: "alpha", increment: 0 } } as VersionMeta],
+        ]),
       ),
-    ).toEqual({
-      [SCOPE_NAMES.ALPHA]: {
-        version: "1.1.0-alpha.0",
-        meta: { source: "npm", prerelease: { channel: "alpha", increment: 0 } },
-      },
-      [SCOPE_NAMES.BETA]: { version: "2.0.0", meta: {} },
-    });
+    ).toEqual(
+      new Map([
+        [
+          SCOPE_NAMES.ALPHA,
+          {
+            version: "1.1.0-alpha.0",
+            meta: { source: "npm", prerelease: { channel: "alpha", increment: 0 } },
+          },
+        ],
+        [SCOPE_NAMES.BETA, { version: "2.0.0", meta: {} }],
+      ]),
+    );
   });
 
   it("should return no versions when there are no current versions", () => {
-    expect(resolveCurrentVersions({}, {})).toEqual({});
+    expect(resolveCurrentVersions(new Map(), new Map())).toEqual(new Map());
   });
 });
 
@@ -296,68 +321,85 @@ describe("resolveFileOperations", () => {
   });
 
   it("should resolve relative paths to absolute and preserve already absolute paths", () => {
-    const fileOperations = {
-      [SCOPE_NAMES.ALPHA]: [
-        {
-          type: "changelog",
-          path: "relative/path/to/CHANGELOG.md",
-          action: "write" as const,
-          content: "",
-          meta: {},
-        },
-        {
-          type: "changelog",
-          path: "/absolute/path/to/CHANGELOG.md",
-          action: "write" as const,
-          content: "",
-          meta: {},
-        },
+    const fileOperations = new Map([
+      [
+        SCOPE_NAMES.ALPHA,
+        [
+          {
+            type: "changelog",
+            path: "relative/path/to/CHANGELOG.md",
+            action: "write" as const,
+            content: "",
+            meta: {},
+          },
+          {
+            type: "changelog",
+            path: "/absolute/path/to/CHANGELOG.md",
+            action: "write" as const,
+            content: "",
+            meta: {},
+          },
+        ],
       ],
-      [SCOPE_NAMES.BETA]: [
-        {
-          type: "npm",
-          path: "package.json",
-          action: "write" as const,
-          content: "",
-          meta: {},
-        },
+      [
+        SCOPE_NAMES.BETA,
+        [
+          {
+            type: "npm",
+            path: "package.json",
+            action: "write" as const,
+            content: "",
+            meta: {},
+          },
+        ],
       ],
-    };
+    ]);
 
-    expect(resolveFileOperations("/root/cwd", fileOperations)).toEqual({
-      [SCOPE_NAMES.ALPHA]: [
-        {
-          type: "changelog",
-          path: "/root/cwd/relative/path/to/CHANGELOG.md",
-          action: "write",
-          content: "",
-          meta: {},
-        },
-        {
-          type: "changelog",
-          path: "/absolute/path/to/CHANGELOG.md",
-          action: "write",
-          content: "",
-          meta: {},
-        },
-      ],
-      [SCOPE_NAMES.BETA]: [
-        {
-          type: "npm",
-          path: "/root/cwd/package.json",
-          action: "write",
-          content: "",
-          meta: {},
-        },
-      ],
-    });
+    expect(resolveFileOperations("/root/cwd", fileOperations)).toEqual(
+      new Map([
+        [
+          SCOPE_NAMES.ALPHA,
+          [
+            {
+              type: "changelog",
+              path: "/root/cwd/relative/path/to/CHANGELOG.md",
+              action: "write",
+              content: "",
+              meta: {},
+            },
+            {
+              type: "changelog",
+              path: "/absolute/path/to/CHANGELOG.md",
+              action: "write",
+              content: "",
+              meta: {},
+            },
+          ],
+        ],
+        [
+          SCOPE_NAMES.BETA,
+          [
+            {
+              type: "npm",
+              path: "/root/cwd/package.json",
+              action: "write",
+              content: "",
+              meta: {},
+            },
+          ],
+        ],
+      ]),
+    );
   });
 
   it("should throw when a content path is empty", () => {
     expect(() =>
-      resolveFileOperations("/root/cwd", {
-        [SCOPE_NAMES.ALPHA]: [createFileWrite({ extends: { type: "changelog", path: "  " } })],
-      }),
+      resolveFileOperations(
+        "/root/cwd",
+        new Map([
+          [SCOPE_NAMES.ALPHA, [createFileWrite({ extends: { type: "changelog", path: "  " } })]],
+        ]),
+      ),
     ).toThrow(new CoreEmptyFileOperationPathError(SCOPE_NAMES.ALPHA, "changelog"));
   });
 });
@@ -376,10 +418,12 @@ describe("dedupeFileOperations", () => {
     });
 
     expect(
-      dedupeFileOperations({
-        [SCOPE_NAMES.ALPHA]: [changelogContent, changesetContent],
-        [SCOPE_NAMES.BETA]: [changelogContent],
-      }),
+      dedupeFileOperations(
+        new Map([
+          [SCOPE_NAMES.ALPHA, [changelogContent, changesetContent]],
+          [SCOPE_NAMES.BETA, [changelogContent]],
+        ]),
+      ),
     ).toEqual([changelogContent, changesetContent]);
 
     expect(isSameFileOperationSpy).toHaveBeenCalledTimes(1);
@@ -387,7 +431,7 @@ describe("dedupeFileOperations", () => {
   });
 
   it("should return no file operation when no scope has file operations", () => {
-    expect(dedupeFileOperations({})).toEqual([]);
+    expect(dedupeFileOperations(new Map())).toEqual([]);
 
     expect(isSameFileOperationSpy).not.toHaveBeenCalled();
   });
@@ -401,10 +445,12 @@ describe("dedupeFileOperations", () => {
     });
 
     expect(() =>
-      dedupeFileOperations({
-        [SCOPE_NAMES.ALPHA]: [changelogContent],
-        [SCOPE_NAMES.BETA]: [otherChangelogContent],
-      }),
+      dedupeFileOperations(
+        new Map([
+          [SCOPE_NAMES.ALPHA, [changelogContent]],
+          [SCOPE_NAMES.BETA, [otherChangelogContent]],
+        ]),
+      ),
     ).toThrow(new CoreConflictingFileOperationError("/repo/CHANGELOG.md"));
 
     expect(isSameFileOperationSpy).toHaveBeenCalledTimes(1);
@@ -457,10 +503,14 @@ describe("filterPhaseState", () => {
     const phaseState = createPrepareState();
 
     expect(filterPhaseState(phaseState, new Set([SCOPE_NAMES.ALPHA]))).toEqual({
-      currentVersions: { [SCOPE_NAMES.ALPHA]: phaseState.currentVersions[SCOPE_NAMES.ALPHA] },
-      changes: { [SCOPE_NAMES.ALPHA]: phaseState.changes[SCOPE_NAMES.ALPHA] },
-      nextVersions: { [SCOPE_NAMES.ALPHA]: phaseState.nextVersions[SCOPE_NAMES.ALPHA] },
-      fileOperations: { [SCOPE_NAMES.ALPHA]: phaseState.fileOperations[SCOPE_NAMES.ALPHA] },
+      currentVersions: new Map([
+        [SCOPE_NAMES.ALPHA, phaseState.currentVersions.get(SCOPE_NAMES.ALPHA)],
+      ]),
+      changes: new Map([[SCOPE_NAMES.ALPHA, phaseState.changes.get(SCOPE_NAMES.ALPHA)]]),
+      nextVersions: new Map([[SCOPE_NAMES.ALPHA, phaseState.nextVersions.get(SCOPE_NAMES.ALPHA)]]),
+      fileOperations: new Map([
+        [SCOPE_NAMES.ALPHA, phaseState.fileOperations.get(SCOPE_NAMES.ALPHA)],
+      ]),
     });
 
     expect(mockedFilterScopeResultMap).toHaveBeenCalledTimes(4);
@@ -497,10 +547,10 @@ describe("filterPhaseState", () => {
     const phaseState = createPrepareState();
 
     expect(filterPhaseState(phaseState, new Set([SCOPE_NAMES.MISSING]))).toEqual({
-      currentVersions: {},
-      changes: {},
-      nextVersions: {},
-      fileOperations: {},
+      currentVersions: new Map(),
+      changes: new Map(),
+      nextVersions: new Map(),
+      fileOperations: new Map(),
     });
 
     expect(mockedFilterScopeResultMap).toHaveBeenCalledTimes(4);
@@ -537,7 +587,7 @@ describe("assertPhaseResultScopes", () => {
       assertPhaseResultScopes(
         "getChanges",
         "plugin",
-        { [SCOPE_NAMES.ALPHA]: [createChange()] },
+        new Map([[SCOPE_NAMES.ALPHA, [createChange()]]]),
         new Set([SCOPE_NAMES.ALPHA, SCOPE_NAMES.BETA]),
       ),
     ).not.toThrow();
@@ -556,7 +606,7 @@ describe("assertPhaseResultScopes", () => {
         assertPhaseResultScopes(
           phaseName,
           "plugin",
-          { [SCOPE_NAMES.BETA]: [] },
+          new Map([[SCOPE_NAMES.BETA, []]]),
           new Set([SCOPE_NAMES.ALPHA]),
         ),
       ).not.toThrow();
@@ -568,7 +618,10 @@ describe("assertPhaseResultScopes", () => {
       assertPhaseResultScopes(
         "computeNextVersion",
         "plugin",
-        { [SCOPE_NAMES.ALPHA]: createVersion(), [SCOPE_NAMES.BETA]: createVersion() },
+        new Map([
+          [SCOPE_NAMES.ALPHA, createVersion()],
+          [SCOPE_NAMES.BETA, createVersion()],
+        ]),
         new Set([SCOPE_NAMES.ALPHA]),
       ),
     ).toThrow(
@@ -576,8 +629,8 @@ describe("assertPhaseResultScopes", () => {
     );
   });
 
-  it("should throw an unknown phase result scope error when a result has an own __proto__ key", () => {
-    const result: Record<string, unknown> = JSON.parse('{"__proto__": []}');
+  it("should throw an unknown phase result scope error when a result has a __proto__ scope", () => {
+    const result = new Map([["__proto__", []]]);
 
     expect(() =>
       assertPhaseResultScopes("getChanges", "plugin", result, new Set([SCOPE_NAMES.ALPHA])),

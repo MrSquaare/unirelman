@@ -12,6 +12,7 @@ import {
   createPhaseContext,
   createVersion,
   SCOPE_NAMES,
+  SCOPE_PATHS,
 } from "@unirelman/core/testing/fixtures";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -58,12 +59,20 @@ describe("createGetDependencyChangesPhase", () => {
     const context = createPhaseContext();
     const alphaPackageJson = createPackageJson({ name: "@scope/a" });
     const betaPackageJson = createPackageJson({ name: "@scope/b" });
-    const packageJsons = {
-      [SCOPE_NAMES.ALPHA]: alphaPackageJson,
-      [SCOPE_NAMES.BETA]: betaPackageJson,
-    };
+    const packageJsons = new Map([
+      [
+        SCOPE_NAMES.ALPHA,
+        { path: `${SCOPE_PATHS[SCOPE_NAMES.ALPHA]}/package.json`, packageJson: alphaPackageJson },
+      ],
+      [
+        SCOPE_NAMES.BETA,
+        { path: `${SCOPE_PATHS[SCOPE_NAMES.BETA]}/package.json`, packageJson: betaPackageJson },
+      ],
+    ]);
     const state = createGetDependencyChangesState({
-      nextVersions: { [SCOPE_NAMES.ALPHA]: createVersion({ extends: { version: "1.0.1" } }) },
+      nextVersions: new Map([
+        [SCOPE_NAMES.ALPHA, createVersion({ extends: { version: "1.0.1" } })],
+      ]),
     });
     const options = createResolvedNpmPluginOptions();
     const params = {
@@ -84,15 +93,20 @@ describe("createGetDependencyChangesPhase", () => {
       .mockReturnValueOnce([betaDependency]);
     mockedIsDependencyChangeRequired.mockReturnValueOnce(true);
 
-    await expect(createGetDependencyChangesPhase(options)(context, state)).resolves.toEqual({
-      [SCOPE_NAMES.BETA]: [
-        {
-          message: "Updated dependencies: @scope/a@1.0.1",
-          level: "patch",
-          meta: {},
-        },
-      ],
-    });
+    await expect(createGetDependencyChangesPhase(options)(context, state)).resolves.toEqual(
+      new Map([
+        [
+          SCOPE_NAMES.BETA,
+          [
+            {
+              message: "Updated dependencies: @scope/a@1.0.1",
+              level: "patch",
+              meta: {},
+            },
+          ],
+        ],
+      ]),
+    );
 
     expect(mockedReadScopePackageJsons).toHaveBeenCalledTimes(1);
     expect(mockedReadScopePackageJsons).toHaveBeenNthCalledWith(1, context.fs, context.scopes);
@@ -125,15 +139,26 @@ describe("createGetDependencyChangesPhase", () => {
     const alphaPackageJson = createPackageJson({ name: "@scope/a" });
     const alphaDependency = createUpdatedInternalDependency({ extends: { name: "@scope/b" } });
     const state = createGetDependencyChangesState({
-      nextVersions: { [SCOPE_NAMES.ALPHA]: createVersion({ extends: { version: "1.0.1" } }) },
+      nextVersions: new Map([
+        [SCOPE_NAMES.ALPHA, createVersion({ extends: { version: "1.0.1" } })],
+      ]),
     });
     const options = createResolvedNpmPluginOptions();
 
-    mockedReadScopePackageJsons.mockResolvedValueOnce({ [SCOPE_NAMES.ALPHA]: alphaPackageJson });
+    mockedReadScopePackageJsons.mockResolvedValueOnce(
+      new Map([
+        [
+          SCOPE_NAMES.ALPHA,
+          { path: `${SCOPE_PATHS[SCOPE_NAMES.ALPHA]}/package.json`, packageJson: alphaPackageJson },
+        ],
+      ]),
+    );
     mockedResolveUpdatedInternalDependencies.mockReturnValueOnce([alphaDependency]);
     mockedIsDependencyChangeRequired.mockReturnValueOnce(false);
 
-    await expect(createGetDependencyChangesPhase(options)(context, state)).resolves.toEqual({});
+    await expect(createGetDependencyChangesPhase(options)(context, state)).resolves.toEqual(
+      new Map(),
+    );
 
     expect(mockedIsDependencyChangeRequired).toHaveBeenCalledTimes(1);
     expect(mockedIsDependencyChangeRequired).toHaveBeenNthCalledWith(

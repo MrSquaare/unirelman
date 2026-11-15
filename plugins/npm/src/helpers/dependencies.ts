@@ -61,8 +61,8 @@ export const resolveUpdatedInternalDependency = (
     return undefined;
   }
 
-  const currentVersion = params.currentVersions[dependencyScopeName]?.version;
-  const nextVersion = params.nextVersions[dependencyScopeName]?.version;
+  const currentVersion = params.currentVersions.get(dependencyScopeName)?.version;
+  const nextVersion = params.nextVersions.get(dependencyScopeName)?.version;
 
   if (!currentVersion || !nextVersion || semver.valid(nextVersion) === null) {
     return undefined;

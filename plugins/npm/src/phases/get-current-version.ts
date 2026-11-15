@@ -1,4 +1,4 @@
-import type { Plugin, ScopeVersionMap } from "@unirelman/core";
+import type { Plugin, ScopeVersionMap, Version } from "@unirelman/core";
 
 import { resolve } from "node:path";
 
@@ -9,10 +9,9 @@ import { packageJsonSchema } from "../types";
 export const runGetCurrentVersionPhase: NonNullable<Plugin["getCurrentVersion"]> = async (
   context,
 ): Promise<ScopeVersionMap> => {
-  const currentVersions: ScopeVersionMap = {};
+  const currentVersions = new Map<string, Version>();
 
-  for (const scopeName in context.scopes) {
-    const scope = context.scopes[scopeName];
+  for (const [scopeName, scope] of context.scopes) {
     const packageJsonPath = resolve(scope.path, NPM_PACKAGE_JSON_FILE_NAME);
     const packageJson = await readScopePackageJson(
       context.fs,
@@ -22,10 +21,10 @@ export const runGetCurrentVersionPhase: NonNullable<Plugin["getCurrentVersion"]>
     );
     const version = resolvePackageJsonVersion(scopeName, packageJson);
 
-    currentVersions[scopeName] = {
+    currentVersions.set(scopeName, {
       version,
       meta: {},
-    };
+    });
   }
 
   return currentVersions;

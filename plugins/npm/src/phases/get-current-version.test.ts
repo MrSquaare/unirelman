@@ -3,7 +3,12 @@ import {
   mockedResolvePackageJsonVersion,
 } from "../helpers/package-json.mock";
 
-import { createPhaseContext, SCOPE_NAMES, VERSIONS } from "@unirelman/core/testing/fixtures";
+import {
+  createPhaseContext,
+  SCOPE_NAMES,
+  SCOPE_PATHS,
+  VERSIONS,
+} from "@unirelman/core/testing/fixtures";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { packageJsonSchema } from "../types";
@@ -24,19 +29,27 @@ describe("runGetCurrentVersionPhase", () => {
       .mockResolvedValueOnce(packageJsonA)
       .mockResolvedValueOnce(packageJsonB);
 
-    const expectedPathA = `${context.scopes[SCOPE_NAMES.ALPHA].path}/package.json`;
-    const expectedPathB = `${context.scopes[SCOPE_NAMES.BETA].path}/package.json`;
+    const expectedPathA = `${SCOPE_PATHS[SCOPE_NAMES.ALPHA]}/package.json`;
+    const expectedPathB = `${SCOPE_PATHS[SCOPE_NAMES.BETA]}/package.json`;
 
-    await expect(runGetCurrentVersionPhase(context, {})).resolves.toEqual({
-      [SCOPE_NAMES.ALPHA]: {
-        version: packageJsonA.version,
-        meta: {},
-      },
-      [SCOPE_NAMES.BETA]: {
-        version: packageJsonB.version,
-        meta: {},
-      },
-    });
+    await expect(runGetCurrentVersionPhase(context, {})).resolves.toEqual(
+      new Map([
+        [
+          SCOPE_NAMES.ALPHA,
+          {
+            version: packageJsonA.version,
+            meta: {},
+          },
+        ],
+        [
+          SCOPE_NAMES.BETA,
+          {
+            version: packageJsonB.version,
+            meta: {},
+          },
+        ],
+      ]),
+    );
     expect(mockedReadScopePackageJson).toHaveBeenCalledTimes(2);
     expect(mockedReadScopePackageJson).toHaveBeenNthCalledWith(
       1,

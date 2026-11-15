@@ -1,4 +1,4 @@
-import type { Plugin, ScopeFileOperationsMap } from "@unirelman/core";
+import type { FileOperation, Plugin, ScopeFileOperationsMap } from "@unirelman/core";
 
 import { CHANGESET_FILE_TYPE } from "../constants";
 import { isChangesetsChangeMeta } from "../helpers/guard";
@@ -7,23 +7,23 @@ export const runGenerateFileOperationsPhase: NonNullable<Plugin["generateFileOpe
   context,
   state,
 ): Promise<ScopeFileOperationsMap> => {
-  const fileOperations: ScopeFileOperationsMap = {};
+  const fileOperations = new Map<string, FileOperation[]>();
 
-  for (const scopeName in state.changes) {
-    for (const change of state.changes[scopeName]) {
+  for (const [scopeName, changes] of state.changes) {
+    for (const change of changes) {
       if (!isChangesetsChangeMeta(change.meta)) {
         continue;
       }
 
-      fileOperations[scopeName] = [
-        ...(fileOperations[scopeName] ?? []),
+      fileOperations.set(scopeName, [
+        ...(fileOperations.get(scopeName) ?? []),
         {
           type: CHANGESET_FILE_TYPE,
           path: context.store.resolvePath(change.meta.changesets.path),
           action: "delete",
           meta: {},
         },
-      ];
+      ]);
     }
   }
 

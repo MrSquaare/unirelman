@@ -20,10 +20,10 @@ export class VersioningInvalidVersionError extends VersioningError {
 }
 
 export class VersioningFixedVersionMismatchError extends VersioningError {
-  readonly currentVersions: Readonly<Record<string, string | undefined>>;
+  readonly currentVersions: ReadonlyMap<string, string | undefined>;
 
-  constructor(currentVersions: Readonly<Record<string, string | undefined>>) {
-    const versions = Object.entries(currentVersions)
+  constructor(currentVersions: ReadonlyMap<string, string | undefined>) {
+    const versions = [...currentVersions]
       .map(([scopeName, version]) => `${scopeName} (${version ?? "no version"})`)
       .join(", ");
 

@@ -25,21 +25,23 @@ describe("resolveVersionOutput", () => {
     const changesetContent = createFileDelete({
       extends: { path: "/repo/.unirelman/changesets/a.md" },
     });
-    const fileOperations = {
-      [SCOPE_NAMES.ALPHA]: [changelogContent, changesetContent],
-      [SCOPE_NAMES.BETA]: [changelogContent],
-    };
+    const fileOperations = new Map([
+      [SCOPE_NAMES.ALPHA, [changelogContent, changesetContent]],
+      [SCOPE_NAMES.BETA, [changelogContent]],
+    ]);
 
     expect(
       resolveVersionOutput("/repo", {
         pipeline: "version",
         dryRun: true,
-        currentVersions: { [SCOPE_NAMES.ALPHA]: createVersion({ extends: { version: "1.0.0" } }) },
-        changes: {},
-        nextVersions: {
-          [SCOPE_NAMES.ALPHA]: createVersion({ extends: { version: "1.0.1" } }),
-          [SCOPE_NAMES.BETA]: createVersion({ extends: { version: "2.0.0" } }),
-        },
+        currentVersions: new Map([
+          [SCOPE_NAMES.ALPHA, createVersion({ extends: { version: "1.0.0" } })],
+        ]),
+        changes: new Map(),
+        nextVersions: new Map([
+          [SCOPE_NAMES.ALPHA, createVersion({ extends: { version: "1.0.1" } })],
+          [SCOPE_NAMES.BETA, createVersion({ extends: { version: "2.0.0" } })],
+        ]),
         fileOperations,
       }),
     ).toEqual({
@@ -70,28 +72,31 @@ describe("resolvePublishOutput", () => {
       resolvePublishOutput({
         pipeline: "publish",
         dryRun: false,
-        currentVersions: {},
-        releaseNotes: {},
-        releases: {
-          [SCOPE_NAMES.ALPHA]: [
-            createRelease({
-              extends: {
-                type: "git-tag",
-                name: "@scope/a@1.0.1",
-                status: "created",
-                meta: { id: 42 },
-              },
-            }),
-            createRelease({
-              extends: {
-                type: "npm-package",
-                name: "@scope/a@1.0.1",
-                status: "existing",
-                meta: {},
-              },
-            }),
+        currentVersions: new Map(),
+        releaseNotes: new Map(),
+        releases: new Map([
+          [
+            SCOPE_NAMES.ALPHA,
+            [
+              createRelease({
+                extends: {
+                  type: "git-tag",
+                  name: "@scope/a@1.0.1",
+                  status: "created",
+                  meta: { id: 42 },
+                },
+              }),
+              createRelease({
+                extends: {
+                  type: "npm-package",
+                  name: "@scope/a@1.0.1",
+                  status: "existing",
+                  meta: {},
+                },
+              }),
+            ],
           ],
-        },
+        ]),
       }),
     ).toEqual({
       pipeline: "publish",
@@ -118,10 +123,10 @@ describe("resolvePipelineOutput", () => {
     const result = {
       pipeline: "version" as const,
       dryRun: false,
-      currentVersions: {},
-      changes: {},
-      nextVersions: {},
-      fileOperations: {},
+      currentVersions: new Map(),
+      changes: new Map(),
+      nextVersions: new Map(),
+      fileOperations: new Map(),
     };
 
     expect(resolvePipelineOutput("/repo", result)).toEqual({
@@ -140,9 +145,9 @@ describe("resolvePipelineOutput", () => {
     const result = {
       pipeline: "publish" as const,
       dryRun: false,
-      currentVersions: {},
-      releaseNotes: {},
-      releases: {},
+      currentVersions: new Map(),
+      releaseNotes: new Map(),
+      releases: new Map(),
     };
 
     expect(resolvePipelineOutput("/repo", result)).toEqual({

@@ -41,16 +41,23 @@ describe("VersioningInvalidVersionError", () => {
 describe("VersioningFixedVersionMismatchError", () => {
   describe("constructor", () => {
     it("should construct with its message, name and properties", () => {
-      const error = new VersioningFixedVersionMismatchError({
-        "@scope/a": "0.1.0",
-        "@scope/b": undefined,
-      });
+      const error = new VersioningFixedVersionMismatchError(
+        new Map([
+          ["@scope/a", "0.1.0"],
+          ["@scope/b", undefined],
+        ]),
+      );
 
       expect(error.message).toEqual(
         "Fixed scopes must share the same current version: @scope/a (0.1.0), @scope/b (no version)",
       );
       expect(error.name).toEqual("VersioningFixedVersionMismatchError");
-      expect(error.currentVersions).toEqual({ "@scope/a": "0.1.0", "@scope/b": undefined });
+      expect(error.currentVersions).toEqual(
+        new Map([
+          ["@scope/a", "0.1.0"],
+          ["@scope/b", undefined],
+        ]),
+      );
     });
   });
 });

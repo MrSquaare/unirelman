@@ -15,6 +15,7 @@ import {
   createPhaseContext,
   createVersion,
   SCOPE_NAMES,
+  SCOPE_PATHS,
 } from "@unirelman/core/testing/fixtures";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -156,15 +157,21 @@ describe("createGenerateFileOperationsPhase", () => {
     const context = createPhaseContext();
     const alphaPackageJson = createPackageJson({ name: "@scope/a", version: "1.0.0" });
     const betaPackageJson = createPackageJson({ name: "@scope/b", version: "1.0.0" });
-    const packageJsons = {
-      [SCOPE_NAMES.ALPHA]: alphaPackageJson,
-      [SCOPE_NAMES.BETA]: betaPackageJson,
-    };
+    const packageJsons = new Map([
+      [
+        SCOPE_NAMES.ALPHA,
+        { path: `${SCOPE_PATHS[SCOPE_NAMES.ALPHA]}/package.json`, packageJson: alphaPackageJson },
+      ],
+      [
+        SCOPE_NAMES.BETA,
+        { path: `${SCOPE_PATHS[SCOPE_NAMES.BETA]}/package.json`, packageJson: betaPackageJson },
+      ],
+    ]);
     const state = createGenerateFileOperationsState({
-      nextVersions: {
-        [SCOPE_NAMES.ALPHA]: createVersion({ extends: { version: "1.0.1" } }),
-        [SCOPE_NAMES.BETA]: createVersion({ extends: { version: "2.0.0" } }),
-      },
+      nextVersions: new Map([
+        [SCOPE_NAMES.ALPHA, createVersion({ extends: { version: "1.0.1" } })],
+        [SCOPE_NAMES.BETA, createVersion({ extends: { version: "2.0.0" } })],
+      ]),
     });
     const options = createResolvedNpmPluginOptions();
     const params = {
@@ -175,8 +182,8 @@ describe("createGenerateFileOperationsPhase", () => {
       currentVersions: state.currentVersions,
       nextVersions: state.nextVersions,
     };
-    const alphaPath = `${context.scopes[SCOPE_NAMES.ALPHA].path}/package.json`;
-    const betaPath = `${context.scopes[SCOPE_NAMES.BETA].path}/package.json`;
+    const alphaPath = `${SCOPE_PATHS[SCOPE_NAMES.ALPHA]}/package.json`;
+    const betaPath = `${SCOPE_PATHS[SCOPE_NAMES.BETA]}/package.json`;
 
     mockedReadScopePackageJsons.mockResolvedValueOnce(packageJsons);
     mockedResolveUpdatedInternalDependencies.mockReturnValueOnce([]).mockReturnValueOnce([]);
@@ -184,26 +191,34 @@ describe("createGenerateFileOperationsPhase", () => {
       .mockResolvedValueOnce(alphaPackageJson)
       .mockResolvedValueOnce(betaPackageJson);
 
-    await expect(createGenerateFileOperationsPhase(options)(context, state)).resolves.toEqual({
-      [SCOPE_NAMES.ALPHA]: [
-        {
-          type: "npm-package-json",
-          path: alphaPath,
-          action: "write",
-          content: '{\n  "name": "@scope/a",\n  "version": "1.0.1",\n  "private": false\n}\n',
-          meta: {},
-        },
-      ],
-      [SCOPE_NAMES.BETA]: [
-        {
-          type: "npm-package-json",
-          path: betaPath,
-          action: "write",
-          content: '{\n  "name": "@scope/b",\n  "version": "2.0.0",\n  "private": false\n}\n',
-          meta: {},
-        },
-      ],
-    });
+    await expect(createGenerateFileOperationsPhase(options)(context, state)).resolves.toEqual(
+      new Map([
+        [
+          SCOPE_NAMES.ALPHA,
+          [
+            {
+              type: "npm-package-json",
+              path: alphaPath,
+              action: "write",
+              content: '{\n  "name": "@scope/a",\n  "version": "1.0.1",\n  "private": false\n}\n',
+              meta: {},
+            },
+          ],
+        ],
+        [
+          SCOPE_NAMES.BETA,
+          [
+            {
+              type: "npm-package-json",
+              path: betaPath,
+              action: "write",
+              content: '{\n  "name": "@scope/b",\n  "version": "2.0.0",\n  "private": false\n}\n',
+              meta: {},
+            },
+          ],
+        ],
+      ]),
+    );
 
     expect(mockedReadScopePackageJsons).toHaveBeenCalledTimes(1);
     expect(mockedReadScopePackageJsons).toHaveBeenNthCalledWith(1, context.fs, context.scopes);
@@ -282,15 +297,25 @@ describe("createGenerateFileOperationsPhase", () => {
       private: false,
     };
     const state = createGenerateFileOperationsState({
-      nextVersions: { [SCOPE_NAMES.ALPHA]: createVersion({ extends: { version: "1.1.0" } }) },
+      nextVersions: new Map([
+        [SCOPE_NAMES.ALPHA, createVersion({ extends: { version: "1.1.0" } })],
+      ]),
     });
     const betaDependency = createUpdatedInternalDependency({
       extends: { field: "dependencies", name: "@scope/b", specifier: "^1.0.0" },
     });
 
-    mockedReadScopePackageJsons.mockResolvedValueOnce({
-      [SCOPE_NAMES.ALPHA]: { ...createPackageJson(), dependencies: document.dependencies },
-    });
+    mockedReadScopePackageJsons.mockResolvedValueOnce(
+      new Map([
+        [
+          SCOPE_NAMES.ALPHA,
+          {
+            path: `${SCOPE_PATHS[SCOPE_NAMES.ALPHA]}/package.json`,
+            packageJson: { ...createPackageJson(), dependencies: document.dependencies },
+          },
+        ],
+      ]),
+    );
     mockedResolveUpdatedInternalDependencies.mockReturnValueOnce([betaDependency]);
     resolveDependenciesRequiringRangeUpdateSpy.mockReturnValueOnce([betaDependency]);
     mockedReadScopePackageJson.mockResolvedValueOnce(document);
@@ -298,18 +323,23 @@ describe("createGenerateFileOperationsPhase", () => {
 
     await expect(
       createGenerateFileOperationsPhase(createResolvedNpmPluginOptions())(context, state),
-    ).resolves.toEqual({
-      [SCOPE_NAMES.ALPHA]: [
-        {
-          type: "npm-package-json",
-          path: `${context.scopes[SCOPE_NAMES.ALPHA].path}/package.json`,
-          action: "write",
-          content:
-            '{\n  "name": "@scope/a",\n  "type": "module",\n  "version": "1.1.0",\n  "dependencies": {\n    "@scope/b": "^2.0.0",\n    "react": "^19.0.0"\n  },\n  "private": false\n}\n',
-          meta: {},
-        },
-      ],
-    });
+    ).resolves.toEqual(
+      new Map([
+        [
+          SCOPE_NAMES.ALPHA,
+          [
+            {
+              type: "npm-package-json",
+              path: `${SCOPE_PATHS[SCOPE_NAMES.ALPHA]}/package.json`,
+              action: "write",
+              content:
+                '{\n  "name": "@scope/a",\n  "type": "module",\n  "version": "1.1.0",\n  "dependencies": {\n    "@scope/b": "^2.0.0",\n    "react": "^19.0.0"\n  },\n  "private": false\n}\n',
+              meta: {},
+            },
+          ],
+        ],
+      ]),
+    );
   });
 
   it("should update the dev ranges of a scope without a next version, keeping its version", async () => {
@@ -320,36 +350,49 @@ describe("createGenerateFileOperationsPhase", () => {
       devDependencies: { "@scope/b": "^1.0.0" },
     };
     const state = createGenerateFileOperationsState({
-      nextVersions: { [SCOPE_NAMES.BETA]: createVersion({ extends: { version: "2.0.0" } }) },
+      nextVersions: new Map([[SCOPE_NAMES.BETA, createVersion({ extends: { version: "2.0.0" } })]]),
     });
     const options = createResolvedNpmPluginOptions();
     const betaDevDependency = createUpdatedInternalDependency({
       extends: { field: "devDependencies", name: "@scope/b", specifier: "^1.0.0" },
     });
 
-    mockedReadScopePackageJsons.mockResolvedValueOnce({
-      [SCOPE_NAMES.ALPHA]: {
-        ...createPackageJson({ name: "@scope/a", version: "1.0.0" }),
-        devDependencies: document.devDependencies,
-      },
-    });
+    mockedReadScopePackageJsons.mockResolvedValueOnce(
+      new Map([
+        [
+          SCOPE_NAMES.ALPHA,
+          {
+            path: `${SCOPE_PATHS[SCOPE_NAMES.ALPHA]}/package.json`,
+            packageJson: {
+              ...createPackageJson({ name: "@scope/a", version: "1.0.0" }),
+              devDependencies: document.devDependencies,
+            },
+          },
+        ],
+      ]),
+    );
     mockedResolveUpdatedInternalDependencies.mockReturnValueOnce([betaDevDependency]);
     resolveDependenciesRequiringRangeUpdateSpy.mockReturnValueOnce([betaDevDependency]);
     mockedReadScopePackageJson.mockResolvedValueOnce(document);
     mockedResolveNextDependencySpecifier.mockReturnValueOnce("^2.0.0");
 
-    await expect(createGenerateFileOperationsPhase(options)(context, state)).resolves.toEqual({
-      [SCOPE_NAMES.ALPHA]: [
-        {
-          type: "npm-package-json",
-          path: `${context.scopes[SCOPE_NAMES.ALPHA].path}/package.json`,
-          action: "write",
-          content:
-            '{\n  "name": "@scope/a",\n  "version": "1.0.0",\n  "devDependencies": {\n    "@scope/b": "^2.0.0"\n  }\n}\n',
-          meta: {},
-        },
-      ],
-    });
+    await expect(createGenerateFileOperationsPhase(options)(context, state)).resolves.toEqual(
+      new Map([
+        [
+          SCOPE_NAMES.ALPHA,
+          [
+            {
+              type: "npm-package-json",
+              path: `${SCOPE_PATHS[SCOPE_NAMES.ALPHA]}/package.json`,
+              action: "write",
+              content:
+                '{\n  "name": "@scope/a",\n  "version": "1.0.0",\n  "devDependencies": {\n    "@scope/b": "^2.0.0"\n  }\n}\n',
+              meta: {},
+            },
+          ],
+        ],
+      ]),
+    );
 
     expect(resolveDependenciesRequiringRangeUpdateSpy).toHaveBeenCalledTimes(1);
     expect(resolveDependenciesRequiringRangeUpdateSpy).toHaveBeenNthCalledWith(
@@ -362,16 +405,24 @@ describe("createGenerateFileOperationsPhase", () => {
 
   it("should skip a scope without a next version or range updates", async () => {
     const context = createPhaseContext();
-    const state = createGenerateFileOperationsState({ nextVersions: {} });
+    const state = createGenerateFileOperationsState({ nextVersions: new Map() });
 
-    mockedReadScopePackageJsons.mockResolvedValueOnce({
-      [SCOPE_NAMES.ALPHA]: createPackageJson(),
-    });
+    mockedReadScopePackageJsons.mockResolvedValueOnce(
+      new Map([
+        [
+          SCOPE_NAMES.ALPHA,
+          {
+            path: `${SCOPE_PATHS[SCOPE_NAMES.ALPHA]}/package.json`,
+            packageJson: createPackageJson(),
+          },
+        ],
+      ]),
+    );
     mockedResolveUpdatedInternalDependencies.mockReturnValueOnce([]);
 
     await expect(
       createGenerateFileOperationsPhase(createResolvedNpmPluginOptions())(context, state),
-    ).resolves.toEqual({});
+    ).resolves.toEqual(new Map());
 
     expect(mockedReadScopePackageJson).not.toHaveBeenCalled();
     expect(serializePackageJsonSpy).not.toHaveBeenCalled();

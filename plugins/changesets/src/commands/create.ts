@@ -74,7 +74,7 @@ export const createCreateCommand = (
       },
     },
     run: async ({ options, ui }): Promise<ChangesetsCreateOutput> => {
-      const availableScopes = Object.keys(context.scopes);
+      const availableScopes = [...context.scopes.keys()];
       const parsedScopes = parseScopes(options.scopes);
 
       assertKnownScopes(parsedScopes, availableScopes);

@@ -139,7 +139,7 @@ describe("Pipeline", () => {
       });
       const executePipelineSpy = vi.spyOn(pipeline as any, "executePipeline");
       const executePhaseSpy = vi.spyOn(pipeline as any, "executePhase");
-      const currentVersions = { [SCOPE_NAMES.ALPHA]: createVersion() };
+      const currentVersions = new Map([[SCOPE_NAMES.ALPHA, createVersion()]]);
       const error = new Error("getChanges failed");
 
       executePipelineSpy.mockImplementationOnce(async (_run, state) => {
@@ -259,21 +259,26 @@ describe("Pipeline", () => {
       });
       const executePhaseSpy = vi.spyOn(pipeline as any, "executePhase");
       const run = { pipeline: "publish", dryRun: false } as const;
-      const currentVersions = {
-        [SCOPE_NAMES.ALPHA]: createVersion({ extends: { version: "1.1.0-alpha.0", meta: {} } }),
-      };
-      const versionMetas = {
-        [SCOPE_NAMES.ALPHA]: { prerelease: { channel: "alpha", increment: 0 } } as VersionMeta,
-      };
+      const currentVersions = new Map([
+        [SCOPE_NAMES.ALPHA, createVersion({ extends: { version: "1.1.0-alpha.0", meta: {} } })],
+      ]);
+      const versionMetas = new Map([
+        [SCOPE_NAMES.ALPHA, { prerelease: { channel: "alpha", increment: 0 } } as VersionMeta],
+      ]);
 
       executePhaseSpy.mockResolvedValueOnce(currentVersions).mockResolvedValueOnce(versionMetas);
 
-      await expect(pipeline["executeCurrentVersionPhases"](run)).resolves.toEqual({
-        [SCOPE_NAMES.ALPHA]: {
-          version: "1.1.0-alpha.0",
-          meta: { prerelease: { channel: "alpha", increment: 0 } },
-        },
-      });
+      await expect(pipeline["executeCurrentVersionPhases"](run)).resolves.toEqual(
+        new Map([
+          [
+            SCOPE_NAMES.ALPHA,
+            {
+              version: "1.1.0-alpha.0",
+              meta: { prerelease: { channel: "alpha", increment: 0 } },
+            },
+          ],
+        ]),
+      );
       expect(executePhaseSpy).toHaveBeenCalledTimes(2);
       expect(executePhaseSpy).toHaveBeenNthCalledWith(1, "getCurrentVersion", run, {});
       expect(executePhaseSpy).toHaveBeenNthCalledWith(2, "parseCurrentVersion", run, {
@@ -311,8 +316,8 @@ describe("Pipeline", () => {
       const applyFileOperationsSpy = vi.spyOn(pipeline as any, "applyFileOperations");
       const run = { pipeline: "version", dryRun: false } as const;
       const { currentVersions, changes, nextVersions, fileOperations } = createPrepareState();
-      const initialChanges = { [SCOPE_NAMES.ALPHA]: [createChange()] };
-      const initialNextVersions = { [SCOPE_NAMES.ALPHA]: createVersion() };
+      const initialChanges = new Map([[SCOPE_NAMES.ALPHA, [createChange()]]]);
+      const initialNextVersions = new Map([[SCOPE_NAMES.ALPHA, createVersion()]]);
       const state = {};
 
       executeCurrentVersionPhasesSpy.mockResolvedValueOnce(currentVersions);
@@ -419,7 +424,7 @@ describe("Pipeline", () => {
       const run = { pipeline: "version", dryRun: false } as const;
       const { currentVersions, changes, nextVersions } = createPrepareState();
 
-      executePhaseSpy.mockResolvedValueOnce({});
+      executePhaseSpy.mockResolvedValueOnce(new Map());
 
       await expect(
         pipeline["executeDependencyChangesPhases"](run, currentVersions, changes, nextVersions),
@@ -432,7 +437,7 @@ describe("Pipeline", () => {
         nextVersions,
       });
       expect(mockedHasChanges).toHaveBeenCalledTimes(1);
-      expect(mockedHasChanges).toHaveBeenNthCalledWith(1, {});
+      expect(mockedHasChanges).toHaveBeenNthCalledWith(1, new Map());
       expect(executeComputeNextVersionPhaseSpy).not.toHaveBeenCalled();
       expect(mockedAssertStableNextVersions).not.toHaveBeenCalled();
     });
@@ -452,11 +457,11 @@ describe("Pipeline", () => {
       const currentVersions = createScopeVersionMap();
       const alphaChange = createChange({ extends: { message: "fix alpha" } });
       const dependencyChange = createChange({ extends: { message: "Updated dependencies" } });
-      const initialChanges = { [SCOPE_NAMES.ALPHA]: [alphaChange] };
-      const nextVersions = { [SCOPE_NAMES.ALPHA]: createVersion() };
-      const dependencyChanges = { [SCOPE_NAMES.ALPHA]: [dependencyChange] };
-      const changes = { [SCOPE_NAMES.ALPHA]: [alphaChange, dependencyChange] };
-      const dependentNextVersions = { [SCOPE_NAMES.ALPHA]: createVersion() };
+      const initialChanges = new Map([[SCOPE_NAMES.ALPHA, [alphaChange]]]);
+      const nextVersions = new Map([[SCOPE_NAMES.ALPHA, createVersion()]]);
+      const dependencyChanges = new Map([[SCOPE_NAMES.ALPHA, [dependencyChange]]]);
+      const changes = new Map([[SCOPE_NAMES.ALPHA, [alphaChange, dependencyChange]]]);
+      const dependentNextVersions = new Map([[SCOPE_NAMES.ALPHA, createVersion()]]);
 
       executePhaseSpy.mockResolvedValueOnce(dependencyChanges);
       executeComputeNextVersionPhaseSpy.mockResolvedValueOnce(dependentNextVersions);
@@ -502,13 +507,13 @@ describe("Pipeline", () => {
       const currentVersions = createScopeVersionMap();
       const alphaChange = createChange({ extends: { message: "fix alpha" } });
       const dependencyChange = createChange({ extends: { message: "Updated dependencies" } });
-      const initialChanges = { [SCOPE_NAMES.ALPHA]: [alphaChange] };
-      const nextVersions = { [SCOPE_NAMES.ALPHA]: createVersion() };
-      const dependencyChanges = { [SCOPE_NAMES.BETA]: [dependencyChange] };
-      const changes = {
-        [SCOPE_NAMES.ALPHA]: [alphaChange],
-        [SCOPE_NAMES.BETA]: [dependencyChange],
-      };
+      const initialChanges = new Map([[SCOPE_NAMES.ALPHA, [alphaChange]]]);
+      const nextVersions = new Map([[SCOPE_NAMES.ALPHA, createVersion()]]);
+      const dependencyChanges = new Map([[SCOPE_NAMES.BETA, [dependencyChange]]]);
+      const changes = new Map([
+        [SCOPE_NAMES.ALPHA, [alphaChange]],
+        [SCOPE_NAMES.BETA, [dependencyChange]],
+      ]);
       const dependentNextVersions = createScopeVersionMap();
 
       executePhaseSpy
@@ -614,7 +619,7 @@ describe("Pipeline", () => {
       const changesetContent = createFileDelete({
         extends: { path: "/repo/.unirelman/changesets/a.md" },
       });
-      const fileOperations = { [SCOPE_NAMES.ALPHA]: [changelogContent, changesetContent] };
+      const fileOperations = new Map([[SCOPE_NAMES.ALPHA, [changelogContent, changesetContent]]]);
 
       await expect(
         pipeline["applyFileOperations"]({ pipeline: "version", dryRun: false }, fileOperations),
@@ -642,12 +647,15 @@ describe("Pipeline", () => {
         createLogger: mockCreateLogger,
       });
       const fs = vi.mocked(MockedFS.mock.instances[0]);
-      const fileOperations = {
-        [SCOPE_NAMES.ALPHA]: [
-          createFileWrite({ extends: { path: "/repo/CHANGELOG.md" } }),
-          createFileDelete({ extends: { path: "/repo/.unirelman/changesets/a.md" } }),
+      const fileOperations = new Map([
+        [
+          SCOPE_NAMES.ALPHA,
+          [
+            createFileWrite({ extends: { path: "/repo/CHANGELOG.md" } }),
+            createFileDelete({ extends: { path: "/repo/.unirelman/changesets/a.md" } }),
+          ],
         ],
-      };
+      ]);
 
       await expect(
         pipeline["applyFileOperations"]({ pipeline: "version", dryRun: true }, fileOperations),
@@ -669,7 +677,9 @@ describe("Pipeline", () => {
 
       const firstChange = createChange({ extends: { message: "First change" } });
       const secondChange = createChange({ extends: { message: "Second change" } });
-      const getChangesA = vi.fn().mockResolvedValueOnce({ [SCOPE_NAMES.ALPHA]: [firstChange] });
+      const getChangesA = vi
+        .fn()
+        .mockResolvedValueOnce(new Map([[SCOPE_NAMES.ALPHA, [firstChange]]]));
       const pluginWithGetChangesA = createPluginRegistration({
         extends: {
           plugin: {
@@ -678,7 +688,9 @@ describe("Pipeline", () => {
           },
         },
       });
-      const getChangesB = vi.fn().mockResolvedValueOnce({ [SCOPE_NAMES.ALPHA]: [secondChange] });
+      const getChangesB = vi
+        .fn()
+        .mockResolvedValueOnce(new Map([[SCOPE_NAMES.ALPHA, [secondChange]]]));
       const pluginWithGetChangesB = createPluginRegistration({
         extends: {
           plugin: {
@@ -718,7 +730,7 @@ describe("Pipeline", () => {
           { pipeline: "version", dryRun: false },
           completeState,
         ),
-      ).resolves.toEqual({ [SCOPE_NAMES.ALPHA]: [firstChange, secondChange] });
+      ).resolves.toEqual(new Map([[SCOPE_NAMES.ALPHA, [firstChange, secondChange]]]));
 
       expect(logger.info).not.toHaveBeenCalled();
       expect(logger.debug).toHaveBeenCalledTimes(4);
@@ -769,14 +781,14 @@ describe("Pipeline", () => {
         1,
         "getChanges",
         "plugin-with-get-changes-a",
-        { [SCOPE_NAMES.ALPHA]: [firstChange] },
+        new Map([[SCOPE_NAMES.ALPHA, [firstChange]]]),
         new Set([SCOPE_NAMES.ALPHA, SCOPE_NAMES.BETA]),
       );
       expect(mockedAssertPhaseResultScopes).toHaveBeenNthCalledWith(
         2,
         "getChanges",
         "plugin-with-get-changes-b",
-        { [SCOPE_NAMES.ALPHA]: [secondChange] },
+        new Map([[SCOPE_NAMES.ALPHA, [secondChange]]]),
         new Set([SCOPE_NAMES.ALPHA, SCOPE_NAMES.BETA]),
       );
     });
@@ -794,7 +806,7 @@ describe("Pipeline", () => {
         },
       });
       const change = createChange();
-      const getChanges = vi.fn().mockResolvedValueOnce({ [SCOPE_NAMES.ALPHA]: [change] });
+      const getChanges = vi.fn().mockResolvedValueOnce(new Map([[SCOPE_NAMES.ALPHA, [change]]]));
       const pluginWithGetChanges = createPluginRegistration({
         extends: {
           plugin: {
@@ -829,7 +841,7 @@ describe("Pipeline", () => {
           { pipeline: "version", dryRun: false },
           completeState,
         ),
-      ).resolves.toEqual({ [SCOPE_NAMES.ALPHA]: [change] });
+      ).resolves.toEqual(new Map([[SCOPE_NAMES.ALPHA, [change]]]));
 
       expect(logger.info).not.toHaveBeenCalled();
 
@@ -862,7 +874,7 @@ describe("Pipeline", () => {
         1,
         "getChanges",
         "plugin-with-get-changes",
-        { [SCOPE_NAMES.ALPHA]: [change] },
+        new Map([[SCOPE_NAMES.ALPHA, [change]]]),
         new Set([SCOPE_NAMES.ALPHA, SCOPE_NAMES.BETA]),
       );
     });
@@ -889,8 +901,8 @@ describe("Pipeline", () => {
         const firstResult = await pipeline["executePhase"](phaseName, run, createPrepareState());
         const secondResult = await pipeline["executePhase"](phaseName, run, createPrepareState());
 
-        expect(firstResult).toEqual({});
-        expect(secondResult).toEqual({});
+        expect(firstResult).toEqual(new Map());
+        expect(secondResult).toEqual(new Map());
         expect(secondResult).not.toBe(firstResult);
         expect(mockedAssertPhaseResultScopes).not.toHaveBeenCalled();
       },
@@ -901,9 +913,9 @@ describe("Pipeline", () => {
 
       mockCreateLogger.mockReturnValueOnce(logger);
 
-      const getChanges = vi.fn().mockResolvedValueOnce({
-        [SCOPE_NAMES.ALPHA]: [createChange()],
-      });
+      const getChanges = vi
+        .fn()
+        .mockResolvedValueOnce(new Map([[SCOPE_NAMES.ALPHA, [createChange()]]]));
       const pluginWithNoScope = createPluginRegistration({
         extends: {
           plugin: {
@@ -915,7 +927,7 @@ describe("Pipeline", () => {
       });
 
       const pluginContext = createPluginContext({
-        scopes: {},
+        scopes: new Map(),
       });
 
       mockedCreatePluginContext.mockReturnValueOnce(pluginContext);
@@ -936,7 +948,7 @@ describe("Pipeline", () => {
           { pipeline: "version", dryRun: false },
           createPrepareState(),
         ),
-      ).resolves.toEqual({});
+      ).resolves.toEqual(new Map());
 
       expect(logger.info).not.toHaveBeenCalled();
 

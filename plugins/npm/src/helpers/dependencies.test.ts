@@ -61,8 +61,8 @@ describe("resolveUpdatedInternalDependency", () => {
     expect(
       resolveUpdatedInternalDependency("dependencies", "@example/core", "workspace:^", {
         scopeNamesByPackageName: new Map([["@example/core", "core"]]),
-        currentVersions: { core: createVersion({ extends: { version: "1.0.0" } }) },
-        nextVersions: { core: createVersion({ extends: { version: "1.1.0" } }) },
+        currentVersions: new Map([["core", createVersion({ extends: { version: "1.0.0" } })]]),
+        nextVersions: new Map([["core", createVersion({ extends: { version: "1.1.0" } })]]),
       }),
     ).toEqual({
       field: "dependencies",
@@ -80,8 +80,8 @@ describe("resolveUpdatedInternalDependency", () => {
     expect(
       resolveUpdatedInternalDependency("dependencies", "react", "^19.0.0", {
         scopeNamesByPackageName: new Map(),
-        currentVersions: {},
-        nextVersions: {},
+        currentVersions: new Map(),
+        nextVersions: new Map(),
       }),
     ).toEqual(undefined);
   });
@@ -90,8 +90,8 @@ describe("resolveUpdatedInternalDependency", () => {
     expect(
       resolveUpdatedInternalDependency("dependencies", "constructor", "^1.0.0", {
         scopeNamesByPackageName: new Map([["@example/core", "core"]]),
-        currentVersions: {},
-        nextVersions: {},
+        currentVersions: new Map(),
+        nextVersions: new Map(),
       }),
     ).toEqual(undefined);
   });
@@ -100,8 +100,8 @@ describe("resolveUpdatedInternalDependency", () => {
     expect(
       resolveUpdatedInternalDependency("dependencies", "@example/core", "^1.0.0", {
         scopeNamesByPackageName: new Map([["@example/core", "core"]]),
-        currentVersions: { core: createVersion({ extends: { version: "1.0.0" } }) },
-        nextVersions: {},
+        currentVersions: new Map([["core", createVersion({ extends: { version: "1.0.0" } })]]),
+        nextVersions: new Map(),
       }),
     ).toEqual(undefined);
   });
@@ -110,8 +110,10 @@ describe("resolveUpdatedInternalDependency", () => {
     expect(
       resolveUpdatedInternalDependency("dependencies", "@example/core", "workspace:*", {
         scopeNamesByPackageName: new Map([["@example/core", "core"]]),
-        currentVersions: { core: createVersion({ extends: { version: "2026.01.01.0" } }) },
-        nextVersions: { core: createVersion({ extends: { version: "2026.01.02.0" } }) },
+        currentVersions: new Map([
+          ["core", createVersion({ extends: { version: "2026.01.01.0" } })],
+        ]),
+        nextVersions: new Map([["core", createVersion({ extends: { version: "2026.01.02.0" } })]]),
       }),
     ).toEqual(undefined);
     expect(resolveDependencyRangeSpy).not.toHaveBeenCalled();
@@ -121,8 +123,8 @@ describe("resolveUpdatedInternalDependency", () => {
     expect(
       resolveUpdatedInternalDependency("dependencies", "@example/core", "catalog:", {
         scopeNamesByPackageName: new Map([["@example/core", "core"]]),
-        currentVersions: { core: createVersion({ extends: { version: "1.0.0" } }) },
-        nextVersions: { core: createVersion({ extends: { version: "1.1.0" } }) },
+        currentVersions: new Map([["core", createVersion({ extends: { version: "1.0.0" } })]]),
+        nextVersions: new Map([["core", createVersion({ extends: { version: "1.1.0" } })]]),
       }),
     ).toEqual(undefined);
   });
@@ -138,8 +140,8 @@ describe("resolveUpdatedInternalDependencies", () => {
   it("should resolve the internal dependencies of every dependency field", () => {
     const params = {
       scopeNamesByPackageName: new Map([["@example/core", "core"]]),
-      currentVersions: { core: createVersion({ extends: { version: "1.0.0" } }) },
-      nextVersions: { core: createVersion({ extends: { version: "2.0.0" } }) },
+      currentVersions: new Map([["core", createVersion({ extends: { version: "1.0.0" } })]]),
+      nextVersions: new Map([["core", createVersion({ extends: { version: "2.0.0" } })]]),
     };
     const packageJson = {
       name: "@example/cli",
