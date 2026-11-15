@@ -1,0 +1,9 @@
+extends: existence
+message: "Describe only current behavior: remove '%s'."
+level: error
+ignorecase: true
+tokens:
+  - previously
+  - no longer
+  - formerly
+  - anymore

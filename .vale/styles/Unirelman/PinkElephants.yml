@@ -1,0 +1,13 @@
+extends: existence
+message: "State facts positively: remove '%s', which mentions what does not exist or is not needed."
+level: error
+ignorecase: true
+tokens:
+  - there is no
+  - there are no
+  - unlike
+  - isn't needed
+  - is not needed
+  - aren't needed
+  - not supported
+  - isn't supported

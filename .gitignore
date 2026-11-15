@@ -9,3 +9,8 @@ node_modules/
 
 # macOS
 .DS_Store
+
+# Vale
+.vale/styles/*
+!.vale/styles/config/
+!.vale/styles/Unirelman/

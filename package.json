@@ -13,6 +13,7 @@
     "check": "turbo check --continue",
     "check:fix": "turbo check:fix --continue",
     "typecheck": "turbo typecheck --continue",
+    "lint:prose": "vale .",
     "clean": "turbo clean --continue",
     "deps:update": "taze",
     "deps:upgrade": "taze -w"

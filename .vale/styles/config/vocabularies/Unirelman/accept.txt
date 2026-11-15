@@ -1,0 +1,14 @@
+unirelman
+@unirelman/[a-z-]+
+[Pp]rereleases?
+CLI
+GitHub
+GitHub Action
+GitHub Actions
+GitHub Enterprise Server
+SemVer
+CalVer
+npm
+pnpm
+oxfmt
+Zod
