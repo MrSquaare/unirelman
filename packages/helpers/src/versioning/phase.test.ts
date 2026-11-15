@@ -22,6 +22,7 @@ import {
   createComputeNextVersionState,
   createGetChangesState,
   createPhaseContext,
+  createScope,
   createScopeMap,
   SCOPE_NAMES,
 } from "@unirelman/core/testing/fixtures";
@@ -51,10 +52,10 @@ describe("createParseCurrentVersionPhase", () => {
     const scheme = createVersioningScheme();
     const phase = createParseCurrentVersionPhase(scheme);
     const context = createPhaseContext({
-      scopes: { [SCOPE_NAMES.ALPHA]: createScopeMap()[SCOPE_NAMES.ALPHA] },
+      scopes: new Map([[SCOPE_NAMES.ALPHA, createScope()]]),
     });
     const state = createGetChangesState({
-      currentVersions: { [SCOPE_NAMES.ALPHA]: { version: "3-beta.1", meta: {} } },
+      currentVersions: new Map([[SCOPE_NAMES.ALPHA, { version: "3-beta.1", meta: {} }]]),
     });
     const parsedVersion = { base: { value: 3 }, prerelease: { channel: "beta", increment: 1 } };
     const versionMeta = {
@@ -65,22 +66,24 @@ describe("createParseCurrentVersionPhase", () => {
     mockedParseVersion.mockReturnValueOnce(parsedVersion);
     mockedResolveVersionMeta.mockReturnValueOnce(versionMeta);
 
-    await expect(phase(context, state)).resolves.toEqual({ [SCOPE_NAMES.ALPHA]: versionMeta });
+    await expect(phase(context, state)).resolves.toEqual(
+      new Map([[SCOPE_NAMES.ALPHA, versionMeta]]),
+    );
     expect(mockedParseVersion).toHaveBeenCalledTimes(1);
     expect(mockedParseVersion).toHaveBeenNthCalledWith(1, scheme, "3-beta.1");
     expect(mockedResolveVersionMeta).toHaveBeenCalledTimes(1);
     expect(mockedResolveVersionMeta).toHaveBeenNthCalledWith(1, scheme, parsedVersion);
   });
 
-  it("should skip scopes without current version", async () => {
+  it("should return no meta without current versions", async () => {
     const phase = createParseCurrentVersionPhase(createVersioningScheme());
     const context = createPhaseContext({
-      scopes: { [SCOPE_NAMES.ALPHA]: createScopeMap()[SCOPE_NAMES.ALPHA] },
+      scopes: new Map([[SCOPE_NAMES.ALPHA, createScope()]]),
     });
 
-    await expect(phase(context, createGetChangesState({ currentVersions: {} }))).resolves.toEqual(
-      {},
-    );
+    await expect(
+      phase(context, createGetChangesState({ currentVersions: new Map() })),
+    ).resolves.toEqual(new Map());
     expect(mockedParseVersion).not.toHaveBeenCalled();
     expect(mockedResolveVersionMeta).not.toHaveBeenCalled();
   });
@@ -204,43 +207,54 @@ describe("resolveSharedCurrentVersion", () => {
 
   it("should return the current version shared by every scope", () => {
     expect(
-      resolveSharedCurrentVersion([SCOPE_NAMES.ALPHA, SCOPE_NAMES.BETA], {
-        [SCOPE_NAMES.ALPHA]: { version: "0.1.0", meta: {} },
-        [SCOPE_NAMES.BETA]: { version: "0.1.0", meta: {} },
-      }),
+      resolveSharedCurrentVersion(
+        [SCOPE_NAMES.ALPHA, SCOPE_NAMES.BETA],
+        new Map([
+          [SCOPE_NAMES.ALPHA, { version: "0.1.0", meta: {} }],
+          [SCOPE_NAMES.BETA, { version: "0.1.0", meta: {} }],
+        ]),
+      ),
     ).toEqual("0.1.0");
   });
 
   it("should return undefined when no scope has a current version", () => {
-    expect(resolveSharedCurrentVersion([SCOPE_NAMES.ALPHA, SCOPE_NAMES.BETA], {})).toEqual(
+    expect(resolveSharedCurrentVersion([SCOPE_NAMES.ALPHA, SCOPE_NAMES.BETA], new Map())).toEqual(
       undefined,
     );
   });
 
   it("should throw when scopes have different current versions", () => {
     expect(() =>
-      resolveSharedCurrentVersion([SCOPE_NAMES.ALPHA, SCOPE_NAMES.BETA], {
-        [SCOPE_NAMES.ALPHA]: { version: "0.1.0", meta: {} },
-        [SCOPE_NAMES.BETA]: { version: "0.2.0", meta: {} },
-      }),
+      resolveSharedCurrentVersion(
+        [SCOPE_NAMES.ALPHA, SCOPE_NAMES.BETA],
+        new Map([
+          [SCOPE_NAMES.ALPHA, { version: "0.1.0", meta: {} }],
+          [SCOPE_NAMES.BETA, { version: "0.2.0", meta: {} }],
+        ]),
+      ),
     ).toThrow(
-      new VersioningFixedVersionMismatchError({
-        [SCOPE_NAMES.ALPHA]: "0.1.0",
-        [SCOPE_NAMES.BETA]: "0.2.0",
-      }),
+      new VersioningFixedVersionMismatchError(
+        new Map([
+          [SCOPE_NAMES.ALPHA, "0.1.0"],
+          [SCOPE_NAMES.BETA, "0.2.0"],
+        ]),
+      ),
     );
   });
 
   it("should throw when only some scopes have a current version", () => {
     expect(() =>
-      resolveSharedCurrentVersion([SCOPE_NAMES.ALPHA, SCOPE_NAMES.BETA], {
-        [SCOPE_NAMES.ALPHA]: { version: "0.1.0", meta: {} },
-      }),
+      resolveSharedCurrentVersion(
+        [SCOPE_NAMES.ALPHA, SCOPE_NAMES.BETA],
+        new Map([[SCOPE_NAMES.ALPHA, { version: "0.1.0", meta: {} }]]),
+      ),
     ).toThrow(
-      new VersioningFixedVersionMismatchError({
-        [SCOPE_NAMES.ALPHA]: "0.1.0",
-        [SCOPE_NAMES.BETA]: undefined,
-      }),
+      new VersioningFixedVersionMismatchError(
+        new Map([
+          [SCOPE_NAMES.ALPHA, "0.1.0"],
+          [SCOPE_NAMES.BETA, undefined],
+        ]),
+      ),
     );
   });
 });
@@ -260,14 +274,14 @@ describe("createComputeNextVersionPhase", () => {
       fixed: false,
     });
     const context = createPhaseContext({
-      scopes: { [SCOPE_NAMES.ALPHA]: createScopeMap()[SCOPE_NAMES.ALPHA] },
+      scopes: new Map([[SCOPE_NAMES.ALPHA, createScope()]]),
     });
     const changes = [createChange()];
     const state = createComputeNextVersionState({
-      currentVersions: { [SCOPE_NAMES.ALPHA]: { version: "3", meta: {} } },
-      changes: { [SCOPE_NAMES.ALPHA]: changes },
+      currentVersions: new Map([[SCOPE_NAMES.ALPHA, { version: "3", meta: {} }]]),
+      changes: new Map([[SCOPE_NAMES.ALPHA, changes]]),
     });
-    const prereleaseState = { [SCOPE_NAMES.ALPHA]: { channel: "beta" } };
+    const prereleaseState = new Map([[SCOPE_NAMES.ALPHA, { channel: "beta" }]]);
 
     mockedReadPrereleaseState.mockResolvedValueOnce(prereleaseState);
     resolveNextVersionSpy.mockReturnValueOnce({
@@ -275,9 +289,9 @@ describe("createComputeNextVersionPhase", () => {
       version: { version: "4-beta.0", meta: {} },
     });
 
-    await expect(phase(context, state)).resolves.toEqual({
-      [SCOPE_NAMES.ALPHA]: { version: "4-beta.0", meta: {} },
-    });
+    await expect(phase(context, state)).resolves.toEqual(
+      new Map([[SCOPE_NAMES.ALPHA, { version: "4-beta.0", meta: {} }]]),
+    );
     expect(mockedReadPrereleaseState).toHaveBeenCalledTimes(1);
     expect(mockedReadPrereleaseState).toHaveBeenNthCalledWith(1, context.store);
     expect(mockedResolveGroups).toHaveBeenCalledTimes(1);
@@ -321,13 +335,13 @@ describe("createComputeNextVersionPhase", () => {
     const context = createPhaseContext({ scopes: createScopeMap() });
     const alphaChanges = [createChange({ extends: { message: "fix alpha" } })];
     const state = createComputeNextVersionState({
-      currentVersions: {
-        [SCOPE_NAMES.ALPHA]: { version: "3", meta: {} },
-        [SCOPE_NAMES.BETA]: { version: "3", meta: {} },
-      },
-      changes: { [SCOPE_NAMES.ALPHA]: alphaChanges },
+      currentVersions: new Map([
+        [SCOPE_NAMES.ALPHA, { version: "3", meta: {} }],
+        [SCOPE_NAMES.BETA, { version: "3", meta: {} }],
+      ]),
+      changes: new Map([[SCOPE_NAMES.ALPHA, alphaChanges]]),
     });
-    const prereleaseState = {};
+    const prereleaseState = new Map();
 
     mockedReadPrereleaseState.mockResolvedValueOnce(prereleaseState);
     resolveNextVersionSpy.mockReturnValueOnce({
@@ -335,10 +349,12 @@ describe("createComputeNextVersionPhase", () => {
       version: { version: "4", meta: {} },
     });
 
-    await expect(phase(context, state)).resolves.toEqual({
-      [SCOPE_NAMES.ALPHA]: { version: "4", meta: {} },
-      [SCOPE_NAMES.BETA]: { version: "4", meta: {} },
-    });
+    await expect(phase(context, state)).resolves.toEqual(
+      new Map([
+        [SCOPE_NAMES.ALPHA, { version: "4", meta: {} }],
+        [SCOPE_NAMES.BETA, { version: "4", meta: {} }],
+      ]),
+    );
     expect(mockedResolveGroups).toHaveBeenCalledTimes(1);
     expect(mockedResolveGroups).toHaveBeenNthCalledWith(1, true, [
       SCOPE_NAMES.ALPHA,
@@ -381,22 +397,27 @@ describe("createComputeNextVersionPhase", () => {
     const alphaChanges = [createChange({ extends: { message: "fix alpha" } })];
     const betaChanges = [createChange({ extends: { message: "fix beta" } })];
     const state = createComputeNextVersionState({
-      currentVersions: {
-        [SCOPE_NAMES.ALPHA]: { version: "3", meta: {} },
-        [SCOPE_NAMES.BETA]: { version: "7", meta: {} },
-      },
-      changes: { [SCOPE_NAMES.ALPHA]: alphaChanges, [SCOPE_NAMES.BETA]: betaChanges },
+      currentVersions: new Map([
+        [SCOPE_NAMES.ALPHA, { version: "3", meta: {} }],
+        [SCOPE_NAMES.BETA, { version: "7", meta: {} }],
+      ]),
+      changes: new Map([
+        [SCOPE_NAMES.ALPHA, alphaChanges],
+        [SCOPE_NAMES.BETA, betaChanges],
+      ]),
     });
 
-    mockedReadPrereleaseState.mockResolvedValueOnce({});
+    mockedReadPrereleaseState.mockResolvedValueOnce(new Map());
     resolveNextVersionSpy
       .mockReturnValueOnce({ kind: "release", version: { version: "4", meta: {} } })
       .mockReturnValueOnce({ kind: "release", version: { version: "8", meta: {} } });
 
-    await expect(phase(context, state)).resolves.toEqual({
-      [SCOPE_NAMES.ALPHA]: { version: "4", meta: {} },
-      [SCOPE_NAMES.BETA]: { version: "8", meta: {} },
-    });
+    await expect(phase(context, state)).resolves.toEqual(
+      new Map([
+        [SCOPE_NAMES.ALPHA, { version: "4", meta: {} }],
+        [SCOPE_NAMES.BETA, { version: "8", meta: {} }],
+      ]),
+    );
     expect(mockedResolveGroupTargets).toHaveBeenCalledTimes(1);
     expect(mockedResolveGroupTargets).toHaveBeenNthCalledWith(
       1,
@@ -438,13 +459,13 @@ describe("createComputeNextVersionPhase", () => {
       fixed: false,
     });
     const context = createPhaseContext({
-      scopes: { [SCOPE_NAMES.ALPHA]: createScopeMap()[SCOPE_NAMES.ALPHA] },
+      scopes: new Map([[SCOPE_NAMES.ALPHA, createScope()]]),
     });
-    const state = createComputeNextVersionState({ currentVersions: {}, changes: {} });
+    const state = createComputeNextVersionState({ currentVersions: new Map(), changes: new Map() });
 
-    mockedReadPrereleaseState.mockResolvedValueOnce({});
+    mockedReadPrereleaseState.mockResolvedValueOnce(new Map());
 
-    await expect(phase(context, state)).resolves.toEqual({});
+    await expect(phase(context, state)).resolves.toEqual(new Map());
     expect(resolveNextVersionSpy).not.toHaveBeenCalled();
     expect(context.logger.debug).toHaveBeenCalledTimes(1);
     expect(context.logger.debug).toHaveBeenNthCalledWith(
@@ -460,17 +481,17 @@ describe("createComputeNextVersionPhase", () => {
       fixed: false,
     });
     const context = createPhaseContext({
-      scopes: { [SCOPE_NAMES.ALPHA]: createScopeMap()[SCOPE_NAMES.ALPHA] },
+      scopes: new Map([[SCOPE_NAMES.ALPHA, createScope()]]),
     });
     const state = createComputeNextVersionState({
-      currentVersions: { [SCOPE_NAMES.ALPHA]: { version: "3", meta: {} } },
-      changes: {},
+      currentVersions: new Map([[SCOPE_NAMES.ALPHA, { version: "3", meta: {} }]]),
+      changes: new Map(),
     });
 
-    mockedReadPrereleaseState.mockResolvedValueOnce({});
+    mockedReadPrereleaseState.mockResolvedValueOnce(new Map());
     resolveNextVersionSpy.mockReturnValueOnce(undefined);
 
-    await expect(phase(context, state)).resolves.toEqual({});
+    await expect(phase(context, state)).resolves.toEqual(new Map());
     expect(resolveNextVersionSpy).toHaveBeenCalledTimes(1);
     expect(resolveNextVersionSpy).toHaveBeenNthCalledWith(1, scheme, CHANNELS, "3", [], undefined);
     expect(context.logger.debug).toHaveBeenCalledTimes(1);
@@ -487,14 +508,14 @@ describe("createComputeNextVersionPhase", () => {
       fixed: false,
     });
     const context = createPhaseContext({
-      scopes: { [SCOPE_NAMES.ALPHA]: createScopeMap()[SCOPE_NAMES.ALPHA] },
+      scopes: new Map([[SCOPE_NAMES.ALPHA, createScope()]]),
     });
     const state = createComputeNextVersionState({
-      currentVersions: {},
-      changes: { [SCOPE_NAMES.ALPHA]: [createChange()] },
+      currentVersions: new Map(),
+      changes: new Map([[SCOPE_NAMES.ALPHA, [createChange()]]]),
     });
 
-    mockedReadPrereleaseState.mockResolvedValueOnce({});
+    mockedReadPrereleaseState.mockResolvedValueOnce(new Map());
 
     await expect(phase(context, state)).rejects.toThrow(
       new VersioningMissingCurrentVersionError([SCOPE_NAMES.ALPHA]),
