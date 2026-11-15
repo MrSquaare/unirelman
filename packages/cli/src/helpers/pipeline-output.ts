@@ -11,15 +11,15 @@ export const resolveVersionOutput = (
   cwd: string,
   result: Extract<PipelineResult, { pipeline: "version" }>,
 ): VersionOutput => {
-  const scopes: VersionOutput["scopes"] = {};
-
-  for (const scopeName in result.nextVersions) {
-    scopes[scopeName] = {
-      currentVersion: result.currentVersions[scopeName]?.version ?? null,
-      nextVersion: result.nextVersions[scopeName].version,
-    };
-  }
-
+  const scopes = Object.fromEntries(
+    [...result.nextVersions].map(([scopeName, nextVersion]) => [
+      scopeName,
+      {
+        currentVersion: result.currentVersions.get(scopeName)?.version ?? null,
+        nextVersion: nextVersion.version,
+      },
+    ]),
+  );
   const files = dedupeFileOperations(result.fileOperations).map((fileOperation) => ({
     path: relative(cwd, fileOperation.path),
     action: fileOperation.action,
@@ -36,16 +36,17 @@ export const resolveVersionOutput = (
 export const resolvePublishOutput = (
   result: Extract<PipelineResult, { pipeline: "publish" }>,
 ): PublishOutput => {
-  const releases: PublishOutput["releases"] = {};
-
-  for (const scopeName in result.releases) {
-    releases[scopeName] = result.releases[scopeName].map(({ type, name, status, meta }) => ({
-      type,
-      name,
-      status,
-      meta: { ...meta },
-    }));
-  }
+  const releases = Object.fromEntries(
+    [...result.releases].map(([scopeName, scopeReleases]) => [
+      scopeName,
+      scopeReleases.map(({ type, name, status, meta }) => ({
+        type,
+        name,
+        status,
+        meta: { ...meta },
+      })),
+    ]),
+  );
 
   return {
     pipeline: result.pipeline,
