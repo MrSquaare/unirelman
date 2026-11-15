@@ -413,16 +413,19 @@ describe("createCreateReleasesPhase", () => {
   it("should create GitHub releases with their notes for current versions without a release", async () => {
     const context = createPhaseContext();
     const state = createCreateReleasesState({
-      currentVersions: {
-        [SCOPE_NAMES.ALPHA]: createVersion({ extends: { version: "1.0.1" } }),
-        [SCOPE_NAMES.BETA]: createVersion({
-          extends: {
-            version: "2.0.0-beta.0",
-            meta: { prerelease: { channel: "beta", increment: 0 } },
-          },
-        }),
-      },
-      releaseNotes: { [SCOPE_NAMES.ALPHA]: "### Patch changes\n- fix a bug" },
+      currentVersions: new Map([
+        [SCOPE_NAMES.ALPHA, createVersion({ extends: { version: "1.0.1" } })],
+        [
+          SCOPE_NAMES.BETA,
+          createVersion({
+            extends: {
+              version: "2.0.0-beta.0",
+              meta: { prerelease: { channel: "beta", increment: 0 } },
+            },
+          }),
+        ],
+      ]),
+      releaseNotes: new Map([[SCOPE_NAMES.ALPHA, "### Patch changes\n- fix a bug"]]),
     });
 
     readHeadCommitSpy.mockResolvedValueOnce("abc123");
@@ -433,24 +436,32 @@ describe("createCreateReleasesPhase", () => {
 
     const phase = createCreateReleasesPhase(OPTIONS);
 
-    await expect(phase(context, state)).resolves.toEqual({
-      [SCOPE_NAMES.ALPHA]: [
-        {
-          type: "github-release",
-          name: "@scope/a@1.0.1",
-          status: "created",
-          meta: { github: RELEASE },
-        },
-      ],
-      [SCOPE_NAMES.BETA]: [
-        {
-          type: "github-release",
-          name: "@scope/b@2.0.0-beta.0",
-          status: "created",
-          meta: { github: { ...RELEASE, id: 43 } },
-        },
-      ],
-    });
+    await expect(phase(context, state)).resolves.toEqual(
+      new Map([
+        [
+          SCOPE_NAMES.ALPHA,
+          [
+            {
+              type: "github-release",
+              name: "@scope/a@1.0.1",
+              status: "created",
+              meta: { github: RELEASE },
+            },
+          ],
+        ],
+        [
+          SCOPE_NAMES.BETA,
+          [
+            {
+              type: "github-release",
+              name: "@scope/b@2.0.0-beta.0",
+              status: "created",
+              meta: { github: { ...RELEASE, id: 43 } },
+            },
+          ],
+        ],
+      ]),
+    );
 
     const octokit = MockedOctokit.mock.instances[0];
 
@@ -466,14 +477,14 @@ describe("createCreateReleasesPhase", () => {
     expect(mockedResolveGitTag).toHaveBeenCalledTimes(2);
     expect(mockedResolveGitTag).toHaveBeenNthCalledWith(
       1,
-      context.scopes[SCOPE_NAMES.ALPHA],
+      context.scopes.get(SCOPE_NAMES.ALPHA),
       "1.0.1",
       context.cwd,
       resolveDefaultGitTag,
     );
     expect(mockedResolveGitTag).toHaveBeenNthCalledWith(
       2,
-      context.scopes[SCOPE_NAMES.BETA],
+      context.scopes.get(SCOPE_NAMES.BETA),
       "2.0.0-beta.0",
       context.cwd,
       resolveDefaultGitTag,
@@ -545,9 +556,9 @@ describe("createCreateReleasesPhase", () => {
   it("should list the draft releases once for every lookup of the run", async () => {
     const context = createPhaseContext();
     const state = createCreateReleasesState({
-      currentVersions: {
-        [SCOPE_NAMES.ALPHA]: createVersion({ extends: { version: "1.0.1" } }),
-      },
+      currentVersions: new Map([
+        [SCOPE_NAMES.ALPHA, createVersion({ extends: { version: "1.0.1" } })],
+      ]),
     });
     const draftReleases = new Map([["@scope/a@1.0.1", RELEASE]]);
 
@@ -568,20 +579,15 @@ describe("createCreateReleasesPhase", () => {
     expect(listGitHubDraftReleasesSpy).toHaveBeenNthCalledWith(1, octokit, REPOSITORY);
   });
 
-  it("should skip scopes that are missing or without current version", async () => {
+  it("should skip scopes without current version", async () => {
     const context = createPhaseContext();
-    const state = createCreateReleasesState({
-      currentVersions: {
-        [SCOPE_NAMES.ALPHA]: createVersion({ extends: { version: "" } }),
-        [SCOPE_NAMES.MISSING]: createVersion({ extends: { version: "1.0.0" } }),
-      },
-    });
+    const state = createCreateReleasesState({ currentVersions: new Map() });
 
     readHeadCommitSpy.mockResolvedValueOnce("abc123");
 
     const phase = createCreateReleasesPhase(OPTIONS);
 
-    await expect(phase(context, state)).resolves.toEqual({});
+    await expect(phase(context, state)).resolves.toEqual(new Map());
     expect(findGitHubReleaseSpy).not.toHaveBeenCalled();
     expect(createGitHubReleaseSpy).not.toHaveBeenCalled();
   });
@@ -589,9 +595,9 @@ describe("createCreateReleasesPhase", () => {
   it("should skip GitHub releases that already exist", async () => {
     const context = createPhaseContext();
     const state = createCreateReleasesState({
-      currentVersions: {
-        [SCOPE_NAMES.ALPHA]: createVersion({ extends: { version: "1.0.1" } }),
-      },
+      currentVersions: new Map([
+        [SCOPE_NAMES.ALPHA, createVersion({ extends: { version: "1.0.1" } })],
+      ]),
     });
 
     readHeadCommitSpy.mockResolvedValueOnce("abc123");
@@ -599,16 +605,21 @@ describe("createCreateReleasesPhase", () => {
 
     const phase = createCreateReleasesPhase(OPTIONS);
 
-    await expect(phase(context, state)).resolves.toEqual({
-      [SCOPE_NAMES.ALPHA]: [
-        {
-          type: "github-release",
-          name: "@scope/a@1.0.1",
-          status: "existing",
-          meta: { github: RELEASE },
-        },
-      ],
-    });
+    await expect(phase(context, state)).resolves.toEqual(
+      new Map([
+        [
+          SCOPE_NAMES.ALPHA,
+          [
+            {
+              type: "github-release",
+              name: "@scope/a@1.0.1",
+              status: "existing",
+              meta: { github: RELEASE },
+            },
+          ],
+        ],
+      ]),
+    );
     expect(createGitHubReleaseSpy).not.toHaveBeenCalled();
     expect(context.logger.info).toHaveBeenCalledTimes(1);
     expect(context.logger.info).toHaveBeenNthCalledWith(
@@ -620,9 +631,9 @@ describe("createCreateReleasesPhase", () => {
   it("should not create GitHub releases in dry-run mode", async () => {
     const context = createPhaseContext({ dryRun: true });
     const state = createCreateReleasesState({
-      currentVersions: {
-        [SCOPE_NAMES.ALPHA]: createVersion({ extends: { version: "1.0.1" } }),
-      },
+      currentVersions: new Map([
+        [SCOPE_NAMES.ALPHA, createVersion({ extends: { version: "1.0.1" } })],
+      ]),
     });
 
     readHeadCommitSpy.mockResolvedValueOnce("abc123");
@@ -630,11 +641,14 @@ describe("createCreateReleasesPhase", () => {
 
     const phase = createCreateReleasesPhase(OPTIONS);
 
-    await expect(phase(context, state)).resolves.toEqual({
-      [SCOPE_NAMES.ALPHA]: [
-        { type: "github-release", name: "@scope/a@1.0.1", status: "created", meta: {} },
-      ],
-    });
+    await expect(phase(context, state)).resolves.toEqual(
+      new Map([
+        [
+          SCOPE_NAMES.ALPHA,
+          [{ type: "github-release", name: "@scope/a@1.0.1", status: "created", meta: {} }],
+        ],
+      ]),
+    );
     expect(createGitHubReleaseSpy).not.toHaveBeenCalled();
     expect(context.logger.info).toHaveBeenCalledTimes(1);
     expect(context.logger.info).toHaveBeenNthCalledWith(
