@@ -50,7 +50,7 @@ Check the exit code before reading the result. On failure, unirelman exits with 
 if npx unirelman version --dry-run --json > release.json; then
   jq '.scopes' release.json
 else
-  echo "Release failed, see the error above" >&2
+  echo "Release failed" >&2
   exit 1
 fi
 ```

@@ -1,6 +1,6 @@
 # unirelman
 
-Universal release manager: version, changelog and publish any project, from a single package to a monorepo.
+Universal release manager: version, changelog, and publish any project, from a single package to a monorepo.
 
 ## Table of contents
 
@@ -35,7 +35,7 @@ You describe your changes in small files called changesets. unirelman turns them
 
 ### Installation
 
-1. Install the CLI, core and the plugins you need:
+1. Install the CLI, core, and the plugins you need:
 
 ```shell
 npm install -D @unirelman/cli @unirelman/core @unirelman/plugin-changesets @unirelman/plugin-changelog @unirelman/plugin-npm @unirelman/plugin-git @unirelman/plugin-semver

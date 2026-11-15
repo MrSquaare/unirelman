@@ -15,7 +15,7 @@ Each phase has one job and one result type. This is what makes plugins composabl
 
 ## The version pipeline
 
-```
+```txt
 initialize
 → getCurrentVersion → parseCurrentVersion
 → getChanges
@@ -29,7 +29,7 @@ initialize
 
 ## The publish pipeline
 
-```
+```txt
 initialize
 → getCurrentVersion → parseCurrentVersion
 → getReleaseNotes

@@ -10,7 +10,7 @@ import PackageManagers from "../../../../components/PackageManagers.astro";
 ```ts title="unirelman.config.ts"
 import { createNpmPlugin } from "@unirelman/plugin-npm";
 
-createNpmPlugin({ publish: true });
+createNpmPlugin();
 ```
 
 ## Options
@@ -45,7 +45,7 @@ An [internal dependency](/unirelman/reference/glossary/#internal-dependency) is 
 | `@example/cli` is updated, by its own changes or by a dependency, and `ranges: "patch"`                             | —                | ✓            |
 | `@example/cli` is updated, by its own changes or by a dependency, and `@example/core` gets a minor or major release | —                | ✓            |
 
-When `@example/cli` is updated, its `Updated dependencies` change lists every updated dependency outside `devDependencies`, next to its own changes.
+When `@example/cli` is updated, its `Updated dependencies` change lists each dependency outside `devDependencies` that gives a dependent update or a range update, next to its own changes.
 
 `devDependencies` never give a dependent update. When `@example/core` is only in the `devDependencies` of `@example/cli`, `@example/cli` isn't updated, and `@example/core` leaves its range (or `dependents` is `"always"`), the specifier of `@example/core` still moves to the next version. `@example/cli` keeps its version and gets no change.
 

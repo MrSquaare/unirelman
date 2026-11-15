@@ -10,9 +10,9 @@ import PackageManagers from "../../../components/PackageManagers.astro";
 
 In this tutorial, you write a plugin that stores the version of a scope in a plain `VERSION` file, then add a command that prints it. You use it in the project from [Release your first package](/unirelman/tutorials/first-release/), in place of the npm plugin.
 
-## Before you begin
+## Prerequisites
 
-You need the project from [Release your first package](/unirelman/tutorials/first-release/), at version `1.0.1`.
+- The project from [Release your first package](/unirelman/tutorials/first-release/), at version `1.0.1`.
 
 ## Read the current version
 
@@ -228,7 +228,7 @@ Phases and commands report a failure by throwing an error, and the CLI prints it
 
    The command fails with the error, prefixed by the plugin and the phase:
 
-   ```
+   ```txt
    Plugin "version-file" failed in the getCurrentVersion phase: VERSION file of scope my-package is empty
    ```
 

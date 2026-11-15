@@ -10,7 +10,7 @@ export default defineConfig({
       title: "unirelman",
       plugins: [starlightLinksValidator()],
       disable404Route: true,
-      description: "Universal release manager: version, changelog and publish any project.",
+      description: "Universal release manager: version, changelog, and publish any project.",
       social: [{ icon: "github", label: "GitHub", href: "https://github.com/MrSquaare/unirelman" }],
       editLink: {
         baseUrl: "https://github.com/MrSquaare/unirelman/edit/main/docs/",

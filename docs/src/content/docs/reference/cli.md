@@ -1,6 +1,6 @@
 ---
 title: CLI
-description: Commands, options, output modes, output streams and exit codes of the unirelman command line.
+description: Commands, options, output modes, output streams, and exit codes of the unirelman command line.
 ---
 
 The CLI is provided by the `@unirelman/cli` package, as the `unirelman` command.
@@ -147,8 +147,8 @@ After a pipeline, the last message summarizes the next versions (`version`) or t
 
 On failure, the CLI prints the error message on standard error, prefixed with `error:` in `plain` and `json` modes. When a plugin fails during a pipeline, the message names the plugin and the phase:
 
-```
-error: Plugin "example" failed in the createReleases phase: Failed to publish example@1.0.1
+```txt
+error: Plugin "example" failed in the createReleases phase: Failed to publish @example/core@1.0.1
 ```
 
 With `--verbose`, the CLI prints the stack trace of the error, followed by the stack trace of each error it wraps, introduced by `Caused by:`.

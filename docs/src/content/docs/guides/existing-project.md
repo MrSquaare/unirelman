@@ -1,6 +1,6 @@
 ---
 title: Adopt unirelman in an existing project
-description: Add unirelman to a project that already has versions, tags and releases.
+description: Add unirelman to a project that already has versions, tags, and releases.
 sidebar:
   order: 6
 ---

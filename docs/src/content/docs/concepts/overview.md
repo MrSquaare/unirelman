@@ -1,6 +1,6 @@
 ---
 title: How unirelman works
-description: Scopes, changes, versions and plugins - the model behind unirelman.
+description: "Scopes, changes, versions, and plugins: the model behind unirelman."
 sidebar:
   order: 1
 ---
