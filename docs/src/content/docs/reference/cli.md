@@ -118,11 +118,11 @@ unirelman <plugin> <command> [options]
 
 ## Output modes
 
-| Mode          | Output                                                                                                                                                 |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `interactive` | Styled messages, a spinner while a command runs, and prompts for missing options.                                                                      |
-| `plain`       | One line per message. A missing option fails the command with `CLIPromptUnavailableError`, naming the option to pass.                                  |
-| `json`        | The result of the command as a JSON document on standard output, documented with each command, plus warnings and errors. Prompts behave as in `plain`. |
+| Mode          | Output                                                                                                                                                   |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `interactive` | Styled messages, a spinner while a command runs, and prompts for missing options.                                                                        |
+| `plain`       | One line per message. A missing option fails the command with `CLIPromptUnavailableError`, naming the option to pass.                                    |
+| `json`        | Messages as in `plain`, and the result of the command as a JSON document on standard output, documented with each command. Prompts behave as in `plain`. |
 
 The default mode is `interactive` when standard input and standard error are both terminals, and `plain` otherwise.
 
@@ -130,12 +130,12 @@ After a pipeline, the last message summarizes the next versions (`version`) or t
 
 ## Output streams
 
-| Output                                       | Stream          |
-| -------------------------------------------- | --------------- |
-| JSON document of a command in `json` mode    | Standard output |
-| Help (`--help`) and version (`--version`)    | Standard output |
-| Messages, progress, prompts, logs and errors | Standard error  |
-| Usage when the command is missing            | Standard error  |
+| Output                                        | Stream          |
+| --------------------------------------------- | --------------- |
+| JSON document of a command in `json` mode     | Standard output |
+| Help (`--help`) and version (`--version`)     | Standard output |
+| Messages, progress, prompts, logs, and errors | Standard error  |
+| Usage when the command is missing             | Standard error  |
 
 ## Errors and exit codes
 

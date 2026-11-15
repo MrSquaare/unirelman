@@ -15,10 +15,10 @@ createSemverPlugin({ prereleaseChannels: ["alpha", "beta", "rc"] });
 
 ## Options
 
-| Option               | Type                                  | Default | Description                                                                                                                                               |
-| -------------------- | ------------------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `prereleaseChannels` | `string[]`                            | `[]`    | [Channels](/unirelman/reference/glossary/#channel) a scope goes through, in order: letters, digits and hyphens. Required by `semver pre`, except to exit. |
-| `fixed`              | `boolean \| Record<string, string[]>` | `false` | [Groups](/unirelman/reference/glossary/#group) of scopes that share a version. See [Fixed versioning](#fixed-versioning).                                 |
+| Option               | Type                                  | Default | Description                                                                                                                                                |
+| -------------------- | ------------------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `prereleaseChannels` | `string[]`                            | `[]`    | [Channels](/unirelman/reference/glossary/#channel) a scope goes through, in order: letters, digits, and hyphens. Required by `semver pre`, except to exit. |
+| `fixed`              | `boolean \| Record<string, string[]>` | `false` | [Groups](/unirelman/reference/glossary/#group) of scopes that share a version. See [Fixed versioning](#fixed-versioning).                                  |
 
 ## Phases
 
@@ -46,13 +46,13 @@ Every rule but "Exit, no changes" needs at least one change.
 | Exit, no changes            | Release the base.                    | `1.3.0-beta.0` → `1.3.0`                  |
 | Exit, with changes          | Apply the changes, then release.     | `1.3.0-beta.0` + major → `2.0.0`          |
 
-A change is bigger than the base when its level is above the level the base was bumped by: `1.3.0` is a minor bump of `1.2.3`, so a major change is bigger.
+A change is bigger than the base when its level is higher than the level the base was bumped by: `1.3.0` is a minor bump of `1.2.3`, so a major change is bigger.
 
 ## Fixed versioning
 
 `fixed` groups scopes that share a version, such as `{ product: ["@example/core", "@example/cli"] }`. The other scopes stay independent. `true` is one group named `all` with every scope of the registration.
 
-`computeNextVersion` computes one next version per group, from the shared current version and the changes of every scope of the group, and gives it to every scope of the group, with or without changes.
+`computeNextVersion` computes one next version per group, from the shared current version and the changes of every scope of the group, and gives it to every scope of the group, including the scopes without changes.
 
 ## Commands
 
@@ -113,25 +113,25 @@ import { isSemverVersionMeta } from "@unirelman/plugin-semver";
 
 ## Errors
 
-| Error                                  | Cause                                                                                       |
-| -------------------------------------- | ------------------------------------------------------------------------------------------- |
-| `VersioningInvalidVersionError`        | A current version has another format.                                                       |
-| `GroupEmptyError`                      | A group has no scope.                                                                       |
-| `GroupUnknownScopeError`               | A group lists a scope outside the registration.                                             |
-| `GroupDuplicateScopeError`             | A scope is in two groups.                                                                   |
-| `VersioningFixedVersionMismatchError`  | The scopes of a group have different current versions.                                      |
-| `VersioningMissingCurrentVersionError` | A scope or a group with changes has no current version.                                     |
-| `PrereleaseStateMismatchError`         | The scopes of a group have different prerelease states.                                     |
-| `PrereleaseNoChannelsConfiguredError`  | `semver pre` runs without `--exit` and with an empty `prereleaseChannels`.                  |
-| `PrereleaseInvalidChannelNameError`    | A channel in `prereleaseChannels` has a character other than a letter, a digit or a hyphen. |
-| `PrereleaseInvalidTargetChannelError`  | The channel is outside `prereleaseChannels`, or before the current one.                     |
-| `PrereleaseDowngradeChannelError`      | A next version would move to an earlier channel.                                            |
-| `PrereleaseInvalidCurrentChannelError` | A current version is on a channel outside `prereleaseChannels`.                             |
-| `PrereleaseInvalidChannelInStateError` | `semver pre` enters a channel while the state has a channel outside `prereleaseChannels`.   |
-| `PrereleaseInvalidScopeError`          | `--scope` names a scope outside the independent scopes of the registration.                 |
-| `PrereleaseInvalidGroupError`          | `--group` names no group.                                                                   |
-| `PrereleaseOptionRequiredError`        | `--channel` or `--exit` is given without a target.                                          |
-| `PrereleaseOptionsConflictError`       | `--channel` and `--exit`, or `--scope` and `--group`, are given together.                   |
+| Error                                  | Cause                                                                                        |
+| -------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `VersioningInvalidVersionError`        | A current version has another format.                                                        |
+| `GroupEmptyError`                      | A group has no scope.                                                                        |
+| `GroupUnknownScopeError`               | A group lists a scope outside the registration.                                              |
+| `GroupDuplicateScopeError`             | A scope is in two groups.                                                                    |
+| `VersioningFixedVersionMismatchError`  | The scopes of a group have different current versions.                                       |
+| `VersioningMissingCurrentVersionError` | A scope or a group with changes has no current version.                                      |
+| `PrereleaseStateMismatchError`         | The scopes of a group have different prerelease states.                                      |
+| `PrereleaseNoChannelsConfiguredError`  | `semver pre` runs without `--exit` and with an empty `prereleaseChannels`.                   |
+| `PrereleaseInvalidChannelNameError`    | A channel in `prereleaseChannels` has a character other than a letter, a digit, or a hyphen. |
+| `PrereleaseInvalidTargetChannelError`  | The channel is outside `prereleaseChannels`, or before the current one.                      |
+| `PrereleaseDowngradeChannelError`      | A next version would move to an earlier channel.                                             |
+| `PrereleaseInvalidCurrentChannelError` | A current version is on a channel outside `prereleaseChannels`.                              |
+| `PrereleaseInvalidChannelInStateError` | `semver pre` enters a channel while the state has a channel outside `prereleaseChannels`.    |
+| `PrereleaseInvalidScopeError`          | `--scope` names a scope outside the independent scopes of the registration.                  |
+| `PrereleaseInvalidGroupError`          | `--group` names no group.                                                                    |
+| `PrereleaseOptionRequiredError`        | `--channel` or `--exit` is given without a target.                                           |
+| `PrereleaseOptionsConflictError`       | `--channel` and `--exit`, or `--scope` and `--group`, are given together.                    |
 
 ## Related
 

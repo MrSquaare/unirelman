@@ -15,11 +15,11 @@ createCalverPlugin({ prereleaseChannels: ["alpha", "beta"] });
 
 ## Options
 
-| Option               | Type                                  | Default | Description                                                                                                                                               |
-| -------------------- | ------------------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `prereleaseChannels` | `string[]`                            | `[]`    | [Channels](/unirelman/reference/glossary/#channel) a scope goes through, in order: letters, digits and hyphens. Required by `calver pre`, except to exit. |
-| `fixed`              | `boolean \| Record<string, string[]>` | `false` | [Groups](/unirelman/reference/glossary/#group) of scopes that share a version. See [Fixed versioning](#fixed-versioning).                                 |
-| `granularity`        | `"day" \| "month"`                    | `"day"` | Period of a version. See [Version format](#version-format).                                                                                               |
+| Option               | Type                                  | Default | Description                                                                                                                                                |
+| -------------------- | ------------------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `prereleaseChannels` | `string[]`                            | `[]`    | [Channels](/unirelman/reference/glossary/#channel) a scope goes through, in order: letters, digits, and hyphens. Required by `calver pre`, except to exit. |
+| `fixed`              | `boolean \| Record<string, string[]>` | `false` | [Groups](/unirelman/reference/glossary/#group) of scopes that share a version. See [Fixed versioning](#fixed-versioning).                                  |
+| `granularity`        | `"day" \| "month"`                    | `"day"` | Period of a version. See [Version format](#version-format).                                                                                                |
 
 ## Phases
 
@@ -56,7 +56,7 @@ The date is the day, or the month with the `month` granularity, of the `version`
 
 `fixed` groups scopes that share a version, such as `{ product: ["@example/core", "@example/cli"] }`. The other scopes stay independent. `true` is one group named `all` with every scope of the registration.
 
-`computeNextVersion` computes one next version per group, from the shared current version and the changes of every scope of the group, and gives it to every scope of the group, with or without changes.
+`computeNextVersion` computes one next version per group, from the shared current version and the changes of every scope of the group, and gives it to every scope of the group, including the scopes without changes.
 
 ## Commands
 
@@ -117,26 +117,26 @@ import { isCalverVersionMeta } from "@unirelman/plugin-calver";
 
 ## Errors
 
-| Error                                  | Cause                                                                                       |
-| -------------------------------------- | ------------------------------------------------------------------------------------------- |
-| `VersioningInvalidVersionError`        | A current version has another format, or a date that does not exist.                        |
-| `CalverFutureVersionError`             | A current version is dated after today (UTC).                                               |
-| `GroupEmptyError`                      | A group has no scope.                                                                       |
-| `GroupUnknownScopeError`               | A group lists a scope outside the registration.                                             |
-| `GroupDuplicateScopeError`             | A scope is in two groups.                                                                   |
-| `VersioningFixedVersionMismatchError`  | The scopes of a group have different current versions.                                      |
-| `VersioningMissingCurrentVersionError` | A scope or a group with changes has no current version.                                     |
-| `PrereleaseStateMismatchError`         | The scopes of a group have different prerelease states.                                     |
-| `PrereleaseNoChannelsConfiguredError`  | `calver pre` runs without `--exit` and with an empty `prereleaseChannels`.                  |
-| `PrereleaseInvalidChannelNameError`    | A channel in `prereleaseChannels` has a character other than a letter, a digit or a hyphen. |
-| `PrereleaseInvalidTargetChannelError`  | The channel is outside `prereleaseChannels`, or before the current one.                     |
-| `PrereleaseDowngradeChannelError`      | A next version would move to an earlier channel.                                            |
-| `PrereleaseInvalidCurrentChannelError` | A current version is on a channel outside `prereleaseChannels`.                             |
-| `PrereleaseInvalidChannelInStateError` | `calver pre` enters a channel while the state has a channel outside `prereleaseChannels`.   |
-| `PrereleaseInvalidScopeError`          | `--scope` names a scope outside the independent scopes of the registration.                 |
-| `PrereleaseInvalidGroupError`          | `--group` names no group.                                                                   |
-| `PrereleaseOptionRequiredError`        | `--channel` or `--exit` is given without a target.                                          |
-| `PrereleaseOptionsConflictError`       | `--channel` and `--exit`, or `--scope` and `--group`, are given together.                   |
+| Error                                  | Cause                                                                                        |
+| -------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `VersioningInvalidVersionError`        | A current version has another format, or a date that does not exist.                         |
+| `CalverFutureVersionError`             | A current version is dated after today (UTC).                                                |
+| `GroupEmptyError`                      | A group has no scope.                                                                        |
+| `GroupUnknownScopeError`               | A group lists a scope outside the registration.                                              |
+| `GroupDuplicateScopeError`             | A scope is in two groups.                                                                    |
+| `VersioningFixedVersionMismatchError`  | The scopes of a group have different current versions.                                       |
+| `VersioningMissingCurrentVersionError` | A scope or a group with changes has no current version.                                      |
+| `PrereleaseStateMismatchError`         | The scopes of a group have different prerelease states.                                      |
+| `PrereleaseNoChannelsConfiguredError`  | `calver pre` runs without `--exit` and with an empty `prereleaseChannels`.                   |
+| `PrereleaseInvalidChannelNameError`    | A channel in `prereleaseChannels` has a character other than a letter, a digit, or a hyphen. |
+| `PrereleaseInvalidTargetChannelError`  | The channel is outside `prereleaseChannels`, or before the current one.                      |
+| `PrereleaseDowngradeChannelError`      | A next version would move to an earlier channel.                                             |
+| `PrereleaseInvalidCurrentChannelError` | A current version is on a channel outside `prereleaseChannels`.                              |
+| `PrereleaseInvalidChannelInStateError` | `calver pre` enters a channel while the state has a channel outside `prereleaseChannels`.    |
+| `PrereleaseInvalidScopeError`          | `--scope` names a scope outside the independent scopes of the registration.                  |
+| `PrereleaseInvalidGroupError`          | `--group` names no group.                                                                    |
+| `PrereleaseOptionRequiredError`        | `--channel` or `--exit` is given without a target.                                           |
+| `PrereleaseOptionsConflictError`       | `--channel` and `--exit`, or `--scope` and `--group`, are given together.                    |
 
 ## Related
 

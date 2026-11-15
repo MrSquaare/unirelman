@@ -2,7 +2,7 @@
 
 Keeps a release pull request up to date, and publishes when you merge it.
 
-## Table of Contents
+## Table of contents
 
 - [About](#about)
 - [Getting started](#getting-started)

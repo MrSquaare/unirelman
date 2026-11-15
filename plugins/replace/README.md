@@ -1,8 +1,8 @@
-# @unirelman/plugin-replace
+# `@unirelman/plugin-replace`
 
 unirelman plugin for version references in any file.
 
-## Table of Contents
+## Table of contents
 
 - [About](#about)
 - [Getting started](#getting-started)

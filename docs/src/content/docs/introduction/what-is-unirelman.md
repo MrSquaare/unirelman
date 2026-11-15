@@ -9,15 +9,15 @@ unirelman is a universal release manager: it versions, changelogs and publishes 
 
 ## Context
 
-Every release repeats the same steps: decide the next version from what changed, write it where it lives, write the changelog, commit and tag, then publish to a registry and a forge. Each project combines these steps differently: an npm library publishes to the registry, an application tags a calendar version, a monorepo releases each package at its own pace or all of them together.
+Every release repeats the same steps: decide the next version from what changed, write it where it lives, write the changelog, commit and tag, then publish to a registry and a forge. Each project combines these steps differently: an npm library publishes to the registry, an app tags a calendar version, a monorepo releases each package at its own pace or all of them together.
 
 ## Approach
 
-unirelman runs a release in two commands, `version` and `publish`, and plugins do each step. A project registers the plugins it needs, for all its [scopes](/unirelman/reference/glossary/#scope) or for some of them. [How unirelman works](/unirelman/concepts/overview/) explains the model.
+unirelman runs a release in two commands, `version` and `publish`, and plugins do each step. A project registers each plugin it needs for all its [scopes](/unirelman/reference/glossary/#scope) or for some of them. [How unirelman works](/unirelman/concepts/overview/) explains the model.
 
 ## Features
 
-- **Changesets**: record each change in a file, with its scopes, level and message. See the [Changesets plugin](/unirelman/reference/plugins/changesets/).
+- **Changesets**: record each change in a file, with its scopes, level, and message. See the [Changesets plugin](/unirelman/reference/plugins/changesets/).
 - **Semantic and calendar versioning**: see [Choose a versioning scheme](/unirelman/guides/versioning-schemes/).
 - **Prereleases**: move a scope through channels such as `alpha`, `beta` and `rc`. See [Publish prereleases](/unirelman/guides/prereleases/).
 - **Monorepos**: version each scope on its own, or several together. See [Release a monorepo](/unirelman/guides/monorepo/).

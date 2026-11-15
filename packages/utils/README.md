@@ -1,8 +1,8 @@
-# @unirelman/utils
+# `@unirelman/utils`
 
 Project-agnostic utilities of unirelman.
 
-## Table of Contents
+## Table of contents
 
 - [About](#about)
 - [Getting started](#getting-started)

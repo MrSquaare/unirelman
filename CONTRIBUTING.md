@@ -66,6 +66,13 @@ Fix the lint and format issues:
 pnpm check:fix
 ```
 
+Lint the prose of the documentation and the READMEs, with [Vale](https://vale.sh/) installed:
+
+```shell
+vale sync
+pnpm lint:prose
+```
+
 Run the tests:
 
 ```shell

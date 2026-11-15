@@ -5,7 +5,7 @@ description: The terms used across unirelman, its plugins and this documentation
 
 ### Change
 
-A modification recorded for a [scope](#scope), with a message, a [level](#level) and [meta](#meta). Plugins provide changes in the `getChanges` [phase](#phase), for example from [changesets](#changeset).
+A modification recorded for a [scope](#scope), with a message, a [level](#level), and [meta](#meta). Plugins provide changes in the `getChanges` [phase](#phase), for example from [changesets](#changeset).
 
 ### Changelog section
 
@@ -121,7 +121,7 @@ The pull request the GitHub Action keeps up to date with the [release commit](#r
 
 ### Scope
 
-A releasable unit of a project, such as a package, with a name, a folder and its own version. See [`scopes`](/unirelman/reference/configuration/#scopes).
+A releasable unit of a project, such as a package, with a name, a folder, and its own version. See [`scopes`](/unirelman/reference/configuration/#scopes).
 
 ### Store
 

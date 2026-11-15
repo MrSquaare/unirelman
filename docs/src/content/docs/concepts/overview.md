@@ -9,7 +9,7 @@ unirelman is a release engine: core defines a few concepts and the order in whic
 
 ## Scopes
 
-A [scope](/unirelman/reference/glossary/#scope) is something you release: a package, an application, or the whole repository. Each scope has a name and a folder, and gets its own version.
+A [scope](/unirelman/reference/glossary/#scope) is something you release: a package, an app, or the whole repository. Each scope has a name and a folder, and gets its own version.
 
 A single-package project has one scope. A monorepo has one per package, and the repository root can be one too. Each scope moves at its own pace, with the changes recorded for it and the versioning scheme registered for it. Scopes released as one product share a version through [fixed versioning](/unirelman/reference/glossary/#fixed-versioning).
 
@@ -25,7 +25,7 @@ A release goes from changes to versions:
 
 ## Plugins
 
-Plugins do every step above, so a project uses the plugins it needs, and each source or destination is swappable:
+Plugins do every one of these steps, so a project uses the plugins it needs, and each source or destination is swappable:
 
 | Concern                 | Built-in plugin      | A custom plugin could use…                       |
 | ----------------------- | -------------------- | ------------------------------------------------ |
@@ -35,7 +35,7 @@ Plugins do every step above, so a project uses the plugins it needs, and each so
 | What gets written       | Changelog            | Another changelog format                         |
 | What gets published     | npm, Git, GitHub     | Other registries or forges                       |
 
-A plugin is registered for every scope or for some of them. This is how a monorepo uses SemVer for its libraries and CalVer for its application.
+A plugin is registered for every scope or for some of them. This is how a monorepo uses SemVer for its libraries and CalVer for its app.
 
 ## Two pipelines
 

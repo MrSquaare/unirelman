@@ -15,13 +15,13 @@ createChangelogPlugin({ mode: "root" });
 
 ## Options
 
-| Option            | Type                                                     | Default                                                  | Description                                                |
-| ----------------- | -------------------------------------------------------- | -------------------------------------------------------- | ---------------------------------------------------------- |
-| `mode`            | `"root" \| "scope"`                                      | `"root"`                                                 | Location of the changelogs. See [Modes](#modes).           |
-| `header`          | `string`, or `({ scopeName }) => string` in `scope` mode | `# Changelog`, `# <scope> Changelog` in `scope` mode     | Text above the sections. Must not contain a `## ` heading. |
-| `sectionHeader`   | `({ scopeName, version }) => string`                     | `## <scope> - <version>`, `## <version>` in `scope` mode | Heading of a section: one line starting with `## `.        |
-| `levelHeaders`    | `{ major?, minor?, patch? }`                             | `Major changes`, `Minor changes`, `Patch changes`        | Subsection titles, one line each.                          |
-| `noChangeMessage` | `({ scopeName, version }) => string`                     | `No user-facing changes.`                                | Entry of a version without changes.                        |
+| Option            | Type                                                     | Default                                                  | Description                                                 |
+| ----------------- | -------------------------------------------------------- | -------------------------------------------------------- | ----------------------------------------------------------- |
+| `mode`            | `"root" \| "scope"`                                      | `"root"`                                                 | Location of the changelogs. See [Modes](#modes).            |
+| `header`          | `string`, or `({ scopeName }) => string` in `scope` mode | `# Changelog`, `# <scope> Changelog` in `scope` mode     | Text before the sections. Must not contain a `## ` heading. |
+| `sectionHeader`   | `({ scopeName, version }) => string`                     | `## <scope> - <version>`, `## <version>` in `scope` mode | Heading of a section: one line starting with `## `.         |
+| `levelHeaders`    | `{ major?, minor?, patch? }`                             | `Major changes`, `Minor changes`, `Patch changes`        | Subsection titles, one line each.                           |
+| `noChangeMessage` | `({ scopeName, version }) => string`                     | `No user-facing changes.`                                | Entry of a version without changes.                         |
 
 ## Phases
 
@@ -57,7 +57,7 @@ createChangelogPlugin({ mode: "root" });
 - <message of a patch change>
 ```
 
-- The header is rewritten on every release; new sections go above the existing ones.
+- The header is rewritten on every release; new sections go before the existing ones.
 - In `root` mode, the sections of one release are ordered by scope name.
 - Each level with changes gets a subsection. A version without changes, such as the exit from a prerelease, gets `### Changes` with `noChangeMessage`.
 - The lines after the first line of a message are indented under its entry.

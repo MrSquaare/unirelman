@@ -37,7 +37,7 @@ add a feature
 | `level`  | `patch`, `minor` or `major`, case-insensitive.                              |
 | Body     | Message of the change, non-empty.                                           |
 
-A changeset is a `.md` file with a frontmatter block delimited by `---`. Its file name is free.
+A changeset is a `.md` file with a frontmatter block delimited by `---`. Its filename is free.
 
 ## Commands
 
@@ -79,7 +79,7 @@ With `--json`, the command prints this document, validated by `changesetsCreateO
 
 ## Change meta
 
-Changes from this plugin carry `meta.changesets.path`, the file name of their changeset. The exported type guard checks it:
+Changes from this plugin carry `meta.changesets.path`, the filename of their changeset. The exported type guard checks it:
 
 ```ts
 import { isChangesetsChangeMeta } from "@unirelman/plugin-changesets";
@@ -87,13 +87,13 @@ import { isChangesetsChangeMeta } from "@unirelman/plugin-changesets";
 
 ## Errors
 
-| Error                               | Cause                                                                                        |
-| ----------------------------------- | -------------------------------------------------------------------------------------------- |
-| `ChangesetsInvalidScopesError`      | `--scopes`, or a changeset, lists a scope the plugin is not registered for.                  |
-| `ChangesetsInvalidLevelError`       | `--level`, or the level of a changeset, is other than `patch`, `minor` or `major`.           |
-| `ChangesetsMissingFrontmatterError` | A changeset has no frontmatter block delimited by `---`.                                     |
-| `ChangesetsMissingFieldError`       | A changeset has no scopes, no level or no message.                                           |
-| `ChangesetsInvalidFileError`        | A changeset is invalid. Its `cause` is one of the errors above, and its `filePath` the file. |
+| Error                               | Cause                                                                                                |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `ChangesetsInvalidScopesError`      | `--scopes`, or a changeset, lists a scope the plugin is not registered for.                          |
+| `ChangesetsInvalidLevelError`       | `--level`, or the level of a changeset, is other than `patch`, `minor` or `major`.                   |
+| `ChangesetsMissingFrontmatterError` | A changeset has no frontmatter block delimited by `---`.                                             |
+| `ChangesetsMissingFieldError`       | A changeset has no scopes, no level, or no message.                                                  |
+| `ChangesetsInvalidFileError`        | A changeset is invalid. Its `cause` is one of the errors of this table, and its `filePath` the file. |
 
 ## Related
 

@@ -1,8 +1,8 @@
-# @unirelman/plugin-changelog
+# `@unirelman/plugin-changelog`
 
 unirelman plugin for changelogs.
 
-## Table of Contents
+## Table of contents
 
 - [About](#about)
 - [Getting started](#getting-started)

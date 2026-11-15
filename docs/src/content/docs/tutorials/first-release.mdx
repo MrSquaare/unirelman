@@ -10,7 +10,7 @@ import PackageManagers from "../../../components/PackageManagers.astro";
 
 In this tutorial, you set up unirelman in a small npm package, record a bug fix, and release it: the version in `package.json` goes from `1.0.0` to `1.0.1`, a changelog is written, and the release is committed and tagged.
 
-Everything runs locally: publishing to npm stays disabled.
+Everything runs locally: publishing to npm stays off.
 
 ## Before you begin
 
@@ -100,7 +100,7 @@ Describe a bug fix with a [changeset](/unirelman/reference/glossary/#changeset):
 
 <PackageManagers type="exec" pkg="unirelman" args='changesets create --scopes my-package --level patch --message "fix a bug"' />
 
-Without options, the command prompts for the scopes, the level and the message.
+Without options, the command prompts for the scopes, the level, and the message.
 
 The command creates a file under `.unirelman/changesets/`:
 
@@ -124,7 +124,7 @@ level: patch
 fix a bug
 ```
 
-The file name changes on every run. Commit the changeset like any other change of your project:
+The filename changes on every run. Commit the changeset like any other change of your project:
 
 ```sh
 git add .

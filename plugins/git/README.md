@@ -1,8 +1,8 @@
-# @unirelman/plugin-git
+# `@unirelman/plugin-git`
 
 unirelman plugin for Git.
 
-## Table of Contents
+## Table of contents
 
 - [About](#about)
 - [Getting started](#getting-started)

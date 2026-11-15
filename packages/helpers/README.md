@@ -1,8 +1,8 @@
-# @unirelman/helpers
+# `@unirelman/helpers`
 
 Shared building blocks for unirelman plugins.
 
-## Table of Contents
+## Table of contents
 
 - [About](#about)
 - [Getting started](#getting-started)
