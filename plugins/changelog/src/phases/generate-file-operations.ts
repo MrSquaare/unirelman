@@ -1,9 +1,10 @@
 import type {
+  Change,
   ChangeLevel,
+  FileOperation,
   Plugin,
   ScopeChangesMap,
   ScopeFileOperationsMap,
-  ScopeMap,
   ScopeVersionMap,
 } from "@unirelman/core";
 
@@ -22,7 +23,7 @@ const LINE_BREAK_PATTERN = /\r?\n/;
 const LIST_ITEM_INDENT = "  ";
 
 export const resolveGroupedChangeMessages = (
-  changes: ScopeChangesMap[string] | undefined,
+  changes: readonly Change[] | undefined,
 ): Record<ChangeLevel, string[]> => {
   const groupedChanges: Record<ChangeLevel, string[]> = {
     major: [],
@@ -83,7 +84,7 @@ export const resolveChangelogGroupsMarkdown = (
 export const resolveScopeChangelogMarkdown = (
   scopeName: string,
   version: string,
-  changes: ScopeChangesMap[string] | undefined,
+  changes: readonly Change[] | undefined,
   options: ResolvedChangelogPluginOptions,
 ): string => {
   const sectionHeading = resolveChangelogSectionHeading(options.sectionHeader, scopeName, version);
@@ -98,23 +99,18 @@ export const resolveScopeChangelogMarkdown = (
 };
 
 export const resolveRootChangelogMarkdown = (
-  scopes: ScopeMap,
   nextVersions: ScopeVersionMap,
   changes: ScopeChangesMap,
   options: ResolvedChangelogPluginOptions,
 ): string => {
   const sections: string[] = [];
-  const scopeNames = Object.keys(nextVersions).sort();
+  const sortedNextVersions = [...nextVersions].sort(
+    ([left], [right]) => Number(left > right) - Number(left < right),
+  );
 
-  for (const scopeName of scopeNames) {
-    const version = nextVersions[scopeName]?.version;
-
-    if (!scopes[scopeName] || !version) {
-      continue;
-    }
-
+  for (const [scopeName, { version }] of sortedNextVersions) {
     sections.push(
-      thisMod.resolveScopeChangelogMarkdown(scopeName, version, changes[scopeName], options),
+      thisMod.resolveScopeChangelogMarkdown(scopeName, version, changes.get(scopeName), options),
     );
   }
 
@@ -137,46 +133,47 @@ export const resolveNextChangelogContent = (
     .join("\n\n")}\n`;
 };
 
+export type ScopeChangelog = {
+  readonly version: string;
+  readonly path: string;
+  readonly content: string;
+};
+
 export const resolveChangelogFileOperations = (
-  cwd: string,
-  scopes: ScopeMap,
   nextVersions: ScopeVersionMap,
   changes: ScopeChangesMap,
   options: ResolvedChangelogPluginOptions,
-  existingContents: Record<string, string>,
+  changelogs: ReadonlyMap<string, ScopeChangelog>,
 ): ScopeFileOperationsMap => {
-  const fileOperations: ScopeFileOperationsMap = {};
+  const fileOperations = new Map<string, FileOperation[]>();
   const rootMarkdown =
     options.mode === "root"
-      ? thisMod.resolveRootChangelogMarkdown(scopes, nextVersions, changes, options)
+      ? thisMod.resolveRootChangelogMarkdown(nextVersions, changes, options)
       : undefined;
 
-  for (const scopeName in nextVersions) {
-    const scope = scopes[scopeName];
-    const version = nextVersions[scopeName]?.version;
-
-    if (!scope || !version) {
-      continue;
-    }
-
-    const filePath = resolveChangelogPath(cwd, scope.path, options.mode);
+  for (const [scopeName, changelog] of changelogs) {
     const changelogMarkdown =
       rootMarkdown ??
-      thisMod.resolveScopeChangelogMarkdown(scopeName, version, changes[scopeName], options);
+      thisMod.resolveScopeChangelogMarkdown(
+        scopeName,
+        changelog.version,
+        changes.get(scopeName),
+        options,
+      );
 
-    fileOperations[scopeName] = [
+    fileOperations.set(scopeName, [
       {
         type: CHANGELOG_FILE_TYPE,
-        path: filePath,
+        path: changelog.path,
         action: "write",
         content: thisMod.resolveNextChangelogContent(
           changelogMarkdown,
-          existingContents[filePath],
+          changelog.content,
           resolveChangelogHeader(options.header, scopeName),
         ),
         meta: {},
       },
-    ];
+    ]);
   }
 
   return fileOperations;
@@ -186,31 +183,28 @@ export const createGenerateFileOperationsPhase = (
   options: ResolvedChangelogPluginOptions,
 ): NonNullable<Plugin["generateFileOperations"]> => {
   return async (context, state): Promise<ScopeFileOperationsMap> => {
-    const existingContents: Record<string, string> = {};
+    const contents = new Map<string, string>();
+    const changelogs = new Map<string, ScopeChangelog>();
 
-    for (const scopeName in state.nextVersions) {
-      const scope = context.scopes[scopeName];
+    for (const [scopeName, scope] of context.scopes) {
+      const nextVersion = state.nextVersions.get(scopeName);
 
-      if (!scope || !state.nextVersions[scopeName]?.version) {
+      if (nextVersion === undefined) {
         continue;
       }
 
-      const filePath = resolveChangelogPath(context.cwd, scope.path, options.mode);
+      const path = resolveChangelogPath(context.cwd, scope.path, options.mode);
+      const content = contents.get(path) ?? (await context.fs.read(path, ""));
 
-      if (filePath in existingContents) {
-        continue;
-      }
-
-      existingContents[filePath] = await context.fs.read(filePath, "");
+      contents.set(path, content);
+      changelogs.set(scopeName, { version: nextVersion.version, path, content });
     }
 
     return thisMod.resolveChangelogFileOperations(
-      context.cwd,
-      context.scopes,
       state.nextVersions,
       state.changes,
       options,
-      existingContents,
+      changelogs,
     );
   };
 };
