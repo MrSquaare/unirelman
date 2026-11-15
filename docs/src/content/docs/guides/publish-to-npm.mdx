@@ -80,6 +80,8 @@ Trusted publishing lets GitHub Actions publish with a short-lived identity token
 
 3. Run the workflow on a GitHub-hosted runner, the runner type npm trusted publishing supports.
 
+4. For a restricted package, also expose a read-only granular access token, as described in [With a token](#with-a-token): the plugin checks the registry with `npm view`, which trusted publishing doesn't authenticate. npm still publishes with trusted publishing.
+
 ### With a token
 
 Create an npm access token and store it as a repository secret, such as `NPM_TOKEN`. Then expose the token to your package manager:
