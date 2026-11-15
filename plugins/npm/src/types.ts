@@ -50,7 +50,12 @@ export const dependencyPackageJsonSchema = packageJsonSchema.extend({
 
 export type DependencyPackageJson = z.infer<typeof dependencyPackageJsonSchema>;
 
-export type ScopePackageJsonMap = Readonly<Record<string, DependencyPackageJson>>;
+export type ScopePackageJson = {
+  readonly path: string;
+  readonly packageJson: DependencyPackageJson;
+};
+
+export type ScopePackageJsonMap = ReadonlyMap<string, ScopePackageJson>;
 
 export type UpdatedInternalDependency = {
   readonly field: NpmDependencyField;
