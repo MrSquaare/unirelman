@@ -27,7 +27,7 @@ Runs `unirelman publish`, then `unirelman version` on a release branch, on every
 Add the step after installing your dependencies:
 
 ```yaml
-- uses: MrSquaare/unirelman@v0.1.0-alpha.1
+- uses: MrSquaare/unirelman@v0.1.0-alpha.2
 ```
 
 See the [documentation](https://mrsquaare.github.io/unirelman/reference/integrations/github-action/).
