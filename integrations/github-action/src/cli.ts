@@ -4,8 +4,8 @@ import { getExecOutput } from "@actions/exec";
 import {
   publishOutputSchema,
   versionOutputSchema,
-  type PublishOutput,
-  type VersionOutput,
+  type ParsedPublishOutput,
+  type ParsedVersionOutput,
 } from "@unirelman/cli/output";
 import { parseJSON } from "@unirelman/utils";
 
@@ -37,7 +37,7 @@ export const runUnirelmanPublish = async (
   command: string,
   cwd: string,
   environment: Record<string, string>,
-): Promise<PublishOutput> => {
+): Promise<ParsedPublishOutput> => {
   return thisMod.runUnirelman(
     command,
     ["publish", "--json"],
@@ -51,7 +51,7 @@ export const runUnirelmanVersion = async (
   command: string,
   cwd: string,
   environment: Record<string, string>,
-): Promise<VersionOutput> => {
+): Promise<ParsedVersionOutput> => {
   return thisMod.runUnirelman(
     command,
     ["version", "--json"],

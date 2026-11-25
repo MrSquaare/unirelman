@@ -1,4 +1,4 @@
-import type { PublishOutput } from "@unirelman/cli/output";
+import type { ParsedPublishOutput } from "@unirelman/cli/output";
 
 import { exec, getExecOutput } from "@actions/exec";
 import { GIT_TAG_RELEASE_TYPE } from "@unirelman/plugin-git";
@@ -35,8 +35,8 @@ export const configureGitIdentity = async (cwd: string): Promise<void> => {
   await exec("git", ["config", "user.email", GITHUB_ACTIONS_BOT_USER_EMAIL], { cwd });
 };
 
-export const resolvePublishedGitTags = (output: PublishOutput): string[] => {
-  return Object.values(output.releases)
+export const resolvePublishedGitTags = (output: ParsedPublishOutput): string[] => {
+  return [...output.releases.values()]
     .flat()
     .filter((release) => release.type === GIT_TAG_RELEASE_TYPE)
     .map((release) => release.name);

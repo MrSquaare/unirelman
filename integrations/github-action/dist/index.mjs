@@ -21006,6 +21006,12 @@ function finalizeIssue(iss, ctx, config) {
 	if (ctx?.reportInput) full.input = iss.input;
 	return full;
 }
+function getSizableOrigin(input) {
+	if (input instanceof Set) return "set";
+	if (input instanceof Map) return "map";
+	if (input instanceof File) return "file";
+	return "unknown";
+}
 const highSurrogate = /[\uD800-\uDBFF]/;
 function codePointLength(str) {
 	const units = str.length;
@@ -21752,11 +21758,78 @@ const $ZodCheck = /*@__PURE__*/ $constructor("$ZodCheck", (inst, def) => {
 	inst._zod.def = def;
 	(_a = inst._zod).onattach ?? (_a.onattach = []);
 });
+/** Default `when` for size-based checks: run only on non-nullish values with a `size`. */
+const _whenHasSize = (payload) => {
+	const val = payload.value;
+	return !nullish(val) && val.size !== void 0;
+};
 /** Default `when` for length-based checks: run only on non-nullish values with a `length`. */
 const _whenHasLength = (payload) => {
 	const val = payload.value;
 	return !nullish(val) && val.length !== void 0;
 };
+const $ZodCheckMaxSize = /*@__PURE__*/ $constructor("$ZodCheckMaxSize", (inst, def) => {
+	var _a;
+	$ZodCheck.init(inst, def);
+	(_a = inst._zod.def).when ?? (_a.when = _whenHasSize);
+	inst._zod.check = (payload) => {
+		const input = payload.value;
+		if (input.size <= def.maximum) return;
+		payload.issues.push({
+			origin: getSizableOrigin(input),
+			code: "too_big",
+			maximum: def.maximum,
+			inclusive: true,
+			input,
+			inst,
+			continue: !def.abort
+		});
+	};
+});
+const $ZodCheckMinSize = /*@__PURE__*/ $constructor("$ZodCheckMinSize", (inst, def) => {
+	var _a;
+	$ZodCheck.init(inst, def);
+	(_a = inst._zod.def).when ?? (_a.when = _whenHasSize);
+	inst._zod.check = (payload) => {
+		const input = payload.value;
+		if (input.size >= def.minimum) return;
+		payload.issues.push({
+			origin: getSizableOrigin(input),
+			code: "too_small",
+			minimum: def.minimum,
+			inclusive: true,
+			input,
+			inst,
+			continue: !def.abort
+		});
+	};
+});
+const $ZodCheckSizeEquals = /*@__PURE__*/ $constructor("$ZodCheckSizeEquals", (inst, def) => {
+	var _a;
+	$ZodCheck.init(inst, def);
+	(_a = inst._zod.def).when ?? (_a.when = _whenHasSize);
+	inst._zod.check = (payload) => {
+		const input = payload.value;
+		const size = input.size;
+		if (size === def.size) return;
+		const tooBig = size > def.size;
+		payload.issues.push({
+			origin: getSizableOrigin(input),
+			...tooBig ? {
+				code: "too_big",
+				maximum: def.size
+			} : {
+				code: "too_small",
+				minimum: def.size
+			},
+			inclusive: true,
+			exact: true,
+			input: payload.value,
+			inst,
+			continue: !def.abort
+		});
+	};
+});
 const $ZodCheckMaxLength = /*@__PURE__*/ $constructor("$ZodCheckMaxLength", (inst, def) => {
 	var _a;
 	$ZodCheck.init(inst, def);
@@ -22456,6 +22529,7 @@ function capSize(inst, size) {
 	};
 }
 const arraySize = (input) => Array.isArray(input) ? input.length : -1;
+const mapSize = (input) => input instanceof Map ? input.size : -1;
 function handleArrayResult(result, final, index) {
 	if (result.issues.length) final.issues.push(...prefixIssues(index, result.issues));
 	final.value[index] = result.value;
@@ -23131,6 +23205,72 @@ const $ZodRecord = /*@__PURE__*/ $constructor("$ZodRecord", (inst, def) => {
 		return payload;
 	};
 });
+const $ZodMap = /*@__PURE__*/ $constructor("$ZodMap", (inst, def) => {
+	$ZodType.init(inst, def);
+	const memo = globalConfig.memoizer;
+	memo?.attach(inst);
+	inst._zod.parse = (payload, ctx) => {
+		const input = payload.value;
+		if (!(input instanceof Map)) {
+			payload.issues.push({
+				expected: "map",
+				code: "invalid_type",
+				input,
+				inst
+			});
+			return payload;
+		}
+		const proms = [];
+		payload.value = memo ? memo.alloc(inst, payload, /* @__PURE__ */ new Map(), ctx) : /* @__PURE__ */ new Map();
+		const abortEarly = ctx?.abortEarly;
+		let seen = payload.issues.length;
+		for (const [key, value] of input) {
+			if (abortEarly && payload.issues.length !== seen) {
+				if (aborted(payload, seen)) break;
+				seen = payload.issues.length;
+			}
+			const keyResult = def.keyType._zod.run({
+				value: key,
+				issues: []
+			}, ctx);
+			const valueResult = def.valueType._zod.run({
+				value,
+				issues: []
+			}, ctx);
+			if (keyResult instanceof Promise || valueResult instanceof Promise) proms.push(Promise.all([keyResult, valueResult]).then(([keyResult, valueResult]) => {
+				handleMapResult(keyResult, valueResult, payload, key, input, inst, ctx);
+			}));
+			else handleMapResult(keyResult, valueResult, payload, key, input, inst, ctx);
+		}
+		if (proms.length) return Promise.all(proms).then(() => payload);
+		return payload;
+	};
+	capSize(inst, mapSize);
+});
+function handleMapResult(keyResult, valueResult, final, key, input, inst, ctx) {
+	if (keyResult.issues.length) {
+		if (propertyKeyTypes.has(typeof key)) final.issues.push(...prefixIssues(key, keyResult.issues));
+		else final.issues.push({
+			code: "invalid_key",
+			origin: "map",
+			input,
+			inst,
+			issues: keyResult.issues.map((iss) => finalizeIssue(iss, ctx, config()))
+		});
+	}
+	if (valueResult.issues.length) {
+		if (propertyKeyTypes.has(typeof key)) final.issues.push(...prefixIssues(key, valueResult.issues));
+		else final.issues.push({
+			origin: "map",
+			code: "invalid_element",
+			input,
+			inst,
+			key,
+			issues: valueResult.issues.map((iss) => finalizeIssue(iss, ctx, config()))
+		});
+	}
+	final.value.set(keyResult.value, valueResult.value);
+}
 const $ZodEnum = /*@__PURE__*/ $constructor("$ZodEnum", (inst, def) => {
 	$ZodType.init(inst, def);
 	const values = getEnumValues(def.entries);
@@ -23347,6 +23487,49 @@ function handlePipeResult(left, next, ctx) {
 	}
 	return next._zod.run({
 		value: left.value,
+		issues: left.issues
+	}, ctx);
+}
+const $ZodCodec = /*@__PURE__*/ $constructor("$ZodCodec", (inst, def) => {
+	$ZodType.init(inst, def);
+	defineLazyInternal(inst, "values", (zod) => zod.def.in._zod.values);
+	defineLazyInternal(inst, "optin", (zod) => zod.def.in._zod.optin);
+	defineLazyInternal(inst, "optout", (zod) => zod.def.out._zod.optout);
+	defineLazyInternal(inst, "propValues", (zod) => zod.def.in._zod.propValues);
+	inst._zod.parse = (payload, ctx) => {
+		if ((ctx.direction || "forward") === "forward") {
+			const left = def.in._zod.run(payload, ctx);
+			if (left instanceof Promise) return left.then((left) => handleCodecAResult(left, def, ctx));
+			return handleCodecAResult(left, def, ctx);
+		} else {
+			const right = def.out._zod.run(payload, ctx);
+			if (right instanceof Promise) return right.then((right) => handleCodecAResult(right, def, ctx));
+			return handleCodecAResult(right, def, ctx);
+		}
+	};
+});
+function handleCodecAResult(result, def, ctx) {
+	if (result.issues.length) {
+		result.aborted = true;
+		return result;
+	}
+	if ((ctx.direction || "forward") === "forward") {
+		const transformed = def.transform(result.value, result);
+		if (transformed instanceof Promise) return transformed.then((value) => handleCodecTxResult(result, value, def.out, ctx));
+		return handleCodecTxResult(result, transformed, def.out, ctx);
+	} else {
+		const transformed = def.reverseTransform(result.value, result);
+		if (transformed instanceof Promise) return transformed.then((value) => handleCodecTxResult(result, value, def.in, ctx));
+		return handleCodecTxResult(result, transformed, def.in, ctx);
+	}
+}
+function handleCodecTxResult(left, value, nextSchema, ctx) {
+	if (left.issues.length) {
+		left.aborted = true;
+		return left;
+	}
+	return nextSchema._zod.run({
+		value,
 		issues: left.issues
 	}, ctx);
 }
@@ -24094,6 +24277,30 @@ function _never(Class, params) {
 	return new Class({
 		type: "never",
 		...normalizeParams(params)
+	});
+}
+// @__NO_SIDE_EFFECTS__
+function _maxSize(maximum, params) {
+	return new $ZodCheckMaxSize({
+		check: "max_size",
+		...normalizeParams(params),
+		maximum
+	});
+}
+// @__NO_SIDE_EFFECTS__
+function _minSize(minimum, params) {
+	return new $ZodCheckMinSize({
+		check: "min_size",
+		...normalizeParams(params),
+		minimum
+	});
+}
+// @__NO_SIDE_EFFECTS__
+function _size(size, params) {
+	return new $ZodCheckSizeEquals({
+		check: "size_equals",
+		...normalizeParams(params),
+		size
 	});
 }
 // @__NO_SIDE_EFFECTS__
@@ -24849,6 +25056,9 @@ const customProcessor = (schema, ctx, json, params) => {
 };
 const transformProcessor = (schema, ctx, json, params) => {
 	handleUnrepresentable(schema, ctx, json, params, "Transforms cannot be represented in JSON Schema");
+};
+const mapProcessor = (schema, ctx, json, params) => {
+	handleUnrepresentable(schema, ctx, json, params, "Map cannot be represented in JSON Schema");
 };
 const arrayProcessor = (schema, ctx, _json, params) => {
 	const json = _json;
@@ -25773,6 +25983,26 @@ function record(keyType, valueType, params) {
 		...normalizeParams(params)
 	});
 }
+const ZodMap = /*@__PURE__*/ $constructor("ZodMap", (inst, def) => {
+	_ensureDefaultMemoizer();
+	$ZodMap.init(inst, def);
+	ZodType.init(inst, def);
+	inst._zod.processJSONSchema = (ctx, json, params) => mapProcessor(inst, ctx, json, params);
+	inst.keyType = def.keyType;
+	inst.valueType = def.valueType;
+	inst.min = (...args) => inst.check(/* @__PURE__ */ _minSize(...args));
+	inst.nonempty = (params) => inst.check(/* @__PURE__ */ _minSize(1, params));
+	inst.max = (...args) => inst.check(/* @__PURE__ */ _maxSize(...args));
+	inst.size = (...args) => inst.check(/* @__PURE__ */ _size(...args));
+});
+function map(keyType, valueType, params) {
+	return new ZodMap({
+		type: "map",
+		keyType,
+		valueType,
+		...normalizeParams(params)
+	});
+}
 const ZodEnum = /*@__PURE__*/ $constructor("ZodEnum", (inst, def) => {
 	$ZodEnum.init(inst, def);
 	ZodType.init(inst, def);
@@ -25969,6 +26199,19 @@ function pipe(in_, out) {
 		out
 	});
 }
+const ZodCodec = /*@__PURE__*/ $constructor("ZodCodec", (inst, def) => {
+	ZodPipe.init(inst, def);
+	$ZodCodec.init(inst, def);
+});
+function codec(in_, out, params) {
+	return new ZodCodec({
+		type: "pipe",
+		in: in_,
+		out,
+		transform: params.decode,
+		reverseTransform: params.encode
+	});
+}
 const ZodReadonly = /*@__PURE__*/ $constructor("ZodReadonly", (inst, def) => {
 	$ZodReadonly.init(inst, def);
 	ZodType.init(inst, def);
@@ -26021,6 +26264,15 @@ const parseJSON = (source, content, schema) => {
 	const result = schema.safeParse(decodeJSON(source, content));
 	if (!result.success) throw new InvalidJSONError(source, prettifyError(result.error));
 	return result.data;
+};
+const isJSONObject = (value) => {
+	return typeof value === "object" && value !== null && !Array.isArray(value);
+};
+const createRecordMapSchema = (valueSchema) => {
+	return codec(custom(isJSONObject, { error: "Invalid input: expected object" }), map(string(), valueSchema).readonly(), {
+		decode: (record) => new Map(Object.entries(record)),
+		encode: (map) => Object.fromEntries(map)
+	});
 };
 // ../../packages/core/dist/index.mjs
 var CoreError = class extends Error {
@@ -26139,11 +26391,11 @@ const isPlugin = (value) => {
 };
 const pluginSchema = custom(isPlugin, { error: "Expected a plugin object with a name and phase functions" });
 strictObject({
-	scopes: record(string(), string()),
+	scopes: createRecordMapSchema(string()),
 	plugins: array(union([pluginSchema, strictObject({
 		plugin: pluginSchema,
-		scopes: array(string()).optional()
-	})]))
+		scopes: array(string()).readonly().optional()
+	})])).readonly()
 });
 // ../../packages/cli/dist/output.mjs
 const versionOutputScopeSchema = object({
@@ -26157,7 +26409,7 @@ const versionOutputFileSchema = object({
 const versionOutputSchema = object({
 	pipeline: literal("version"),
 	dryRun: boolean(),
-	scopes: record(string(), versionOutputScopeSchema),
+	scopes: createRecordMapSchema(versionOutputScopeSchema),
 	files: array(versionOutputFileSchema)
 });
 const publishOutputReleaseSchema = object({
@@ -26169,7 +26421,7 @@ const publishOutputReleaseSchema = object({
 const publishOutputSchema = object({
 	pipeline: literal("publish"),
 	dryRun: boolean(),
-	releases: record(string(), array(publishOutputReleaseSchema))
+	releases: createRecordMapSchema(array(publishOutputReleaseSchema))
 });
 discriminatedUnion("pipeline", [versionOutputSchema, publishOutputSchema]);
 // src/env.ts
@@ -26253,7 +26505,7 @@ const configureGitIdentity = async (cwd) => {
 	], { cwd });
 };
 const resolvePublishedGitTags = (output) => {
-	return Object.values(output.releases).flat().filter((release) => release.type === GIT_TAG_RELEASE_TYPE).map((release) => release.name);
+	return [...output.releases.values()].flat().filter((release) => release.type === GIT_TAG_RELEASE_TYPE).map((release) => release.name);
 };
 const pushGitTags = async (cwd, tags) => {
 	if (tags.length === 0) return;
@@ -26307,7 +26559,7 @@ const readActionInputs = () => {
 };
 // src/pull-request.ts
 const formatReleasePullRequestBody = (output) => {
-	const lines = Object.entries(output.scopes).map(([scopeName, scope]) => `- \`${scopeName}\`: ${scope.currentVersion ?? "none"} → ${scope.nextVersion}`);
+	const lines = [...output.scopes].map(([scopeName, scope]) => `- \`${scopeName}\`: ${scope.currentVersion ?? "none"} → ${scope.nextVersion}`);
 	return [
 		ACTION_RELEASE_PULL_REQUEST_HEADING,
 		"",
@@ -26365,7 +26617,7 @@ const writeActionSettings = (store, settings) => {
 const runPublishStep = async (inputs, environment) => {
 	const publishOutput = await runUnirelmanPublish(inputs.command, inputs.workingDirectory, environment);
 	await pushGitTags(inputs.workingDirectory, resolvePublishedGitTags(publishOutput));
-	setOutput("releases", JSON.stringify(publishOutput.releases));
+	setOutput("releases", JSON.stringify(Object.fromEntries(publishOutput.releases)));
 };
 const runVersionStep = async (inputs, environment) => {
 	await checkoutBranch(inputs.workingDirectory, inputs.branch);
