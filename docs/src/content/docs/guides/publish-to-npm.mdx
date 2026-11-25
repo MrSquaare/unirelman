@@ -101,7 +101,7 @@ Configure the registry with `actions/setup-node`, and set the `NODE_AUTH_TOKEN` 
 # ...
 
 - name: Release
-  uses: MrSquaare/unirelman@v0.1.0-alpha.1
+  uses: MrSquaare/unirelman@v0.1.0-alpha.2
   env:
     NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 ```
@@ -121,7 +121,7 @@ Configure the registry with `actions/setup-node`, and set the `NODE_AUTH_TOKEN` 
 # ...
 
 - name: Release
-  uses: MrSquaare/unirelman@v0.1.0-alpha.1
+  uses: MrSquaare/unirelman@v0.1.0-alpha.2
   env:
     NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 ```
@@ -133,7 +133,7 @@ Set the `YARN_NPM_AUTH_TOKEN` environment variable:
 
 ```yaml title=".github/workflows/release.yml"
 - name: Release
-  uses: MrSquaare/unirelman@v0.1.0-alpha.1
+  uses: MrSquaare/unirelman@v0.1.0-alpha.2
   env:
     YARN_NPM_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 ```
@@ -145,7 +145,7 @@ Set the `NPM_CONFIG_TOKEN` environment variable:
 
 ```yaml title=".github/workflows/release.yml"
 - name: Release
-  uses: MrSquaare/unirelman@v0.1.0-alpha.1
+  uses: MrSquaare/unirelman@v0.1.0-alpha.2
   env:
     NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
 ```
