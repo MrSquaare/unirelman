@@ -52,5 +52,3 @@ jobs:
           working-directory: ${{ matrix.working-directory }}
           branch: ${{ matrix.branch }}
           pr-title: ${{ matrix.pr-title }}
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
