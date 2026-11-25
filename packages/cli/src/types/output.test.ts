@@ -8,28 +8,40 @@ describe("pipelineOutputSchema", () => {
   });
 
   it("should parse a version output", () => {
-    const output = {
+    expect(
+      pipelineOutputSchema.parse({
+        pipeline: "version",
+        dryRun: false,
+        scopes: { "@scope/a": { currentVersion: null, nextVersion: "1.0.0" } },
+        files: [{ path: "CHANGELOG.md", action: "write" }],
+      }),
+    ).toEqual({
       pipeline: "version",
       dryRun: false,
-      scopes: { "@scope/a": { currentVersion: null, nextVersion: "1.0.0" } },
+      scopes: new Map([["@scope/a", { currentVersion: null, nextVersion: "1.0.0" }]]),
       files: [{ path: "CHANGELOG.md", action: "write" }],
-    };
-
-    expect(pipelineOutputSchema.parse(output)).toEqual(output);
+    });
   });
 
   it("should parse a publish output", () => {
-    const output = {
+    const release = {
+      type: "git-tag",
+      name: "@scope/a@1.0.0",
+      status: "existing",
+      meta: { id: 42 },
+    } as const;
+
+    expect(
+      pipelineOutputSchema.parse({
+        pipeline: "publish",
+        dryRun: true,
+        releases: { "@scope/a": [release] },
+      }),
+    ).toEqual({
       pipeline: "publish",
       dryRun: true,
-      releases: {
-        "@scope/a": [
-          { type: "git-tag", name: "@scope/a@1.0.0", status: "existing", meta: { id: 42 } },
-        ],
-      },
-    };
-
-    expect(pipelineOutputSchema.parse(output)).toEqual(output);
+      releases: new Map([["@scope/a", [release]]]),
+    });
   });
 
   it("should reject an unknown pipeline", () => {
