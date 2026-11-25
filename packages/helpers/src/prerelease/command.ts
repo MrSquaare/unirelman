@@ -123,7 +123,7 @@ export const promptPrereleaseTarget = async (
     option: targetOptions.join(" or "),
     options: targets.map((target) => {
       const label = resolveGroupTargetLabel(target);
-      const channel = target.scopes.map((scopeName) => state[scopeName]?.channel).find(Boolean);
+      const channel = target.scopes.map((scopeName) => state.get(scopeName)?.channel).find(Boolean);
 
       return { value: target, label: channel ? `${label} · ${channel}` : label };
     }),
@@ -186,9 +186,7 @@ export const resolvePrereleaseUpdate = (
     }
 
     return {
-      state: Object.fromEntries(
-        Object.entries(state).filter(([scopeName]) => !scopes.includes(scopeName)),
-      ),
+      state: new Map([...state].filter(([scopeName]) => !scopes.includes(scopeName))),
       output: {
         group,
         scopes: [...scopes],
@@ -203,10 +201,13 @@ export const resolvePrereleaseUpdate = (
   }
 
   return {
-    state: {
+    state: new Map([
       ...state,
-      ...Object.fromEntries(scopes.map((scopeName) => [scopeName, { channel: selection.channel }])),
-    },
+      ...scopes.map((scopeName): [string, PrereleaseScopeState] => [
+        scopeName,
+        { channel: selection.channel },
+      ]),
+    ]),
     output: {
       group,
       scopes: [...scopes],
@@ -237,7 +238,7 @@ export const createPrereleaseCommand = (
   context: PluginContext,
   versioningOptions: ResolvedVersioningOptions,
 ) => {
-  const scopeNames = Object.keys(context.scopes);
+  const scopeNames = [...context.scopes.keys()];
   const groups = resolveGroups(versioningOptions.fixed, scopeNames);
   const independentScopes = resolveIndependentScopes(groups, scopeNames);
   const targets = resolveGroupTargets(groups, independentScopes);

@@ -1,21 +1,18 @@
-export const shallowMerge = <TValue extends object>(
-  target: TValue | undefined,
-  source: TValue,
-): TValue => {
-  return {
-    ...target,
-    ...source,
-  };
+export const mergeMaps = <TKey, TValue>(
+  target: ReadonlyMap<TKey, TValue> | undefined,
+  source: ReadonlyMap<TKey, TValue>,
+): Map<TKey, TValue> => {
+  return new Map([...(target ?? []), ...source]);
 };
 
-export const mergeArrayRecords = <TItem>(
-  target: Readonly<Record<string, TItem[]>> | undefined,
-  source: Readonly<Record<string, TItem[]>>,
-): Record<string, TItem[]> => {
-  const merged: Record<string, TItem[]> = Object.assign(Object.create(null), target);
+export const mergeArrayMaps = <TKey, TItem>(
+  target: ReadonlyMap<TKey, TItem[]> | undefined,
+  source: ReadonlyMap<TKey, TItem[]>,
+): Map<TKey, TItem[]> => {
+  const merged = new Map(target);
 
-  for (const [key, items] of Object.entries(source)) {
-    merged[key] = [...(merged[key] ?? []), ...items];
+  for (const [key, items] of source) {
+    merged.set(key, [...(merged.get(key) ?? []), ...items]);
   }
 
   return merged;

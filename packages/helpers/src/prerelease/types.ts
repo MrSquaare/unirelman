@@ -1,3 +1,4 @@
+import { createRecordMapSchema } from "@unirelman/utils";
 import * as z from "zod";
 
 export type PrereleaseOptions = {
@@ -34,9 +35,9 @@ export const prereleaseScopeStateSchema = z
   })
   .readonly();
 
-export const prereleaseStateSchema = z.record(z.string(), prereleaseScopeStateSchema).readonly();
-
 export type PrereleaseScopeState = z.infer<typeof prereleaseScopeStateSchema>;
+
+export const prereleaseStateSchema = createRecordMapSchema(prereleaseScopeStateSchema);
 
 export type PrereleaseState = z.infer<typeof prereleaseStateSchema>;
 

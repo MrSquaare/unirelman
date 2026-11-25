@@ -28,10 +28,10 @@ describe("formatReleasePullRequestBody", () => {
       formatReleasePullRequestBody({
         pipeline: "version",
         dryRun: false,
-        scopes: {
-          "@scope/a": { currentVersion: "1.0.0", nextVersion: "1.0.1" },
-          "@scope/b": { currentVersion: null, nextVersion: "1.0.0" },
-        },
+        scopes: new Map([
+          ["@scope/a", { currentVersion: "1.0.0", nextVersion: "1.0.1" }],
+          ["@scope/b", { currentVersion: null, nextVersion: "1.0.0" }],
+        ]),
         files: [],
       }),
     ).toEqual("## Releases\n\n- `@scope/a`: 1.0.0 → 1.0.1\n- `@scope/b`: none → 1.0.0");

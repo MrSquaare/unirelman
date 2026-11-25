@@ -1,4 +1,4 @@
-import type { VersionOutput } from "@unirelman/cli/output";
+import type { ParsedVersionOutput } from "@unirelman/cli/output";
 
 import { info, setOutput } from "@actions/core";
 import { context, getOctokit } from "@actions/github";
@@ -44,13 +44,13 @@ export const runPublishStep = async (
   );
 
   await pushGitTags(inputs.workingDirectory, resolvePublishedGitTags(publishOutput));
-  setOutput("releases", JSON.stringify(publishOutput.releases));
+  setOutput("releases", JSON.stringify(Object.fromEntries(publishOutput.releases)));
 };
 
 export const runVersionStep = async (
   inputs: ActionInputs,
   environment: Record<string, string>,
-): Promise<VersionOutput> => {
+): Promise<ParsedVersionOutput> => {
   await checkoutBranch(inputs.workingDirectory, inputs.branch);
 
   const baseCommit = await readHeadCommit(inputs.workingDirectory);
@@ -76,7 +76,7 @@ export const syncReleasePullRequest = async (
   inputs: ActionInputs,
   store: Store,
   settings: ActionSettings,
-  versionOutput: VersionOutput,
+  versionOutput: ParsedVersionOutput,
 ): Promise<void> => {
   const pullRequestNumber = await findReleasePullRequest(octokit, repository, inputs);
   const hasReleaseChanges = versionOutput.files.length > 0;

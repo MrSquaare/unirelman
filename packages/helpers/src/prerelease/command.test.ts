@@ -180,7 +180,7 @@ describe("promptPrereleaseTarget", () => {
       promptPrereleaseTarget(
         ui,
         [groupTarget, scopeTarget],
-        { [SCOPE_NAMES.ALPHA]: { channel: "alpha" } },
+        new Map([[SCOPE_NAMES.ALPHA, { channel: "alpha" }]]),
         ["--scope", "--group"],
       ),
     ).resolves.toEqual(groupTarget);
@@ -281,18 +281,18 @@ describe("resolvePrereleaseUpdate", () => {
   it("should put every scope of the target on the selected channel", () => {
     expect(
       resolvePrereleaseUpdate(
-        { other: { channel: "rc" } },
+        new Map([["other", { channel: "rc" }]]),
         target,
         undefined,
         { action: "enter", channel: "alpha" },
         ["alpha", "beta"],
       ),
     ).toEqual({
-      state: {
-        other: { channel: "rc" },
-        [SCOPE_NAMES.ALPHA]: { channel: "alpha" },
-        [SCOPE_NAMES.BETA]: { channel: "alpha" },
-      },
+      state: new Map([
+        ["other", { channel: "rc" }],
+        [SCOPE_NAMES.ALPHA, { channel: "alpha" }],
+        [SCOPE_NAMES.BETA, { channel: "alpha" }],
+      ]),
       output: {
         group: "product",
         scopes: [SCOPE_NAMES.ALPHA, SCOPE_NAMES.BETA],
@@ -305,14 +305,20 @@ describe("resolvePrereleaseUpdate", () => {
   it("should move every scope of the target to an upper channel", () => {
     expect(
       resolvePrereleaseUpdate(
-        { [SCOPE_NAMES.ALPHA]: { channel: "beta" }, [SCOPE_NAMES.BETA]: { channel: "beta" } },
+        new Map([
+          [SCOPE_NAMES.ALPHA, { channel: "beta" }],
+          [SCOPE_NAMES.BETA, { channel: "beta" }],
+        ]),
         target,
         { channel: "beta" },
         { action: "enter", channel: "rc" },
         ["rc"],
       ),
     ).toEqual({
-      state: { [SCOPE_NAMES.ALPHA]: { channel: "rc" }, [SCOPE_NAMES.BETA]: { channel: "rc" } },
+      state: new Map([
+        [SCOPE_NAMES.ALPHA, { channel: "rc" }],
+        [SCOPE_NAMES.BETA, { channel: "rc" }],
+      ]),
       output: {
         group: "product",
         scopes: [SCOPE_NAMES.ALPHA, SCOPE_NAMES.BETA],
@@ -325,18 +331,18 @@ describe("resolvePrereleaseUpdate", () => {
   it("should remove every scope of the target from the state on exit", () => {
     expect(
       resolvePrereleaseUpdate(
-        {
-          other: { channel: "alpha" },
-          [SCOPE_NAMES.ALPHA]: { channel: "beta" },
-          [SCOPE_NAMES.BETA]: { channel: "beta" },
-        },
+        new Map([
+          ["other", { channel: "alpha" }],
+          [SCOPE_NAMES.ALPHA, { channel: "beta" }],
+          [SCOPE_NAMES.BETA, { channel: "beta" }],
+        ]),
         target,
         { channel: "beta" },
         { action: "exit" },
         ["rc"],
       ),
     ).toEqual({
-      state: { other: { channel: "alpha" } },
+      state: new Map([["other", { channel: "alpha" }]]),
       output: {
         group: "product",
         scopes: [SCOPE_NAMES.ALPHA, SCOPE_NAMES.BETA],
@@ -347,7 +353,9 @@ describe("resolvePrereleaseUpdate", () => {
   });
 
   it("should change nothing when exiting a target in release mode", () => {
-    expect(resolvePrereleaseUpdate({}, target, undefined, { action: "exit" }, ["alpha"])).toEqual({
+    expect(
+      resolvePrereleaseUpdate(new Map(), target, undefined, { action: "exit" }, ["alpha"]),
+    ).toEqual({
       state: undefined,
       output: {
         group: "product",
@@ -361,14 +369,14 @@ describe("resolvePrereleaseUpdate", () => {
   it("should output no group for an independent scope target", () => {
     expect(
       resolvePrereleaseUpdate(
-        {},
+        new Map(),
         { group: undefined, scopes: [SCOPE_NAMES.ALPHA] },
         undefined,
         { action: "enter", channel: "alpha" },
         ["alpha"],
       ),
     ).toEqual({
-      state: { [SCOPE_NAMES.ALPHA]: { channel: "alpha" } },
+      state: new Map([[SCOPE_NAMES.ALPHA, { channel: "alpha" }]]),
       output: { group: null, scopes: [SCOPE_NAMES.ALPHA], channel: "alpha", previousChannel: null },
     });
   });
@@ -376,7 +384,7 @@ describe("resolvePrereleaseUpdate", () => {
   it("should throw when the selected channel is not an allowed channel", () => {
     expect(() =>
       resolvePrereleaseUpdate(
-        {},
+        new Map(),
         target,
         { channel: "beta" },
         { action: "enter", channel: "alpha" },
@@ -480,7 +488,7 @@ describe("createPrereleaseCommand", () => {
     });
     expect(mockedResolveGroupTargets).toHaveBeenCalledTimes(1);
     expect(mockedResolveGroups).toHaveBeenCalledTimes(1);
-    expect(mockedResolveGroups).toHaveBeenNthCalledWith(1, false, Object.keys(context.scopes));
+    expect(mockedResolveGroups).toHaveBeenNthCalledWith(1, false, [...context.scopes.keys()]);
     expect(mockedResolveIndependentScopes).toHaveBeenCalledTimes(1);
     expect(mockedResolveIndependentScopes).toHaveBeenNthCalledWith(
       1,
@@ -542,7 +550,7 @@ describe("createPrereleaseCommand", () => {
     });
     const target = { group: undefined, scopes: [SCOPE_NAMES.BETA] };
 
-    vi.mocked(context.store.readJSON).mockResolvedValueOnce({});
+    vi.mocked(context.store.readJSON).mockResolvedValueOnce(new Map());
 
     await expect(command.run(runContext)).resolves.toEqual({
       result: { ...target, group: null, channel: "alpha", previousChannel: null },
@@ -563,7 +571,7 @@ describe("createPrereleaseCommand", () => {
       1,
       "prerelease.json",
       prereleaseStateSchema,
-      {},
+      new Map(),
     );
     expect(resolvePrereleaseTargetSpy).toHaveBeenCalledTimes(1);
     expect(resolvePrereleaseTargetSpy).toHaveBeenNthCalledWith(1, groups, [SCOPE_NAMES.BETA], {
@@ -578,7 +586,7 @@ describe("createPrereleaseCommand", () => {
     expect(resolvePrereleaseUpdateSpy).toHaveBeenCalledTimes(1);
     expect(resolvePrereleaseUpdateSpy).toHaveBeenNthCalledWith(
       1,
-      {},
+      new Map(),
       target,
       undefined,
       { action: "enter", channel: "alpha" },
@@ -599,7 +607,7 @@ describe("createPrereleaseCommand", () => {
       fixed: { product: [SCOPE_NAMES.ALPHA] },
     });
     const target = { group: "product", scopes: [SCOPE_NAMES.ALPHA] };
-    const state = { [SCOPE_NAMES.ALPHA]: { channel: "alpha" } };
+    const state = new Map([[SCOPE_NAMES.ALPHA, { channel: "alpha" }]]);
 
     vi.mocked(context.store.readJSON).mockResolvedValueOnce(state);
     promptPrereleaseTargetSpy.mockResolvedValueOnce(target);
@@ -646,7 +654,7 @@ describe("createPrereleaseCommand", () => {
       fixed: true,
     });
 
-    vi.mocked(context.store.readJSON).mockResolvedValueOnce({});
+    vi.mocked(context.store.readJSON).mockResolvedValueOnce(new Map());
 
     await expect(command.run(runContext)).resolves.toEqual({
       result: { group: "all", scopes, channel: null, previousChannel: null },
@@ -674,7 +682,7 @@ describe("createPrereleaseCommand", () => {
     expect(resolvePrereleaseUpdateSpy).toHaveBeenCalledTimes(1);
     expect(resolvePrereleaseUpdateSpy).toHaveBeenNthCalledWith(
       1,
-      {},
+      new Map(),
       { group: "all", scopes },
       undefined,
       { action: "exit" },
@@ -692,10 +700,12 @@ describe("createPrereleaseCommand", () => {
       fixed: true,
     });
 
-    vi.mocked(context.store.readJSON).mockResolvedValueOnce({
-      [SCOPE_NAMES.ALPHA]: { channel: "alpha" },
-      [SCOPE_NAMES.BETA]: { channel: "alpha" },
-    });
+    vi.mocked(context.store.readJSON).mockResolvedValueOnce(
+      new Map([
+        [SCOPE_NAMES.ALPHA, { channel: "alpha" }],
+        [SCOPE_NAMES.BETA, { channel: "alpha" }],
+      ]),
+    );
 
     await expect(command.run(runContext)).resolves.toEqual({
       result: { group: "all", scopes, channel: null, previousChannel: "alpha" },
@@ -719,10 +729,12 @@ describe("createPrereleaseCommand", () => {
       fixed: true,
     });
 
-    vi.mocked(context.store.readJSON).mockResolvedValueOnce({
-      [SCOPE_NAMES.ALPHA]: { channel: "alpha" },
-      [SCOPE_NAMES.BETA]: { channel: "alpha" },
-    });
+    vi.mocked(context.store.readJSON).mockResolvedValueOnce(
+      new Map([
+        [SCOPE_NAMES.ALPHA, { channel: "alpha" }],
+        [SCOPE_NAMES.BETA, { channel: "alpha" }],
+      ]),
+    );
 
     await expect(command.run(runContext)).resolves.toEqual({
       result: { group: "all", scopes, channel: null, previousChannel: "alpha" },

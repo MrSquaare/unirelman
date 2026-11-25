@@ -28,3 +28,18 @@ export const defineObjectGenerator = <T extends object, TOptions extends object 
     return { ...defaults, ...options };
   };
 };
+
+export type MapGeneratorOptions<TKey, TValue> = {
+  override?: ReadonlyMap<TKey, TValue>;
+  extends?: ReadonlyMap<TKey, TValue>;
+};
+
+export const defineMapGenerator = <TKey, TValue>(defaultBuilder: () => Map<TKey, TValue>) => {
+  return (options?: MapGeneratorOptions<TKey, TValue>): Map<TKey, TValue> => {
+    if (options?.override !== undefined) {
+      return new Map(options.override);
+    }
+
+    return new Map([...defaultBuilder(), ...(options?.extends ?? [])]);
+  };
+};

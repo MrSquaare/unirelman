@@ -13,7 +13,6 @@ import {
   createPhaseContext,
   createCreateReleasesState,
   createScope,
-  createScopeMap,
   createVersion,
   SCOPE_NAMES,
   SCOPE_PATHS,
@@ -588,14 +587,18 @@ describe("createCreateReleasesPhase", () => {
       createResolvedNpmPluginOptions({ extends: { publish: true, packageManager: undefined } }),
     );
 
-    await expect(phase(context, createCreateReleasesState())).resolves.toEqual({
-      [SCOPE_NAMES.ALPHA]: [
-        { type: "npm-package", name: "@scope/a@1.2.3", status: "created", meta: {} },
-      ],
-      [SCOPE_NAMES.BETA]: [
-        { type: "npm-package", name: "@scope/b@2.0.0", status: "created", meta: {} },
-      ],
-    });
+    await expect(phase(context, createCreateReleasesState())).resolves.toEqual(
+      new Map([
+        [
+          SCOPE_NAMES.ALPHA,
+          [{ type: "npm-package", name: "@scope/a@1.2.3", status: "created", meta: {} }],
+        ],
+        [
+          SCOPE_NAMES.BETA,
+          [{ type: "npm-package", name: "@scope/b@2.0.0", status: "created", meta: {} }],
+        ],
+      ]),
+    );
     expect(mockedReadScopePackageJson).toHaveBeenCalledTimes(2);
     expect(mockedReadScopePackageJson).toHaveBeenNthCalledWith(
       1,
@@ -674,21 +677,24 @@ describe("createCreateReleasesPhase", () => {
 
   it("should publish prerelease versions with their prerelease tag", async () => {
     const context = createPhaseContext({
-      scopes: { [SCOPE_NAMES.ALPHA]: createScopeMap()[SCOPE_NAMES.ALPHA] },
+      scopes: new Map([[SCOPE_NAMES.ALPHA, createScope()]]),
     });
     const packageJson = createPublishPackageJson({
       name: SCOPE_NAMES.ALPHA,
       version: "1.3.0-alpha.0",
     });
     const state = createCreateReleasesState({
-      currentVersions: {
-        [SCOPE_NAMES.ALPHA]: createVersion({
-          extends: {
-            version: "1.3.0-alpha.0",
-            meta: { prerelease: { channel: "alpha", increment: 0 } },
-          },
-        }),
-      },
+      currentVersions: new Map([
+        [
+          SCOPE_NAMES.ALPHA,
+          createVersion({
+            extends: {
+              version: "1.3.0-alpha.0",
+              meta: { prerelease: { channel: "alpha", increment: 0 } },
+            },
+          }),
+        ],
+      ]),
     });
 
     readScopePackageManagerSpy.mockResolvedValueOnce("npm");
@@ -700,11 +706,14 @@ describe("createCreateReleasesPhase", () => {
       createResolvedNpmPluginOptions({ extends: { publish: true, packageManager: undefined } }),
     );
 
-    await expect(phase(context, state)).resolves.toEqual({
-      [SCOPE_NAMES.ALPHA]: [
-        { type: "npm-package", name: "@scope/a@1.3.0-alpha.0", status: "created", meta: {} },
-      ],
-    });
+    await expect(phase(context, state)).resolves.toEqual(
+      new Map([
+        [
+          SCOPE_NAMES.ALPHA,
+          [{ type: "npm-package", name: "@scope/a@1.3.0-alpha.0", status: "created", meta: {} }],
+        ],
+      ]),
+    );
     expect(publishPackageSpy).toHaveBeenCalledTimes(1);
     expect(publishPackageSpy).toHaveBeenNthCalledWith(
       1,
@@ -721,7 +730,7 @@ describe("createCreateReleasesPhase", () => {
       createResolvedNpmPluginOptions({ extends: { publish: false, packageManager: undefined } }),
     );
 
-    await expect(phase(context, createCreateReleasesState())).resolves.toEqual({});
+    await expect(phase(context, createCreateReleasesState())).resolves.toEqual(new Map());
     expect(readScopePackageManagerSpy).not.toHaveBeenCalled();
     expect(mockedReadScopePackageJson).not.toHaveBeenCalled();
     expect(hasPublishedVersionSpy).not.toHaveBeenCalled();
@@ -735,7 +744,7 @@ describe("createCreateReleasesPhase", () => {
 
   it("should skip private packages", async () => {
     const context = createPhaseContext({
-      scopes: { [SCOPE_NAMES.ALPHA]: createScope() },
+      scopes: new Map([[SCOPE_NAMES.ALPHA, createScope()]]),
     });
     const packageJson = createPublishPackageJson({ version: VERSIONS.DEFAULT, private: true });
 
@@ -745,7 +754,7 @@ describe("createCreateReleasesPhase", () => {
       createResolvedNpmPluginOptions({ extends: { publish: true, packageManager: undefined } }),
     );
 
-    await expect(phase(context, createCreateReleasesState())).resolves.toEqual({});
+    await expect(phase(context, createCreateReleasesState())).resolves.toEqual(new Map());
     expect(hasPublishedVersionSpy).not.toHaveBeenCalled();
     expect(readScopePackageManagerSpy).not.toHaveBeenCalled();
     expect(publishPackageSpy).not.toHaveBeenCalled();
@@ -758,7 +767,7 @@ describe("createCreateReleasesPhase", () => {
 
   it("should skip package versions already on the registry", async () => {
     const context = createPhaseContext({
-      scopes: { [SCOPE_NAMES.ALPHA]: createScope() },
+      scopes: new Map([[SCOPE_NAMES.ALPHA, createScope()]]),
     });
     const packageJson = createPublishPackageJson({
       name: SCOPE_NAMES.ALPHA,
@@ -773,11 +782,14 @@ describe("createCreateReleasesPhase", () => {
       createResolvedNpmPluginOptions({ extends: { publish: true, packageManager: undefined } }),
     );
 
-    await expect(phase(context, createCreateReleasesState())).resolves.toEqual({
-      [SCOPE_NAMES.ALPHA]: [
-        { type: "npm-package", name: "@scope/a@1.2.3", status: "existing", meta: {} },
-      ],
-    });
+    await expect(phase(context, createCreateReleasesState())).resolves.toEqual(
+      new Map([
+        [
+          SCOPE_NAMES.ALPHA,
+          [{ type: "npm-package", name: "@scope/a@1.2.3", status: "existing", meta: {} }],
+        ],
+      ]),
+    );
     expect(hasPublishedVersionSpy).toHaveBeenCalledTimes(1);
     expect(hasPublishedVersionSpy).toHaveBeenNthCalledWith(
       1,
@@ -797,7 +809,7 @@ describe("createCreateReleasesPhase", () => {
   it("should not publish in dry-run mode", async () => {
     const context = createPhaseContext({
       dryRun: true,
-      scopes: { [SCOPE_NAMES.ALPHA]: createScope() },
+      scopes: new Map([[SCOPE_NAMES.ALPHA, createScope()]]),
     });
     const packageJson = createPublishPackageJson({
       name: SCOPE_NAMES.ALPHA,
@@ -812,18 +824,21 @@ describe("createCreateReleasesPhase", () => {
       createResolvedNpmPluginOptions({ extends: { publish: true, packageManager: undefined } }),
     );
 
-    await expect(phase(context, createCreateReleasesState())).resolves.toEqual({
-      [SCOPE_NAMES.ALPHA]: [
-        { type: "npm-package", name: "@scope/a@1.2.3", status: "created", meta: {} },
-      ],
-    });
+    await expect(phase(context, createCreateReleasesState())).resolves.toEqual(
+      new Map([
+        [
+          SCOPE_NAMES.ALPHA,
+          [{ type: "npm-package", name: "@scope/a@1.2.3", status: "created", meta: {} }],
+        ],
+      ]),
+    );
     expect(publishPackageSpy).not.toHaveBeenCalled();
     expect(context.logger.info).toHaveBeenCalledTimes(1);
     expect(context.logger.info).toHaveBeenNthCalledWith(1, "Would publish @scope/a@1.2.3");
   });
 
   it("should resolve the package manager of the scope with the plugin option", async () => {
-    const context = createPhaseContext({ scopes: { [SCOPE_NAMES.ALPHA]: createScope() } });
+    const context = createPhaseContext({ scopes: new Map([[SCOPE_NAMES.ALPHA, createScope()]]) });
 
     readScopePackageManagerSpy.mockResolvedValueOnce("bun");
     mockedReadScopePackageJson.mockResolvedValueOnce(
@@ -841,13 +856,13 @@ describe("createCreateReleasesPhase", () => {
       1,
       context.fs,
       context.cwd,
-      context.scopes[SCOPE_NAMES.ALPHA]?.path,
+      context.scopes.get(SCOPE_NAMES.ALPHA)?.path,
       "bun",
     );
   });
 
   it("should not check specifiers when another package manager packs the package", async () => {
-    const context = createPhaseContext({ scopes: { [SCOPE_NAMES.ALPHA]: createScope() } });
+    const context = createPhaseContext({ scopes: new Map([[SCOPE_NAMES.ALPHA, createScope()]]) });
     const packageJson = createPublishPackageJson({
       name: SCOPE_NAMES.ALPHA,
       version: VERSIONS.DEFAULT,
@@ -870,7 +885,7 @@ describe("createCreateReleasesPhase", () => {
   it("should throw when npm would publish a specifier it cannot resolve", async () => {
     const context = createPhaseContext({
       dryRun: true,
-      scopes: { [SCOPE_NAMES.ALPHA]: createScope() },
+      scopes: new Map([[SCOPE_NAMES.ALPHA, createScope()]]),
     });
     const packageJson = createPublishPackageJson({
       name: SCOPE_NAMES.ALPHA,

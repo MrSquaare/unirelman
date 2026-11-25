@@ -13,10 +13,10 @@ import {
   createPhaseContext,
   createScopeChangesMap,
   createScopeFileOperationsMap,
-  createScopeMap,
   createScopeVersionMap,
-  createVersion,
   SCOPE_NAMES,
+  SCOPE_PATHS,
+  VERSIONS,
 } from "@unirelman/core/testing/fixtures";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -47,12 +47,12 @@ describe("resolveGroupedChangeMessages", () => {
 
   it("should group changes by change level", () => {
     const changesMap = createScopeChangesMap();
-    const alphaChanges = changesMap[SCOPE_NAMES.ALPHA];
+    const alphaChanges = changesMap.get(SCOPE_NAMES.ALPHA);
 
     expect(resolveGroupedChangeMessages(alphaChanges)).toEqual({
-      major: [alphaChanges[0].message],
-      minor: [alphaChanges[1].message],
-      patch: [alphaChanges[2].message],
+      major: [alphaChanges?.[0]?.message],
+      minor: [alphaChanges?.[1]?.message],
+      patch: [alphaChanges?.[2]?.message],
     });
   });
 
@@ -221,43 +221,36 @@ describe("resolveRootChangelogMarkdown", () => {
   });
 
   it("should join the sections of every scope, ordered by scope name", () => {
-    const scopes = createScopeMap();
     const nextVersions = createScopeVersionMap();
     const changes = createScopeChangesMap();
     const options = createResolvedChangelogPluginOptions();
 
     resolveScopeChangelogMarkdownSpy.mockReturnValueOnce("## Alpha").mockReturnValueOnce("## Beta");
 
-    expect(resolveRootChangelogMarkdown(scopes, nextVersions, changes, options)).toEqual(
+    expect(resolveRootChangelogMarkdown(nextVersions, changes, options)).toEqual(
       "## Alpha\n\n## Beta",
     );
     expect(resolveScopeChangelogMarkdownSpy).toHaveBeenCalledTimes(2);
     expect(resolveScopeChangelogMarkdownSpy).toHaveBeenNthCalledWith(
       1,
       SCOPE_NAMES.ALPHA,
-      nextVersions[SCOPE_NAMES.ALPHA].version,
-      changes[SCOPE_NAMES.ALPHA],
+      nextVersions.get(SCOPE_NAMES.ALPHA)?.version,
+      changes.get(SCOPE_NAMES.ALPHA),
       options,
     );
     expect(resolveScopeChangelogMarkdownSpy).toHaveBeenNthCalledWith(
       2,
       SCOPE_NAMES.BETA,
-      nextVersions[SCOPE_NAMES.BETA].version,
-      changes[SCOPE_NAMES.BETA],
+      nextVersions.get(SCOPE_NAMES.BETA)?.version,
+      changes.get(SCOPE_NAMES.BETA),
       options,
     );
   });
 
-  it("should skip the scopes that are missing or without next version", () => {
-    const nextVersions = {
-      [SCOPE_NAMES.ALPHA]: createVersion({ extends: { version: "" } }),
-      [SCOPE_NAMES.MISSING]: createVersion(),
-    };
-
+  it("should return no section without next versions", () => {
     expect(
       resolveRootChangelogMarkdown(
-        createScopeMap(),
-        nextVersions,
+        new Map(),
         createScopeChangesMap(),
         createResolvedChangelogPluginOptions(),
       ),
@@ -314,11 +307,9 @@ describe("resolveChangelogFileOperations", () => {
   });
 
   it("should return the root changelog content for every scope in root mode", () => {
-    const scopes = createScopeMap();
     const nextVersions = createScopeVersionMap();
     const changes = createScopeChangesMap();
     const rootPath = `${CONFIG_CWD}/CHANGELOG.md`;
-
     const options = createResolvedChangelogPluginOptions({
       extends: { mode: "root", header: "# Changelog" },
     });
@@ -326,52 +317,58 @@ describe("resolveChangelogFileOperations", () => {
     resolveRootChangelogMarkdownSpy.mockReturnValueOnce("## Release");
 
     expect(
-      resolveChangelogFileOperations(CONFIG_CWD, scopes, nextVersions, changes, options, {
-        [rootPath]: "# Changelog\n\n## Old",
-      }),
-    ).toEqual({
-      [SCOPE_NAMES.ALPHA]: [
-        {
-          type: "changelog",
-          path: rootPath,
-          action: "write",
-          content: "# Changelog\n\n## Release\n\n## Old\n",
-          meta: {},
-        },
-      ],
-      [SCOPE_NAMES.BETA]: [
-        {
-          type: "changelog",
-          path: rootPath,
-          action: "write",
-          content: "# Changelog\n\n## Release\n\n## Old\n",
-          meta: {},
-        },
-      ],
-    });
+      resolveChangelogFileOperations(
+        nextVersions,
+        changes,
+        options,
+        new Map([
+          [
+            SCOPE_NAMES.ALPHA,
+            { version: VERSIONS.DEFAULT, path: rootPath, content: "# Changelog\n\n## Old" },
+          ],
+          [
+            SCOPE_NAMES.BETA,
+            { version: VERSIONS.MAJOR, path: rootPath, content: "# Changelog\n\n## Old" },
+          ],
+        ]),
+      ),
+    ).toEqual(
+      new Map([
+        [
+          SCOPE_NAMES.ALPHA,
+          [
+            {
+              type: "changelog",
+              path: rootPath,
+              action: "write",
+              content: "# Changelog\n\n## Release\n\n## Old\n",
+              meta: {},
+            },
+          ],
+        ],
+        [
+          SCOPE_NAMES.BETA,
+          [
+            {
+              type: "changelog",
+              path: rootPath,
+              action: "write",
+              content: "# Changelog\n\n## Release\n\n## Old\n",
+              meta: {},
+            },
+          ],
+        ],
+      ]),
+    );
 
     expect(resolveRootChangelogMarkdownSpy).toHaveBeenCalledTimes(1);
     expect(resolveRootChangelogMarkdownSpy).toHaveBeenNthCalledWith(
       1,
-      scopes,
       nextVersions,
       changes,
       options,
     );
     expect(resolveScopeChangelogMarkdownSpy).not.toHaveBeenCalled();
-    expect(mockedResolveChangelogPath).toHaveBeenCalledTimes(2);
-    expect(mockedResolveChangelogPath).toHaveBeenNthCalledWith(
-      1,
-      CONFIG_CWD,
-      scopes[SCOPE_NAMES.ALPHA].path,
-      "root",
-    );
-    expect(mockedResolveChangelogPath).toHaveBeenNthCalledWith(
-      2,
-      CONFIG_CWD,
-      scopes[SCOPE_NAMES.BETA].path,
-      "root",
-    );
     expect(mockedResolveChangelogHeader).toHaveBeenCalledTimes(2);
     expect(mockedResolveChangelogHeader).toHaveBeenNthCalledWith(
       1,
@@ -399,12 +396,10 @@ describe("resolveChangelogFileOperations", () => {
   });
 
   it("should return each scope changelog content in scope mode", () => {
-    const scopes = createScopeMap();
     const nextVersions = createScopeVersionMap();
     const changes = createScopeChangesMap();
-    const alphaPath = `${scopes[SCOPE_NAMES.ALPHA].path}/CHANGELOG.md`;
-    const betaPath = `${scopes[SCOPE_NAMES.BETA].path}/CHANGELOG.md`;
-
+    const alphaPath = `${SCOPE_PATHS[SCOPE_NAMES.ALPHA]}/CHANGELOG.md`;
+    const betaPath = `${SCOPE_PATHS[SCOPE_NAMES.BETA]}/CHANGELOG.md`;
     const options = createResolvedChangelogPluginOptions({
       extends: {
         mode: "scope",
@@ -417,45 +412,61 @@ describe("resolveChangelogFileOperations", () => {
       .mockReturnValueOnce("## Beta release");
 
     expect(
-      resolveChangelogFileOperations(CONFIG_CWD, scopes, nextVersions, changes, options, {
-        [alphaPath]: "",
-        [betaPath]: "# Changelog\n\n## Old",
-      }),
-    ).toEqual({
-      [SCOPE_NAMES.ALPHA]: [
-        {
-          type: "changelog",
-          path: alphaPath,
-          action: "write",
-          content: "# @scope/a\n\n## Alpha release\n",
-          meta: {},
-        },
-      ],
-      [SCOPE_NAMES.BETA]: [
-        {
-          type: "changelog",
-          path: betaPath,
-          action: "write",
-          content: "# @scope/b\n\n## Beta release\n\n## Old\n",
-          meta: {},
-        },
-      ],
-    });
+      resolveChangelogFileOperations(
+        nextVersions,
+        changes,
+        options,
+        new Map([
+          [SCOPE_NAMES.ALPHA, { version: VERSIONS.DEFAULT, path: alphaPath, content: "" }],
+          [
+            SCOPE_NAMES.BETA,
+            { version: VERSIONS.MAJOR, path: betaPath, content: "# Changelog\n\n## Old" },
+          ],
+        ]),
+      ),
+    ).toEqual(
+      new Map([
+        [
+          SCOPE_NAMES.ALPHA,
+          [
+            {
+              type: "changelog",
+              path: alphaPath,
+              action: "write",
+              content: "# @scope/a\n\n## Alpha release\n",
+              meta: {},
+            },
+          ],
+        ],
+        [
+          SCOPE_NAMES.BETA,
+          [
+            {
+              type: "changelog",
+              path: betaPath,
+              action: "write",
+              content: "# @scope/b\n\n## Beta release\n\n## Old\n",
+              meta: {},
+            },
+          ],
+        ],
+      ]),
+    );
 
     expect(resolveRootChangelogMarkdownSpy).not.toHaveBeenCalled();
     expect(resolveScopeChangelogMarkdownSpy).toHaveBeenCalledTimes(2);
     expect(resolveScopeChangelogMarkdownSpy).toHaveBeenNthCalledWith(
       1,
       SCOPE_NAMES.ALPHA,
-      nextVersions[SCOPE_NAMES.ALPHA].version,
-      changes[SCOPE_NAMES.ALPHA],
+      VERSIONS.DEFAULT,
+      changes.get(SCOPE_NAMES.ALPHA),
       options,
     );
     expect(resolveScopeChangelogMarkdownSpy).toHaveBeenNthCalledWith(
       2,
       SCOPE_NAMES.BETA,
-      nextVersions[SCOPE_NAMES.BETA].version,
-      changes[SCOPE_NAMES.BETA],
+      VERSIONS.MAJOR,
+      changes.get(SCOPE_NAMES.BETA),
       options,
     );
     expect(resolveNextChangelogContentSpy).toHaveBeenCalledTimes(2);
@@ -473,22 +484,15 @@ describe("resolveChangelogFileOperations", () => {
     );
   });
 
-  it("should skip scopes when scope is missing or version is empty", () => {
-    const nextVersions = {
-      [SCOPE_NAMES.ALPHA]: createVersion({ extends: { version: "" } }),
-      [SCOPE_NAMES.MISSING]: createVersion(),
-    };
-
+  it("should return no file operation without changelogs", () => {
     expect(
       resolveChangelogFileOperations(
-        CONFIG_CWD,
-        createScopeMap(),
-        nextVersions,
+        new Map(),
         createScopeChangesMap(),
         createResolvedChangelogPluginOptions({ extends: { mode: "scope" } }),
-        {},
+        new Map(),
       ),
-    ).toEqual({});
+    ).toEqual(new Map());
 
     expect(resolveNextChangelogContentSpy).not.toHaveBeenCalled();
   });
@@ -503,9 +507,9 @@ describe("createGenerateFileOperationsPhase", () => {
 
   it("should read the changelog of every scope in scope mode", async () => {
     const context = createPhaseContext();
-    const state = createGenerateFileOperationsState();
-    const alphaPath = `${context.scopes[SCOPE_NAMES.ALPHA].path}/CHANGELOG.md`;
-    const betaPath = `${context.scopes[SCOPE_NAMES.BETA].path}/CHANGELOG.md`;
+    const state = createGenerateFileOperationsState({ nextVersions: createScopeVersionMap() });
+    const alphaPath = `${SCOPE_PATHS[SCOPE_NAMES.ALPHA]}/CHANGELOG.md`;
+    const betaPath = `${SCOPE_PATHS[SCOPE_NAMES.BETA]}/CHANGELOG.md`;
     const fileOperations = createScopeFileOperationsMap();
 
     vi.mocked(context.fs.read)
@@ -522,13 +526,13 @@ describe("createGenerateFileOperationsPhase", () => {
     expect(mockedResolveChangelogPath).toHaveBeenNthCalledWith(
       1,
       context.cwd,
-      context.scopes[SCOPE_NAMES.ALPHA].path,
+      SCOPE_PATHS[SCOPE_NAMES.ALPHA],
       "scope",
     );
     expect(mockedResolveChangelogPath).toHaveBeenNthCalledWith(
       2,
       context.cwd,
-      context.scopes[SCOPE_NAMES.BETA].path,
+      SCOPE_PATHS[SCOPE_NAMES.BETA],
       "scope",
     );
     expect(context.fs.read).toHaveBeenCalledTimes(2);
@@ -537,18 +541,22 @@ describe("createGenerateFileOperationsPhase", () => {
     expect(resolveChangelogFileOperationsSpy).toHaveBeenCalledTimes(1);
     expect(resolveChangelogFileOperationsSpy).toHaveBeenNthCalledWith(
       1,
-      context.cwd,
-      context.scopes,
       state.nextVersions,
       state.changes,
       options,
-      { [alphaPath]: "# Changelog\n\n## Alpha", [betaPath]: "" },
+      new Map([
+        [
+          SCOPE_NAMES.ALPHA,
+          { version: VERSIONS.DEFAULT, path: alphaPath, content: "# Changelog\n\n## Alpha" },
+        ],
+        [SCOPE_NAMES.BETA, { version: VERSIONS.MAJOR, path: betaPath, content: "" }],
+      ]),
     );
   });
 
   it("should read the root changelog once in root mode", async () => {
     const context = createPhaseContext();
-    const state = createGenerateFileOperationsState();
+    const state = createGenerateFileOperationsState({ nextVersions: createScopeVersionMap() });
     const rootPath = `${context.cwd}/CHANGELOG.md`;
     const fileOperations = createScopeFileOperationsMap();
 
@@ -565,42 +573,42 @@ describe("createGenerateFileOperationsPhase", () => {
     expect(resolveChangelogFileOperationsSpy).toHaveBeenCalledTimes(1);
     expect(resolveChangelogFileOperationsSpy).toHaveBeenNthCalledWith(
       1,
-      context.cwd,
-      context.scopes,
       state.nextVersions,
       state.changes,
       options,
-      { [rootPath]: "# Changelog\n\n## Old" },
+      new Map([
+        [
+          SCOPE_NAMES.ALPHA,
+          { version: VERSIONS.DEFAULT, path: rootPath, content: "# Changelog\n\n## Old" },
+        ],
+        [
+          SCOPE_NAMES.BETA,
+          { version: VERSIONS.MAJOR, path: rootPath, content: "# Changelog\n\n## Old" },
+        ],
+      ]),
     );
   });
 
-  it("should skip reading changelogs for scopes that are missing or without next version", async () => {
+  it("should skip reading changelogs for scopes without next version", async () => {
     const context = createPhaseContext();
-    const state = createGenerateFileOperationsState({
-      nextVersions: {
-        [SCOPE_NAMES.ALPHA]: createVersion({ extends: { version: "" } }),
-        [SCOPE_NAMES.MISSING]: createVersion(),
-      },
-    });
+    const state = createGenerateFileOperationsState({ nextVersions: new Map() });
 
-    resolveChangelogFileOperationsSpy.mockReturnValueOnce({});
+    resolveChangelogFileOperationsSpy.mockReturnValueOnce(new Map());
 
     const options = createResolvedChangelogPluginOptions({ extends: { mode: "scope" } });
     const phase = createGenerateFileOperationsPhase(options);
 
-    await expect(phase(context, state)).resolves.toEqual({});
+    await expect(phase(context, state)).resolves.toEqual(new Map());
 
     expect(mockedResolveChangelogPath).not.toHaveBeenCalled();
     expect(context.fs.read).not.toHaveBeenCalled();
     expect(resolveChangelogFileOperationsSpy).toHaveBeenCalledTimes(1);
     expect(resolveChangelogFileOperationsSpy).toHaveBeenNthCalledWith(
       1,
-      context.cwd,
-      context.scopes,
       state.nextVersions,
       state.changes,
       options,
-      {},
+      new Map(),
     );
   });
 });

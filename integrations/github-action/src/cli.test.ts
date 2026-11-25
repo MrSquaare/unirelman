@@ -16,7 +16,7 @@ import * as thisMod from "./cli";
 const PUBLISH_OUTPUT = {
   pipeline: "publish" as const,
   dryRun: false,
-  releases: {},
+  releases: new Map(),
 };
 const ENVIRONMENT = { PATH: "/usr/bin", GITHUB_TOKEN: "token" };
 
@@ -106,7 +106,7 @@ describe("runUnirelmanVersion", () => {
   });
 
   it("should run the version pipeline with JSON output", async () => {
-    const output = { pipeline: "version" as const, dryRun: false, scopes: {}, files: [] };
+    const output = { pipeline: "version" as const, dryRun: false, scopes: new Map(), files: [] };
 
     runUnirelmanSpy.mockResolvedValueOnce(output);
 

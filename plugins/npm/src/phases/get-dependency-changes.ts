@@ -32,12 +32,12 @@ export const createGetDependencyChangesPhase = (
       currentVersions: state.currentVersions,
       nextVersions: state.nextVersions,
     };
-    const changes: ScopeChangesMap = {};
+    const changes = new Map<string, Change[]>();
 
-    for (const scopeName in packageJsons) {
-      const isDependentUpdated = state.nextVersions[scopeName] !== undefined;
+    for (const [scopeName, { packageJson }] of packageJsons) {
+      const isDependentUpdated = state.nextVersions.has(scopeName);
       const dependenciesRequiringChange = resolveUpdatedInternalDependencies(
-        packageJsons[scopeName],
+        packageJson,
         params,
       ).filter((dependency) =>
         isDependencyChangeRequired(
@@ -51,7 +51,7 @@ export const createGetDependencyChangesPhase = (
         continue;
       }
 
-      changes[scopeName] = [thisMod.resolveDependencyChange(dependenciesRequiringChange)];
+      changes.set(scopeName, [thisMod.resolveDependencyChange(dependenciesRequiringChange)]);
     }
 
     return changes;

@@ -126,19 +126,25 @@ describe("resolveReplaceFileOperations", () => {
           ["docs/index.md", { content: "docs", scopeNames: new Set([SCOPE_NAMES.ALPHA]) }],
         ]),
       ),
-    ).toEqual({
-      [SCOPE_NAMES.ALPHA]: [
-        { type: "replace", path: "README.md", action: "write", content: "readme", meta: {} },
-        { type: "replace", path: "docs/index.md", action: "write", content: "docs", meta: {} },
-      ],
-      [SCOPE_NAMES.BETA]: [
-        { type: "replace", path: "README.md", action: "write", content: "readme", meta: {} },
-      ],
-    });
+    ).toEqual(
+      new Map([
+        [
+          SCOPE_NAMES.ALPHA,
+          [
+            { type: "replace", path: "README.md", action: "write", content: "readme", meta: {} },
+            { type: "replace", path: "docs/index.md", action: "write", content: "docs", meta: {} },
+          ],
+        ],
+        [
+          SCOPE_NAMES.BETA,
+          [{ type: "replace", path: "README.md", action: "write", content: "readme", meta: {} }],
+        ],
+      ]),
+    );
   });
 
   it("should return no file operation without replaced files", () => {
-    expect(resolveReplaceFileOperations(new Map())).toEqual({});
+    expect(resolveReplaceFileOperations(new Map())).toEqual(new Map());
   });
 });
 
@@ -169,39 +175,47 @@ describe("createGenerateFileOperationsPhase", () => {
     });
     const context = createPhaseContext();
     const state = createGenerateFileOperationsState({
-      currentVersions: {
-        [SCOPE_NAMES.ALPHA]: createVersion({ extends: { version: "1.0.0" } }),
-      },
-      nextVersions: {
-        [SCOPE_NAMES.ALPHA]: createVersion({ extends: { version: "1.1.0" } }),
-        [SCOPE_NAMES.BETA]: createVersion({ extends: { version: "2.0.0" } }),
-      },
+      currentVersions: new Map([
+        [SCOPE_NAMES.ALPHA, createVersion({ extends: { version: "1.0.0" } })],
+      ]),
+      nextVersions: new Map([
+        [SCOPE_NAMES.ALPHA, createVersion({ extends: { version: "1.1.0" } })],
+        [SCOPE_NAMES.BETA, createVersion({ extends: { version: "2.0.0" } })],
+      ]),
     });
 
     vi.mocked(context.fs.read).mockResolvedValueOnce("@scope/a@1.0.0 @scope/b@1.0.0");
 
     await expect(
       createGenerateFileOperationsPhase({ files: [alphaFile, betaFile] })(context, state),
-    ).resolves.toEqual({
-      [SCOPE_NAMES.ALPHA]: [
-        {
-          type: "replace",
-          path: "README.md",
-          action: "write",
-          content: "@scope/a@1.1.0 @scope/b@2.0.0",
-          meta: {},
-        },
-      ],
-      [SCOPE_NAMES.BETA]: [
-        {
-          type: "replace",
-          path: "README.md",
-          action: "write",
-          content: "@scope/a@1.1.0 @scope/b@2.0.0",
-          meta: {},
-        },
-      ],
-    });
+    ).resolves.toEqual(
+      new Map([
+        [
+          SCOPE_NAMES.ALPHA,
+          [
+            {
+              type: "replace",
+              path: "README.md",
+              action: "write",
+              content: "@scope/a@1.1.0 @scope/b@2.0.0",
+              meta: {},
+            },
+          ],
+        ],
+        [
+          SCOPE_NAMES.BETA,
+          [
+            {
+              type: "replace",
+              path: "README.md",
+              action: "write",
+              content: "@scope/a@1.1.0 @scope/b@2.0.0",
+              meta: {},
+            },
+          ],
+        ],
+      ]),
+    );
     expect(context.fs.read).toHaveBeenCalledTimes(1);
     expect(context.fs.read).toHaveBeenNthCalledWith(1, "README.md");
     expect(resolveReplacedContentSpy).toHaveBeenCalledTimes(2);
@@ -236,12 +250,14 @@ describe("createGenerateFileOperationsPhase", () => {
     const file = createResolvedReplaceFile({ extends: { scope: SCOPE_NAMES.BETA } });
     const context = createPhaseContext();
     const state = createGenerateFileOperationsState({
-      nextVersions: { [SCOPE_NAMES.ALPHA]: createVersion({ extends: { version: "1.1.0" } }) },
+      nextVersions: new Map([
+        [SCOPE_NAMES.ALPHA, createVersion({ extends: { version: "1.1.0" } })],
+      ]),
     });
 
     await expect(
       createGenerateFileOperationsPhase({ files: [file] })(context, state),
-    ).resolves.toEqual({});
+    ).resolves.toEqual(new Map());
     expect(context.fs.read).not.toHaveBeenCalled();
     expect(resolveReplacedContentSpy).not.toHaveBeenCalled();
     expect(resolveReplaceFileOperationsSpy).toHaveBeenCalledTimes(1);
@@ -254,14 +270,16 @@ describe("createGenerateFileOperationsPhase", () => {
     });
     const context = createPhaseContext();
     const state = createGenerateFileOperationsState({
-      nextVersions: { [SCOPE_NAMES.ALPHA]: createVersion({ extends: { version: "1.1.0" } }) },
+      nextVersions: new Map([
+        [SCOPE_NAMES.ALPHA, createVersion({ extends: { version: "1.1.0" } })],
+      ]),
     });
 
     vi.mocked(context.fs.read).mockResolvedValueOnce("no reference");
 
     await expect(
       createGenerateFileOperationsPhase({ files: [file] })(context, state),
-    ).resolves.toEqual({});
+    ).resolves.toEqual(new Map());
     expect(resolveReplacedContentSpy).toHaveBeenCalledTimes(1);
     expect(resolveReplaceFileOperationsSpy).toHaveBeenCalledTimes(1);
     expect(resolveReplaceFileOperationsSpy).toHaveBeenNthCalledWith(1, new Map());

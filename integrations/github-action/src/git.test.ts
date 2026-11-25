@@ -105,13 +105,16 @@ describe("resolvePublishedGitTags", () => {
       resolvePublishedGitTags({
         pipeline: "publish",
         dryRun: false,
-        releases: {
-          "@scope/a": [
-            { type: "git-tag", name: "@scope/a@1.0.1", status: "created", meta: {} },
-            { type: "npm-package", name: "@scope/a@1.0.1", status: "created", meta: {} },
+        releases: new Map([
+          [
+            "@scope/a",
+            [
+              { type: "git-tag", name: "@scope/a@1.0.1", status: "created", meta: {} },
+              { type: "npm-package", name: "@scope/a@1.0.1", status: "created", meta: {} },
+            ],
           ],
-          "@scope/b": [{ type: "git-tag", name: "@scope/b@2.0.0", status: "existing", meta: {} }],
-        },
+          ["@scope/b", [{ type: "git-tag", name: "@scope/b@2.0.0", status: "existing", meta: {} }]],
+        ]),
       }),
     ).toEqual(["@scope/a@1.0.1", "@scope/b@2.0.0"]);
   });

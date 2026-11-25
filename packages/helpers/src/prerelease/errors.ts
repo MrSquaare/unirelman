@@ -140,10 +140,10 @@ export class PrereleaseDowngradeChannelError extends PrereleaseError {
 }
 
 export class PrereleaseStateMismatchError extends PrereleaseError {
-  readonly channels: Readonly<Record<string, string | undefined>>;
+  readonly channels: ReadonlyMap<string, string | undefined>;
 
-  constructor(channels: Readonly<Record<string, string | undefined>>) {
-    const states = Object.entries(channels)
+  constructor(channels: ReadonlyMap<string, string | undefined>) {
+    const states = [...channels]
       .map(([scopeName, channel]) => `${scopeName} (${channel ?? "no prerelease"})`)
       .join(", ");
 

@@ -1,4 +1,4 @@
-import type { Plugin, ScopeReleasesMap } from "@unirelman/core";
+import type { Plugin, Release, ScopeReleasesMap } from "@unirelman/core";
 import type { PrereleaseTag } from "@unirelman/helpers/prerelease";
 
 import { RequestError } from "@octokit/request-error";
@@ -155,17 +155,14 @@ export const createCreateReleasesPhase = (
       throw new GitHubMissingOptionError("token", ["GITHUB_TOKEN", "GH_TOKEN"]);
     }
 
-    if (
-      typeof options.makeLatest === "string" &&
-      !Object.hasOwn(context.scopes, options.makeLatest)
-    ) {
+    if (typeof options.makeLatest === "string" && !context.scopes.has(options.makeLatest)) {
       throw new GitHubUnknownLatestScopeError(options.makeLatest);
     }
 
     const repository = thisMod.parseGitHubRepository(options.repository);
     const octokit = new Octokit({ auth: options.token, baseUrl: options.apiUrl });
     const commit = await thisMod.readHeadCommit(context.cwd);
-    const releases: ScopeReleasesMap = {};
+    const releases = new Map<string, Release[]>();
     let draftReleases: Promise<ReadonlyMap<string, GitHubRelease>> | undefined;
     const readDraftReleases = () => {
       draftReleases ??= thisMod.listGitHubDraftReleases(octokit, repository);
@@ -173,13 +170,14 @@ export const createCreateReleasesPhase = (
       return draftReleases;
     };
 
-    for (const scopeName in state.currentVersions) {
-      const scope = context.scopes[scopeName];
-      const version = state.currentVersions[scopeName]?.version;
+    for (const [scopeName, scope] of context.scopes) {
+      const currentVersion = state.currentVersions.get(scopeName);
 
-      if (!scope || !version) {
+      if (currentVersion === undefined) {
         continue;
       }
+
+      const { version, meta } = currentVersion;
 
       const tag = resolveGitTag(scope, version, context.cwd, options.tagFormat);
       const existingRelease = await thisMod.findGitHubRelease(
@@ -190,14 +188,14 @@ export const createCreateReleasesPhase = (
       );
 
       if (existingRelease !== undefined) {
-        releases[scopeName] = [
+        releases.set(scopeName, [
           {
             type: GITHUB_RELEASE_TYPE,
             name: tag,
             status: "existing",
             meta: { github: existingRelease },
           },
-        ];
+        ]);
 
         context.logger.info(`Skipping GitHub release: ${tag} already exists`);
 
@@ -205,9 +203,9 @@ export const createCreateReleasesPhase = (
       }
 
       if (context.dryRun) {
-        releases[scopeName] = [
+        releases.set(scopeName, [
           { type: GITHUB_RELEASE_TYPE, name: tag, status: "created", meta: {} },
-        ];
+        ]);
 
         context.logger.info(`Would create GitHub release: ${tag}`);
 
@@ -218,20 +216,20 @@ export const createCreateReleasesPhase = (
       const createdRelease = await thisMod.createGitHubRelease(octokit, repository, {
         tag,
         commit,
-        body: state.releaseNotes[scopeName] ?? "",
-        prerelease: state.currentVersions[scopeName]?.meta.prerelease,
+        body: state.releaseNotes.get(scopeName) ?? "",
+        prerelease: meta.prerelease,
         draft: thisMod.isGitHubReleaseDraft(options.draft, selectorInput),
         latest: thisMod.isGitHubReleaseLatest(options.makeLatest, selectorInput),
       });
 
-      releases[scopeName] = [
+      releases.set(scopeName, [
         {
           type: GITHUB_RELEASE_TYPE,
           name: tag,
           status: "created",
           meta: { github: createdRelease },
         },
-      ];
+      ]);
 
       context.logger.info(`Created GitHub release: ${tag}`);
     }

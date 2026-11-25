@@ -31,7 +31,7 @@ describe.concurrent("git", () => {
             {
               name: "git",
               options:
-                '{ annotatedTags: true, commitMessage: ({ nextVersions }) => `chore(release): ${Object.entries(nextVersions).map(([scopeName, version]) => `${scopeName}@${version}`).join(", ")}` }',
+                '{ annotatedTags: true, commitMessage: ({ nextVersions }) => `chore(release): ${[...nextVersions].map(([scopeName, version]) => `${scopeName}@${version}`).join(", ")}` }',
             },
             { name: "semver" },
           ],

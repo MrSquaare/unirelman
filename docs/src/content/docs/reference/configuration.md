@@ -46,7 +46,6 @@ Each scope path is unique and inside the project root.
 A scope name:
 
 - Contains only letters, digits, and the characters `@`, `/`, `.`, `_`, and `-`, such as `@example/core`.
-- Is not a property of `Object.prototype`, such as `constructor`.
 
 ## `plugins`
 
@@ -78,7 +77,6 @@ The CLI validates the configuration when it starts.
 | `CoreInvalidConfigError`               | An unknown key, a wrong type, or a plugin entry that is not a plugin.                                         |
 | `CoreEmptyScopesError`                 | `scopes` is empty.                                                                                            |
 | `CoreInvalidScopeNameError`            | A scope name has a character outside the [scope name](#scope-names) rules.                                    |
-| `CoreReservedScopeNameError`           | A scope name is a property of `Object.prototype`, such as `constructor` or `__proto__`.                       |
 | `CoreScopePathOutsideCwdError`         | A scope path is outside the project root.                                                                     |
 | `CoreDuplicateScopePathError`          | Two scopes have the same path.                                                                                |
 | `CoreInvalidPluginNameError`           | A plugin name has a character outside the [plugin name](/unirelman/reference/plugin-api/#plugin-names) rules. |

@@ -29,17 +29,6 @@ export class CoreInvalidScopeNameError extends CoreError {
   }
 }
 
-export class CoreReservedScopeNameError extends CoreError {
-  readonly scopeName: string;
-
-  constructor(scopeName: string) {
-    super(`Scope name "${scopeName}" is reserved: it is a property of Object.prototype`);
-
-    this.name = "CoreReservedScopeNameError";
-    this.scopeName = scopeName;
-  }
-}
-
 export class CoreScopePathOutsideCwdError extends CoreError {
   readonly scopePath: string;
 

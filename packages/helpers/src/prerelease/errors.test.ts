@@ -175,13 +175,23 @@ describe("PrereleaseDowngradeChannelError", () => {
 describe("PrereleaseStateMismatchError", () => {
   describe("constructor", () => {
     it("should construct with its message, name and properties", () => {
-      const error = new PrereleaseStateMismatchError({ "@scope/a": "beta", "@scope/b": undefined });
+      const error = new PrereleaseStateMismatchError(
+        new Map([
+          ["@scope/a", "beta"],
+          ["@scope/b", undefined],
+        ]),
+      );
 
       expect(error.message).toEqual(
         "Fixed scopes must share the same prerelease state: @scope/a (beta), @scope/b (no prerelease)",
       );
       expect(error.name).toEqual("PrereleaseStateMismatchError");
-      expect(error.channels).toEqual({ "@scope/a": "beta", "@scope/b": undefined });
+      expect(error.channels).toEqual(
+        new Map([
+          ["@scope/a", "beta"],
+          ["@scope/b", undefined],
+        ]),
+      );
     });
   });
 });

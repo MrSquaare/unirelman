@@ -82,24 +82,32 @@ describe("readScopePackageJsons", () => {
       .mockResolvedValueOnce(alphaPackageJson)
       .mockResolvedValueOnce(betaPackageJson);
 
-    await expect(readScopePackageJsons(context.fs, context.scopes)).resolves.toEqual({
-      [SCOPE_NAMES.ALPHA]: alphaPackageJson,
-      [SCOPE_NAMES.BETA]: betaPackageJson,
-    });
+    await expect(readScopePackageJsons(context.fs, context.scopes)).resolves.toEqual(
+      new Map([
+        [
+          SCOPE_NAMES.ALPHA,
+          { path: `${SCOPE_PATHS[SCOPE_NAMES.ALPHA]}/package.json`, packageJson: alphaPackageJson },
+        ],
+        [
+          SCOPE_NAMES.BETA,
+          { path: `${SCOPE_PATHS[SCOPE_NAMES.BETA]}/package.json`, packageJson: betaPackageJson },
+        ],
+      ]),
+    );
 
     expect(readScopePackageJsonSpy).toHaveBeenCalledTimes(2);
     expect(readScopePackageJsonSpy).toHaveBeenNthCalledWith(
       1,
       context.fs,
       SCOPE_NAMES.ALPHA,
-      `${context.scopes[SCOPE_NAMES.ALPHA].path}/package.json`,
+      `${SCOPE_PATHS[SCOPE_NAMES.ALPHA]}/package.json`,
       dependencyPackageJsonSchema,
     );
     expect(readScopePackageJsonSpy).toHaveBeenNthCalledWith(
       2,
       context.fs,
       SCOPE_NAMES.BETA,
-      `${context.scopes[SCOPE_NAMES.BETA].path}/package.json`,
+      `${SCOPE_PATHS[SCOPE_NAMES.BETA]}/package.json`,
       dependencyPackageJsonSchema,
     );
   });
@@ -146,10 +154,24 @@ describe("resolveScopeNamesByPackageName", () => {
 
   it("should map each package name to its scope name", () => {
     expect(
-      resolveScopeNamesByPackageName({
-        alpha: createPackageJson({ name: "@example/a" }),
-        beta: createPackageJson({ name: "@example/b" }),
-      }),
+      resolveScopeNamesByPackageName(
+        new Map([
+          [
+            "alpha",
+            {
+              path: "packages/a/package.json",
+              packageJson: createPackageJson({ name: "@example/a" }),
+            },
+          ],
+          [
+            "beta",
+            {
+              path: "packages/b/package.json",
+              packageJson: createPackageJson({ name: "@example/b" }),
+            },
+          ],
+        ]),
+      ),
     ).toEqual(
       new Map([
         ["@example/a", "alpha"],

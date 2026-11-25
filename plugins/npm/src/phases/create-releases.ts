@@ -1,4 +1,4 @@
-import type { FS, Plugin, ScopeReleasesMap } from "@unirelman/core";
+import type { FS, Plugin, Release, ScopeReleasesMap } from "@unirelman/core";
 import type { PrereleaseTag } from "@unirelman/helpers/prerelease";
 
 import { execCommand, parseJSON } from "@unirelman/utils";
@@ -245,7 +245,7 @@ export const createCreateReleasesPhase = (
   options: ResolvedNpmPluginOptions,
 ): NonNullable<Plugin["createReleases"]> => {
   return async (context, state): Promise<ScopeReleasesMap> => {
-    const releases: ScopeReleasesMap = {};
+    const releases = new Map<string, Release[]>();
 
     if (!options.publish) {
       context.logger.info("Skipping npm publish: publish disabled");
@@ -253,8 +253,7 @@ export const createCreateReleasesPhase = (
       return releases;
     }
 
-    for (const scopeName in context.scopes) {
-      const scope = context.scopes[scopeName];
+    for (const [scopeName, scope] of context.scopes) {
       const packageJsonPath = resolve(scope.path, NPM_PACKAGE_JSON_FILE_NAME);
       const packageJson = await readScopePackageJson(
         context.fs,
@@ -284,14 +283,14 @@ export const createCreateReleasesPhase = (
         scope.path,
       );
 
-      releases[scopeName] = [
+      releases.set(scopeName, [
         {
           type: NPM_PACKAGE_RELEASE_TYPE,
           name: packageSpec,
           status: versionExists ? "existing" : "created",
           meta: {},
         },
-      ];
+      ]);
 
       if (versionExists) {
         context.logger.info(
@@ -322,7 +321,7 @@ export const createCreateReleasesPhase = (
         packageManager,
         scope.path,
         packageSpec,
-        state.currentVersions[scopeName]?.meta.prerelease,
+        state.currentVersions.get(scopeName)?.meta.prerelease,
       );
       context.logger.info(`Published ${packageSpec}`);
     }

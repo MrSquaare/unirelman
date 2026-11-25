@@ -1,3 +1,4 @@
+import { createRecordMapSchema } from "@unirelman/utils";
 import * as z from "zod";
 
 export const versionOutputScopeSchema = z.object({
@@ -17,11 +18,13 @@ export type VersionOutputFile = z.infer<typeof versionOutputFileSchema>;
 export const versionOutputSchema = z.object({
   pipeline: z.literal("version"),
   dryRun: z.boolean(),
-  scopes: z.record(z.string(), versionOutputScopeSchema),
+  scopes: createRecordMapSchema(versionOutputScopeSchema),
   files: z.array(versionOutputFileSchema),
 });
 
-export type VersionOutput = z.infer<typeof versionOutputSchema>;
+export type VersionOutput = z.input<typeof versionOutputSchema>;
+
+export type ParsedVersionOutput = z.output<typeof versionOutputSchema>;
 
 export const publishOutputReleaseSchema = z.object({
   type: z.string(),
@@ -35,14 +38,18 @@ export type PublishOutputRelease = z.infer<typeof publishOutputReleaseSchema>;
 export const publishOutputSchema = z.object({
   pipeline: z.literal("publish"),
   dryRun: z.boolean(),
-  releases: z.record(z.string(), z.array(publishOutputReleaseSchema)),
+  releases: createRecordMapSchema(z.array(publishOutputReleaseSchema)),
 });
 
-export type PublishOutput = z.infer<typeof publishOutputSchema>;
+export type PublishOutput = z.input<typeof publishOutputSchema>;
+
+export type ParsedPublishOutput = z.output<typeof publishOutputSchema>;
 
 export const pipelineOutputSchema = z.discriminatedUnion("pipeline", [
   versionOutputSchema,
   publishOutputSchema,
 ]);
 
-export type PipelineOutput = z.infer<typeof pipelineOutputSchema>;
+export type PipelineOutput = z.input<typeof pipelineOutputSchema>;
+
+export type ParsedPipelineOutput = z.output<typeof pipelineOutputSchema>;

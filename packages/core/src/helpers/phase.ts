@@ -45,8 +45,8 @@ export const assertChangedScopeProviders = (
   pluginRegistrations: readonly PluginRegistration[],
   changes: ScopeChangesMap,
 ): void => {
-  for (const scopeName in changes) {
-    if (changes[scopeName].length === 0) {
+  for (const [scopeName, scopeChanges] of changes) {
+    if (scopeChanges.length === 0) {
       continue;
     }
 
@@ -90,17 +90,15 @@ export const assertSinglePhaseProviders = (
 };
 
 export const hasChanges = (changes: ScopeChangesMap): boolean => {
-  return Object.values(changes).some((scopeChanges) => scopeChanges.length > 0);
+  return [...changes.values()].some((scopeChanges) => scopeChanges.length > 0);
 };
 
 export const assertStableNextVersions = (
   previousNextVersions: ScopeVersionMap,
   nextVersions: ScopeVersionMap,
 ): void => {
-  for (const scopeName in previousNextVersions) {
-    const previousVersion = previousNextVersions[scopeName].version;
-
-    if (nextVersions[scopeName]?.version !== previousVersion) {
+  for (const [scopeName, { version: previousVersion }] of previousNextVersions) {
+    if (nextVersions.get(scopeName)?.version !== previousVersion) {
       throw new CoreUnstableNextVersionError(scopeName, previousVersion);
     }
   }
@@ -110,53 +108,47 @@ export const hasNewScopes = (
   previousNextVersions: ScopeVersionMap,
   nextVersions: ScopeVersionMap,
 ): boolean => {
-  return Object.keys(nextVersions).some(
-    (scopeName) => previousNextVersions[scopeName] === undefined,
-  );
+  return [...nextVersions.keys()].some((scopeName) => !previousNextVersions.has(scopeName));
 };
 
 export const resolveCurrentVersions = (
   currentVersions: ScopeVersionMap,
   versionMetas: ScopeVersionMetaMap,
 ): ScopeVersionMap => {
-  const resolvedVersions: ScopeVersionMap = {};
-
-  for (const scopeName in currentVersions) {
-    const currentVersion = currentVersions[scopeName];
-
-    resolvedVersions[scopeName] = {
-      version: currentVersion.version,
-      meta: { ...currentVersion.meta, ...versionMetas[scopeName] },
-    };
-  }
-
-  return resolvedVersions;
+  return new Map(
+    [...currentVersions].map(([scopeName, currentVersion]) => [
+      scopeName,
+      {
+        version: currentVersion.version,
+        meta: { ...currentVersion.meta, ...versionMetas.get(scopeName) },
+      },
+    ]),
+  );
 };
 
 export const resolveFileOperations = (
   cwd: string,
   fileOperations: ScopeFileOperationsMap,
 ): ScopeFileOperationsMap => {
-  const resolvedFileOperations: ScopeFileOperationsMap = {};
+  return new Map(
+    [...fileOperations].map(([scopeName, scopeFileOperations]) => [
+      scopeName,
+      scopeFileOperations.map((fileOperation) => {
+        if (fileOperation.path.trim().length === 0) {
+          throw new CoreEmptyFileOperationPathError(scopeName, fileOperation.type);
+        }
 
-  for (const scopeName in fileOperations) {
-    resolvedFileOperations[scopeName] = fileOperations[scopeName].map((fileOperation) => {
-      if (fileOperation.path.trim().length === 0) {
-        throw new CoreEmptyFileOperationPathError(scopeName, fileOperation.type);
-      }
-
-      return { ...fileOperation, path: resolve(cwd, fileOperation.path) };
-    });
-  }
-
-  return resolvedFileOperations;
+        return { ...fileOperation, path: resolve(cwd, fileOperation.path) };
+      }),
+    ]),
+  );
 };
 
 export const dedupeFileOperations = (fileOperations: ScopeFileOperationsMap): FileOperation[] => {
   const fileOperationsByPath = new Map<string, FileOperation>();
 
-  for (const scopeName in fileOperations) {
-    for (const fileOperation of fileOperations[scopeName]) {
+  for (const scopeFileOperations of fileOperations.values()) {
+    for (const fileOperation of scopeFileOperations) {
       const existingFileOperation = fileOperationsByPath.get(fileOperation.path);
 
       if (existingFileOperation === undefined) {
@@ -204,11 +196,11 @@ export const assertPhaseResultScopes = (
     return;
   }
 
-  if (typeof result !== "object" || result === null) {
+  if (!(result instanceof Map)) {
     return;
   }
 
-  const unknownScopeName = Object.keys(result).find((scopeName) => !scopeNames.has(scopeName));
+  const unknownScopeName = [...result.keys()].find((scopeName) => !scopeNames.has(scopeName));
 
   if (unknownScopeName !== undefined) {
     throw new CoreUnknownPhaseResultScopeError(phaseName, pluginName, unknownScopeName);

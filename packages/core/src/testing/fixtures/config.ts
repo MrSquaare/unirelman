@@ -1,6 +1,12 @@
-import { defineObjectGenerator } from "@unirelman/testing/utils/factory";
+import { defineMapGenerator, defineObjectGenerator } from "@unirelman/testing/utils/factory";
 
-import type { Config, ConfigScopes, ResolvedConfig, ScopedConfigPlugin } from "../../types/config";
+import type {
+  Config,
+  ConfigScopes,
+  ParsedConfig,
+  ResolvedConfig,
+  ScopedConfigPlugin,
+} from "../../types/config";
 
 import { CONFIG_SCOPE_PATHS, PLUGIN_NAMES, SCOPE_NAMES } from "./constants";
 import { createPlugin, createPluginRegistrations } from "./plugin";
@@ -12,6 +18,14 @@ export const createConfigScopes = defineObjectGenerator<ConfigScopes>(() => ({
   [SCOPE_NAMES.ALPHA]: CONFIG_SCOPE_PATHS[SCOPE_NAMES.ALPHA],
   [SCOPE_NAMES.BETA]: CONFIG_SCOPE_PATHS[SCOPE_NAMES.BETA],
 }));
+
+export const createConfigScopeMap = defineMapGenerator<string, string>(
+  () =>
+    new Map([
+      [SCOPE_NAMES.ALPHA, CONFIG_SCOPE_PATHS[SCOPE_NAMES.ALPHA]],
+      [SCOPE_NAMES.BETA, CONFIG_SCOPE_PATHS[SCOPE_NAMES.BETA]],
+    ]),
+);
 
 export const createScopedConfigPlugin = defineObjectGenerator<ScopedConfigPlugin>(() => ({
   plugin: createPlugin(),
@@ -27,6 +41,11 @@ export const createConfigPlugins = () => [
 
 export const createConfig = defineObjectGenerator<Config>(() => ({
   scopes: createConfigScopes(),
+  plugins: createConfigPlugins(),
+}));
+
+export const createParsedConfig = defineObjectGenerator<ParsedConfig>(() => ({
+  scopes: createConfigScopeMap(),
   plugins: createConfigPlugins(),
 }));
 

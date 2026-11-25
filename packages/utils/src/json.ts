@@ -38,3 +38,20 @@ export const parseJSON = <TSchema extends z.ZodType>(
 
   return result.data;
 };
+
+const isJSONObject = (value: unknown): value is Record<string, unknown> => {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+};
+
+export const createRecordMapSchema = <TValue>(valueSchema: z.ZodType<TValue, TValue>) => {
+  return z.codec(
+    z.custom<Readonly<Record<string, TValue>>>(isJSONObject, {
+      error: "Invalid input: expected object",
+    }),
+    z.map(z.string(), valueSchema).readonly(),
+    {
+      decode: (record) => new Map(Object.entries(record)),
+      encode: (map) => Object.fromEntries(map),
+    },
+  );
+};

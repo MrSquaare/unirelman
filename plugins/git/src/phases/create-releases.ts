@@ -1,4 +1,4 @@
-import type { Plugin, ScopeMap, ScopeReleasesMap, ScopeVersionMap } from "@unirelman/core";
+import type { Plugin, Release, ScopeMap, ScopeReleasesMap, ScopeVersionMap } from "@unirelman/core";
 import type { GitTagFormat } from "@unirelman/helpers/git";
 
 import { resolveGitTag } from "@unirelman/helpers/git";
@@ -19,11 +19,10 @@ export const resolveGitTagEntries = (
 ): GitTagEntry[] => {
   const entries: GitTagEntry[] = [];
 
-  for (const scopeName in versions) {
-    const scope = scopes[scopeName];
-    const version = versions[scopeName]?.version;
+  for (const [scopeName, scope] of scopes) {
+    const version = versions.get(scopeName)?.version;
 
-    if (!scope || !version) {
+    if (version === undefined) {
       continue;
     }
 
@@ -66,19 +65,19 @@ export const createCreateReleasesPhase = (
       context.cwd,
       options.tagFormat,
     );
-    const releases: ScopeReleasesMap = {};
+    const releases = new Map<string, Release[]>();
 
     for (const entry of entries) {
       const tagExists = await thisMod.hasGitTag(context.cwd, entry.tag);
 
-      releases[entry.scopeName] = [
+      releases.set(entry.scopeName, [
         {
           type: GIT_TAG_RELEASE_TYPE,
           name: entry.tag,
           status: tagExists ? "existing" : "created",
           meta: {},
         },
-      ];
+      ]);
 
       if (tagExists) {
         context.logger.info(`Skipping git tag: ${entry.tag} already exists`);

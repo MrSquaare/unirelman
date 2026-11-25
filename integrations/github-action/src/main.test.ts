@@ -41,20 +41,21 @@ const REPOSITORY = { owner: "owner", repo: "repo" };
 const PUBLISH_OUTPUT = {
   pipeline: "publish" as const,
   dryRun: false,
-  releases: {
-    "@scope/a": [
-      { type: "git-tag", name: "@scope/a@1.0.0", status: "existing" as const, meta: {} },
+  releases: new Map([
+    [
+      "@scope/a",
+      [{ type: "git-tag", name: "@scope/a@1.0.0", status: "existing" as const, meta: {} }],
     ],
-  },
+  ]),
 };
 const UNIRELMAN_ENVIRONMENT = { GITHUB_TOKEN: "token" };
 const VERSION_OUTPUT = {
   pipeline: "version" as const,
   dryRun: false,
-  scopes: { "@scope/a": { currentVersion: "1.0.0", nextVersion: "1.0.1" } },
+  scopes: new Map([["@scope/a", { currentVersion: "1.0.0", nextVersion: "1.0.1" }]]),
   files: [{ path: "CHANGELOG.md", action: "write" as const }],
 };
-const EMPTY_VERSION_OUTPUT = { ...VERSION_OUTPUT, scopes: {}, files: [] };
+const EMPTY_VERSION_OUTPUT = { ...VERSION_OUTPUT, scopes: new Map(), files: [] };
 const SETTINGS_PATH = "/workspace/.unirelman/github-action/settings.json";
 
 describe("runPublishStep", () => {

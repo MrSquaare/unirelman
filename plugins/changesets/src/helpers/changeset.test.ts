@@ -30,14 +30,16 @@ describe("parseChangesetFrontmatter", () => {
 
     expect(
       parseChangesetFrontmatter(`scopes: ${scopesStr}\n\ninvalidLine\n: emptyKey\nlevel: patch`),
-    ).toEqual({
-      scopes: scopesStr,
-      level: "patch",
-    });
+    ).toEqual(
+      new Map([
+        ["scopes", scopesStr],
+        ["level", "patch"],
+      ]),
+    );
   });
 
   it("should return empty object for empty frontmatter content", () => {
-    expect(parseChangesetFrontmatter("")).toEqual({});
+    expect(parseChangesetFrontmatter("")).toEqual(new Map());
   });
 });
 

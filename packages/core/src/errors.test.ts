@@ -6,7 +6,6 @@ import {
   CoreEmptyFileOperationPathError,
   CoreDuplicateScopePathError,
   CoreEmptyConfigPluginScopesError,
-  CoreReservedScopeNameError,
   CoreEmptyScopesError,
   CoreError,
   CoreFileNotFoundError,
@@ -74,24 +73,6 @@ describe("CoreInvalidScopeNameError", () => {
       expect(error.scopeName).toEqual("a,b");
       expect(error.message).toEqual(
         'Scope name "a,b" is invalid: it must only contain letters, digits, and the characters @ / . _ -',
-      );
-    });
-  });
-});
-
-describe("CoreReservedScopeNameError", () => {
-  afterEach(() => {
-    vi.clearAllMocks();
-  });
-
-  describe("constructor", () => {
-    it("should initialize CoreReservedScopeNameError with name, scopeName property, and message", () => {
-      const error = new CoreReservedScopeNameError("constructor");
-
-      expect(error.name).toEqual("CoreReservedScopeNameError");
-      expect(error.scopeName).toEqual("constructor");
-      expect(error.message).toEqual(
-        'Scope name "constructor" is reserved: it is a property of Object.prototype',
       );
     });
   });

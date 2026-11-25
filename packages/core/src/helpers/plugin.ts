@@ -5,7 +5,7 @@ import type { ScopeMap } from "../types/scope";
 import { FS } from "../fs";
 import { Store } from "../store";
 import { PHASE_NAMES } from "../types/phases";
-import { filterScopeMap } from "./scope";
+import { filterScopeResultMap } from "./scope";
 
 export type CreatePluginContextOptions = {
   readonly pluginRegistration: PluginRegistration;
@@ -32,7 +32,7 @@ export const isPlugin = (value: unknown): value is Plugin => {
 
 export const createPluginContext = (options: CreatePluginContextOptions): PluginContext => {
   const { plugin, scopes: scopeNames } = options.pluginRegistration;
-  const scopes = filterScopeMap(options.scopes, scopeNames);
+  const scopes = filterScopeResultMap(options.scopes, scopeNames);
 
   return {
     cwd: options.cwd,

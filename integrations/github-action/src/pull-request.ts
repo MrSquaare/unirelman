@@ -1,11 +1,11 @@
-import type { VersionOutput } from "@unirelman/cli/output";
+import type { ParsedVersionOutput } from "@unirelman/cli/output";
 
 import type { ActionInputs, GitHubClient, GitHubRepository } from "./types";
 
 import { ACTION_RELEASE_PULL_REQUEST_HEADING } from "./constants";
 
-export const formatReleasePullRequestBody = (output: VersionOutput): string => {
-  const lines = Object.entries(output.scopes).map(
+export const formatReleasePullRequestBody = (output: ParsedVersionOutput): string => {
+  const lines = [...output.scopes].map(
     ([scopeName, scope]) =>
       `- \`${scopeName}\`: ${scope.currentVersion ?? "none"} → ${scope.nextVersion}`,
   );

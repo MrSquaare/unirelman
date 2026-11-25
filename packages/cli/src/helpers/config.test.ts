@@ -1,4 +1,9 @@
-import { CONFIG_CWD, createConfig, createResolvedConfig } from "@unirelman/core/testing/fixtures";
+import {
+  CONFIG_CWD,
+  createConfig,
+  createParsedConfig,
+  createResolvedConfig,
+} from "@unirelman/core/testing/fixtures";
 import { mockedParseConfig, mockedResolveConfig } from "@unirelman/core/testing/mock";
 import { mockedLoadConfig } from "@unirelman/testing/mocks/c12";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -26,7 +31,7 @@ describe("loadConfig", () => {
       configFile: `${CONFIG_CWD}/unirelman.config.ts`,
     });
 
-    await expect(loadConfig()).resolves.toEqual({ cwd: CONFIG_CWD, config });
+    await expect(loadConfig()).resolves.toEqual({ cwd: CONFIG_CWD, config: createParsedConfig() });
     expect(processCwdSpy).toHaveBeenCalledTimes(1);
     expect(processCwdSpy).toHaveBeenNthCalledWith(1);
     expect(mockedLoadConfig).toHaveBeenCalledTimes(1);
@@ -52,7 +57,10 @@ describe("loadConfig", () => {
       configFile: configPath,
     });
 
-    await expect(loadConfig(configPath)).resolves.toEqual({ cwd: CONFIG_CWD, config });
+    await expect(loadConfig(configPath)).resolves.toEqual({
+      cwd: CONFIG_CWD,
+      config: createParsedConfig(),
+    });
     expect(mockedLoadConfig).toHaveBeenCalledTimes(1);
     expect(mockedLoadConfig).toHaveBeenNthCalledWith(1, {
       name: "unirelman",
@@ -78,7 +86,7 @@ describe("loadConfig", () => {
 
     await expect(loadConfig("./configs/local.config.ts")).resolves.toEqual({
       cwd: `${CONFIG_CWD}/configs`,
-      config,
+      config: createParsedConfig(),
     });
     expect(mockedLoadConfig).toHaveBeenCalledTimes(1);
     expect(mockedLoadConfig).toHaveBeenNthCalledWith(1, {
@@ -117,7 +125,7 @@ describe("loadResolvedConfig", () => {
   });
 
   it("should load and resolve config", async () => {
-    const config = createConfig();
+    const config = createParsedConfig();
     const resolvedConfig = createResolvedConfig();
     const configPath = `${CONFIG_CWD}/unirelman.config.ts`;
 

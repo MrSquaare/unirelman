@@ -54,6 +54,7 @@
   },
   "dependencies": {
     "@clack/prompts": "^1.9.0",
+    "@unirelman/utils": "workspace:*",
     "c12": "4.0.0-rc.4",
     "zod": "^4.6.7"
   },

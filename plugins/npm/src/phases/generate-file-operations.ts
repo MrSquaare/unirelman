@@ -1,6 +1,4 @@
-import type { Plugin, ScopeFileOperationsMap } from "@unirelman/core";
-
-import { resolve } from "node:path";
+import type { FileOperation, Plugin, ScopeFileOperationsMap } from "@unirelman/core";
 
 import type {
   DependencyPackageJson,
@@ -10,7 +8,7 @@ import type {
   UpdatedInternalDependency,
 } from "../types";
 
-import { NPM_PACKAGE_JSON_FILE_TYPE, NPM_PACKAGE_JSON_FILE_NAME } from "../constants";
+import { NPM_PACKAGE_JSON_FILE_TYPE } from "../constants";
 import {
   isDevRangeUpdateRequired,
   isRangeUpdateRequired,
@@ -83,11 +81,10 @@ export const createGenerateFileOperationsPhase = (
       currentVersions: state.currentVersions,
       nextVersions: state.nextVersions,
     };
-    const fileOperations: ScopeFileOperationsMap = {};
+    const fileOperations = new Map<string, FileOperation[]>();
 
-    for (const scopeName in packageJsons) {
-      const packageJson = packageJsons[scopeName];
-      const nextVersion = state.nextVersions[scopeName]?.version;
+    for (const [scopeName, { path: packageJsonPath, packageJson }] of packageJsons) {
+      const nextVersion = state.nextVersions.get(scopeName)?.version;
       const isDependentUpdated = nextVersion !== undefined;
       const dependenciesRequiringRangeUpdate = thisMod.resolveDependenciesRequiringRangeUpdate(
         resolveUpdatedInternalDependencies(packageJson, params),
@@ -99,7 +96,6 @@ export const createGenerateFileOperationsPhase = (
         continue;
       }
 
-      const packageJsonPath = resolve(context.scopes[scopeName].path, NPM_PACKAGE_JSON_FILE_NAME);
       const document = await readScopePackageJson(
         context.fs,
         scopeName,
@@ -107,7 +103,7 @@ export const createGenerateFileOperationsPhase = (
         packageJsonDocumentSchema,
       );
 
-      fileOperations[scopeName] = [
+      fileOperations.set(scopeName, [
         {
           type: NPM_PACKAGE_JSON_FILE_TYPE,
           path: packageJsonPath,
@@ -123,7 +119,7 @@ export const createGenerateFileOperationsPhase = (
           }),
           meta: {},
         },
-      ];
+      ]);
     }
 
     return fileOperations;

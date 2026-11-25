@@ -8,6 +8,7 @@ import {
   createCreateReleasesState,
   createVersion,
   SCOPE_NAMES,
+  SCOPE_PATHS,
 } from "@unirelman/core/testing/fixtures";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -83,10 +84,10 @@ describe("createGetReleaseNotesPhase", () => {
   it("should read the root changelog once and return the section of every scope", async () => {
     const context = createPhaseContext();
     const state = createCreateReleasesState({
-      currentVersions: {
-        [SCOPE_NAMES.ALPHA]: createVersion({ extends: { version: "1.0.1" } }),
-        [SCOPE_NAMES.BETA]: createVersion({ extends: { version: "2.0.0" } }),
-      },
+      currentVersions: new Map([
+        [SCOPE_NAMES.ALPHA, createVersion({ extends: { version: "1.0.1" } })],
+        [SCOPE_NAMES.BETA, createVersion({ extends: { version: "2.0.0" } })],
+      ]),
     });
     const rootPath = `${context.cwd}/CHANGELOG.md`;
 
@@ -98,21 +99,23 @@ describe("createGetReleaseNotesPhase", () => {
       }),
     );
 
-    await expect(phase(context, state)).resolves.toEqual({
-      [SCOPE_NAMES.ALPHA]: "### Patch changes\n- fix a bug",
-      [SCOPE_NAMES.BETA]: "### Minor changes\n- add a feature",
-    });
+    await expect(phase(context, state)).resolves.toEqual(
+      new Map([
+        [SCOPE_NAMES.ALPHA, "### Patch changes\n- fix a bug"],
+        [SCOPE_NAMES.BETA, "### Minor changes\n- add a feature"],
+      ]),
+    );
     expect(mockedResolveChangelogPath).toHaveBeenCalledTimes(2);
     expect(mockedResolveChangelogPath).toHaveBeenNthCalledWith(
       1,
       context.cwd,
-      context.scopes[SCOPE_NAMES.ALPHA].path,
+      SCOPE_PATHS[SCOPE_NAMES.ALPHA],
       "root",
     );
     expect(mockedResolveChangelogPath).toHaveBeenNthCalledWith(
       2,
       context.cwd,
-      context.scopes[SCOPE_NAMES.BETA].path,
+      SCOPE_PATHS[SCOPE_NAMES.BETA],
       "root",
     );
     expect(context.fs.read).toHaveBeenCalledTimes(1);
@@ -138,10 +141,10 @@ describe("createGetReleaseNotesPhase", () => {
   it("should read the changelog of every scope in scope mode", async () => {
     const context = createPhaseContext();
     const state = createCreateReleasesState({
-      currentVersions: {
-        [SCOPE_NAMES.ALPHA]: createVersion({ extends: { version: "1.0.1" } }),
-        [SCOPE_NAMES.BETA]: createVersion({ extends: { version: "2.0.0" } }),
-      },
+      currentVersions: new Map([
+        [SCOPE_NAMES.ALPHA, createVersion({ extends: { version: "1.0.1" } })],
+        [SCOPE_NAMES.BETA, createVersion({ extends: { version: "2.0.0" } })],
+      ]),
     });
 
     vi.mocked(context.fs.read)
@@ -154,30 +157,25 @@ describe("createGetReleaseNotesPhase", () => {
       }),
     );
 
-    await expect(phase(context, state)).resolves.toEqual({
-      [SCOPE_NAMES.ALPHA]: "### Patch changes\n- fix a bug",
-    });
+    await expect(phase(context, state)).resolves.toEqual(
+      new Map([[SCOPE_NAMES.ALPHA, "### Patch changes\n- fix a bug"]]),
+    );
     expect(context.fs.read).toHaveBeenCalledTimes(2);
     expect(context.fs.read).toHaveBeenNthCalledWith(
       1,
-      `${context.scopes[SCOPE_NAMES.ALPHA].path}/CHANGELOG.md`,
+      `${SCOPE_PATHS[SCOPE_NAMES.ALPHA]}/CHANGELOG.md`,
       "",
     );
     expect(context.fs.read).toHaveBeenNthCalledWith(
       2,
-      `${context.scopes[SCOPE_NAMES.BETA].path}/CHANGELOG.md`,
+      `${SCOPE_PATHS[SCOPE_NAMES.BETA]}/CHANGELOG.md`,
       "",
     );
   });
 
-  it("should skip scopes that are missing or without current version", async () => {
+  it("should skip scopes without current version", async () => {
     const context = createPhaseContext();
-    const state = createCreateReleasesState({
-      currentVersions: {
-        [SCOPE_NAMES.ALPHA]: createVersion({ extends: { version: "" } }),
-        [SCOPE_NAMES.MISSING]: createVersion({ extends: { version: "1.0.0" } }),
-      },
-    });
+    const state = createCreateReleasesState({ currentVersions: new Map() });
 
     const phase = createGetReleaseNotesPhase(
       createResolvedChangelogPluginOptions({
@@ -185,7 +183,7 @@ describe("createGetReleaseNotesPhase", () => {
       }),
     );
 
-    await expect(phase(context, state)).resolves.toEqual({});
+    await expect(phase(context, state)).resolves.toEqual(new Map());
     expect(context.fs.read).not.toHaveBeenCalled();
     expect(resolveChangelogSectionSpy).not.toHaveBeenCalled();
   });
