@@ -1,3 +1,4 @@
+import { createRecordMapSchema } from "@unirelman/utils";
 import * as z from "zod";
 
 import type { Plugin, PluginRegistration } from "./plugin";
@@ -31,14 +32,18 @@ export const pluginSchema = z.custom<Plugin>(isPlugin, {
 });
 
 export const configSchema = z.strictObject({
-  scopes: z.record(z.string(), z.string()),
-  plugins: z.array(
-    z.union([
-      pluginSchema,
-      z.strictObject({
-        plugin: pluginSchema,
-        scopes: z.array(z.string()).optional(),
-      }),
-    ]),
-  ),
-}) satisfies z.ZodType<Config>;
+  scopes: createRecordMapSchema(z.string()),
+  plugins: z
+    .array(
+      z.union([
+        pluginSchema,
+        z.strictObject({
+          plugin: pluginSchema,
+          scopes: z.array(z.string()).readonly().optional(),
+        }),
+      ]),
+    )
+    .readonly(),
+}) satisfies z.ZodType<unknown, Config>;
+
+export type ParsedConfig = z.output<typeof configSchema>;
